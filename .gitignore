@@ -1,0 +1,15 @@
+# Python
+__pycache__/
+*.py[cod]
+
+# Parser page-extraction caches (regenerated from the source PDFs)
+pdf_pages.json
+og_pages.json
+
+# Source books are NOT distributed (personal fair-use only)
+*.pdf
+*.epub
+
+# Scratch / local
+_*.py
+.DS_Store
