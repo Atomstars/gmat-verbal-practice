@@ -641,6 +641,66 @@ OG_PG   = re.compile(r"^\s*\d+/\d+\s*$")                        # "10/481" page 
 OG_RC_RANGE = (456, 619)
 OG_CR_RANGE = (620, 801)
 
+# --- Question sub-typing -------------------------------------------------- #
+# The OG prints a category heading in each answer explanation (on its own line,
+# right after the restated options). For RC these ARE the GMAT's official question
+# types; we read them verbatim (source-faithful). For CR the book only prints 3
+# broad buckets, so we ALSO infer a finer task from the question stem wording.
+OG_RC_TYPES = {"Main Idea", "Supporting Idea", "Supporting Ideas", "Inference",
+               "Application", "Evaluation", "Logical Structure", "Style and Tone",
+               "Detail", "Purpose"}
+OG_CR_CATS = {"Argument Construction", "Argument Evaluation", "Evaluation of a Plan"}
+
+def _og_category(blk, cats):
+    """First explanation line that is exactly one of `cats` (the printed heading)."""
+    for l in blk:
+        t = l.strip()
+        if t in cats:
+            return "Supporting Idea" if t == "Supporting Ideas" else t
+    return None
+
+# Ordered (priority) rules mapping a CR stem to a finer task type. Earlier rules win.
+# Each pattern is matched against the whitespace-normalized, lowercased stem. These
+# are INFERRED from the question wording (the OG does not print them); a stem that
+# matches no rule is left "Unclassified" rather than guessed.
+_OG_CR_RULES = [
+    ("Boldface / Method", r"boldface"),
+    ("Flaw", r"vulnerab\w+ to (the |these )?(criticism|objection|grounds)|"
+             r"logical(ly)? flaw|flaw in (the|its|her|his) reasoning|"
+             r"reasoning is (most )?(flawed|questionable|vulnerable)|"
+             r"criticism on which|error in reasoning"),
+    ("Weaken", r"\bweaken|cast(s)? (the most |serious )?doubt|calls? into question|"
+               r"argues against|undermin\w+|points? to the most serious weakness|"
+               r"most seriously (weaken|undermin)|damage(s)? the argument"),
+    ("Assumption", r"depends on (the )?assum|assumes (which|that)|"
+                   r"assumption (on |upon )?which|presuppos|relies on the assum|"
+                   r"required? (by the argument|assuming)|the argument depends on"),
+    ("Explain a Discrepancy", r"resolve|discrepanc|paradox|reconcile|"
+                              r"helps? to explain|explain(s)? (the|why|the apparent|this)|"
+                              r"account(s)? for (the|this|why)"),
+    ("Evaluate", r"\bevaluat\w+|useful to (know|determine|establish)|"
+                 r"most relevant in (evaluating|determining|assessing)|"
+                 r"help(s|ful)? (to )?(determine|evaluate)|answer to which of"),
+    ("Inference / Conclusion", r"supports? which of the following|"
+                               r"most strongly supported by|if the (statements|information) "
+                               r"(above|given) (are|is) true|can be (properly )?(inferred|concluded)|"
+                               r"\bmust (also )?be true|properly (drawn|inferred)|"
+                               r"which of the following can be (inferred|concluded)"),
+    ("Complete the Argument", r"logically completes? the (argument|passage)|"
+                              r"most logically complete"),
+    ("Strengthen", r"\bstrengthen|most strongly supports|justif\w+|best reason|"
+                   r"strongest (support|evidence|reason)|most help(s)? to (support|justify)|"
+                   r"provides? (the )?(most |strongest )?support"),
+    ("Plan", r"\bplan\b|strateg\w+|objective|achieve its (goal|aim|objective)|predict"),
+]
+
+def _og_cr_task(stem):
+    s = re.sub(r"\s+", " ", stem or "").lower()
+    for label, pat in _OG_CR_RULES:
+        if re.search(pat, s):
+            return label
+    return "Unclassified"
+
 
 def _og_is_junk(line):
     """Page furniture that must never be mistaken for question/option/passage text."""
@@ -703,11 +763,12 @@ def _og_difficulty(n, bands):
     return None
 
 
-def _og_parse_explanations(pages, lo, hi, rng, stop_re=None):
+def _og_parse_explanations(pages, lo, hi, rng, stop_re=None, cats=None):
     """
-    {qnum: (marker_answer, explanation_text)} for one section. Includes page `hi`
-    because each explanation section spills onto the next section's first page;
-    `stop_re` halts before that next section's own heading.
+    {qnum: (marker_answer, explanation_text, category)} for one section. Includes
+    page `hi` because each explanation section spills onto the next section's first
+    page; `stop_re` halts before that next section's own heading. `cats` is the set
+    of printed category headings to look for (RC types / CR buckets).
     """
     stop = re.compile(stop_re) if stop_re else None
     lines = []
@@ -739,7 +800,8 @@ def _og_parse_explanations(pages, lo, hi, rng, stop_re=None):
             if m2:
                 ans = m2.group(1)
         kept = [x for x in blk if not _og_is_junk(x)]
-        out[n] = (ans, clean(" ".join(kept)))
+        category = _og_category(blk, cats) if cats else None
+        out[n] = (ans, clean(" ".join(kept)), category)
     return out
 
 
@@ -879,21 +941,23 @@ def parse_og(pdf_path):
     cr_expl_hi = max(i for i in range(H["8.9"], len(pages))
                      if "The correct answer is" in pages[i])
     rc_expl = _og_parse_explanations(pages, H["8.6"], H["8.7"], OG_RC_RANGE,
-                                     r"8\.7\s+Practice Questions")
-    cr_expl = _og_parse_explanations(pages, H["8.9"], cr_expl_hi, OG_CR_RANGE)
+                                     r"8\.7\s+Practice Questions", cats=OG_RC_TYPES)
+    cr_expl = _og_parse_explanations(pages, H["8.9"], cr_expl_hi, OG_CR_RANGE,
+                                     cats=OG_CR_CATS)
 
     rc_q, rc_pass = _og_parse_rc_practice(pages, H["8.4"], H["8.5"])
     cr_q = _og_parse_cr_practice(pages, H["8.7"], H["8.8"])
 
     records, report = [], {"agree": 0, "conflict": 0, "key_only": 0,
-                           "conflicts": [], "no_answer": []}
+                           "conflicts": [], "no_answer": [],
+                           "no_subtype": [], "cr_unclassified": []}
 
     def emit(qs, key, expl, bands, unit, passages=None):
         nice = "Reading Comprehension" if unit == "RC" else "Critical Reasoning"
         for q in qs:
             n = q["num"]
             key_ans = key.get(n)
-            mark_ans = expl.get(n, (None, ""))[0]
+            mark_ans = expl.get(n, (None, "", None))[0]
             # Reconcile the two independent signals.
             if key_ans and mark_ans:
                 if key_ans == mark_ans:
@@ -910,6 +974,18 @@ def parse_og(pdf_path):
             if correct is not None and correct not in q["options"]:
                 correct = None
             diff = _og_difficulty(n, bands)
+            category = expl.get(n, (None, "", None))[2]   # book's printed label
+            if unit == "RC":
+                # RC: the book's printed type IS the GMAT question type.
+                subtype = category
+                if subtype is None:
+                    report["no_subtype"].append(n)
+            else:
+                # CR: finer task inferred from the stem (the book prints only the
+                # 3 broad `category` buckets); left "Unclassified" when uncertain.
+                subtype = _og_cr_task(q["stem"])
+                if subtype == "Unclassified":
+                    report["cr_unclassified"].append(n)
             records.append({
                 "id": f"og-{unit.lower()}-q{n}",
                 "type": unit,
@@ -920,9 +996,11 @@ def parse_og(pdf_path):
                 "options": [{"label": k, "text": q["options"][k]}
                             for k in sorted(q["options"])],
                 "correct_answer": correct,
-                "explanation": expl.get(n, (None, ""))[1],
+                "explanation": expl.get(n, (None, "", None))[1],
                 "format": "multiple_choice",
                 "difficulty": diff,
+                "subtype": subtype,            # RC: book type · CR: inferred task
+                "category": category,          # the book's printed label (verbatim)
                 "number": n,
                 "source": "GMAT Official Guide 2024-2025",
             })
@@ -962,6 +1040,25 @@ def run_og(pdf_path):
         print(f"Left null (unconfirmable)        : {len(rep['no_answer'])} {rep['no_answer']}")
     if rep["conflict"] == 0 and not rep["no_answer"]:
         print("  => Every answer confirmed by the key; no key/marker disagreed.")
+
+    # Sub-type coverage
+    from collections import Counter
+    print("\n" + "-" * 60)
+    print("QUESTION SUB-TYPES")
+    print("-" * 60)
+    rc_sub = Counter(r["subtype"] for r in records if r["type"] == "RC")
+    cr_sub = Counter(r["subtype"] for r in records if r["type"] == "CR")
+    print("RC types (from the book's printed labels — source-faithful):")
+    for k, v in rc_sub.most_common():
+        print(f"    {v:>3}  {k}")
+    print(f"  RC with a type: {sum(v for k,v in rc_sub.items() if k)}/{sum(rc_sub.values())}")
+    print("CR tasks (inferred from the question stem wording):")
+    for k, v in cr_sub.most_common():
+        print(f"    {v:>3}  {k}")
+    classified = sum(v for k, v in cr_sub.items() if k != "Unclassified")
+    print(f"  CR classified: {classified}/{sum(cr_sub.values())}"
+          f"  ({len(rep['cr_unclassified'])} left Unclassified)")
+
     with open("questions-og.json", "w", encoding="utf-8") as f:
         json.dump(records, f, ensure_ascii=False, indent=2)
     print(f"\nWrote questions-og.json ({len(records)} RC+CR problems).")

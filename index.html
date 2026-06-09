@@ -3,404 +3,754 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<meta name="theme-color" content="#0f766e" />
-<title>GMAT Verbal Practice</title>
+<meta name="theme-color" content="#4f46e5" />
+<title>GMAT Verbal Trainer</title>
 <style>
   :root{
-    --bg:#f7f7f5; --card:#ffffff; --ink:#1c1c1a; --muted:#6b6b66;
-    --line:#e6e6e1; --brand:#0f766e; --brand-ink:#0b5a54;
-    --pick:#eef6f5; --pick-line:#0f766e;
-    --right:#16a34a; --right-bg:#ecfdf3; --wrong:#dc2626; --wrong-bg:#fef2f2;
-    --shadow:0 1px 2px rgba(0,0,0,.04),0 8px 24px rgba(0,0,0,.05);
-    --r:16px;
+    --bg:#f5f6fb; --bg2:#eef0f8; --surface:#ffffff; --surface2:#f7f8fc;
+    --ink:#161a2b; --muted:#5d6577; --faint:#929aad; --line:#e6e8f2; --line2:#eef0f7;
+    --brand:#4f46e5; --brand2:#7c6cff; --brand-ink:#4338ca; --accent:#06b6d4;
+    --pick:#eef0ff; --grad:linear-gradient(135deg,#5b54f0 0%,#7c6cff 55%,#22b8e6 130%);
+    --grad-soft:linear-gradient(135deg,#eef0ff,#e8f6fb);
+    --green:#15803d; --green-bg:#e9f7ee; --amber:#b45309; --amber-bg:#fdf3df;
+    --red:#c81e36; --red-bg:#fdebee; --flag:#e0820a;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --serif:Georgia,"Iowan Old Style","Times New Roman",serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    --r:18px; --r2:14px;
+    --sh-sm:0 1px 2px rgba(20,24,50,.05);
+    --sh:0 2px 6px rgba(20,24,50,.05),0 14px 34px rgba(20,24,50,.08);
+    --sh-lg:0 8px 24px rgba(20,24,50,.10),0 30px 60px rgba(20,24,50,.12);
   }
-  @media (prefers-color-scheme: dark){
+  @media (prefers-color-scheme:dark){
     :root{
-      --bg:#16161a; --card:#1f1f25; --ink:#ececec; --muted:#a0a0a8;
-      --line:#33333c; --brand:#2dd4bf; --brand-ink:#5eead4;
-      --pick:#10302d; --pick-line:#2dd4bf;
-      --right:#34d399; --right-bg:#0f2e23; --wrong:#f87171; --wrong-bg:#3a1d1d;
-      --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 30px rgba(0,0,0,.35);
+      --bg:#0b0e18; --bg2:#0f1322; --surface:#161b2b; --surface2:#1b2133;
+      --ink:#eef0f8; --muted:#9aa3ba; --faint:#6c7690; --line:#262d42; --line2:#1d2335;
+      --brand:#7c6cff; --brand2:#9d8cff; --brand-ink:#b3a8ff; --accent:#2dd4ee;
+      --pick:#1d2240; --grad:linear-gradient(135deg,#6a5cf5 0%,#8b78ff 55%,#22b8e6 130%);
+      --grad-soft:linear-gradient(135deg,#1a2042,#102a36);
+      --green:#4ade80; --green-bg:#102a1c; --amber:#fbbf24; --amber-bg:#2e2510;
+      --red:#fb7185; --red-bg:#2c1620; --flag:#f5b945;
+      --sh-sm:0 1px 2px rgba(0,0,0,.4);
+      --sh:0 2px 8px rgba(0,0,0,.35),0 16px 40px rgba(0,0,0,.45);
+      --sh-lg:0 10px 30px rgba(0,0,0,.5),0 40px 70px rgba(0,0,0,.55);
     }
   }
-  *{box-sizing:border-box}
-  html,body{margin:0}
-  body{
-    background:var(--bg); color:var(--ink);
-    font:16px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
-    -webkit-text-size-adjust:100%;
-    padding-bottom:env(safe-area-inset-bottom);
-  }
-  .wrap{max-width:760px;margin:0 auto;padding:16px 16px 120px}
+  *{box-sizing:border-box} html,body{margin:0;min-height:100%}
+  body{background:var(--bg);color:var(--ink);font:15.5px/1.55 var(--sans);-webkit-text-size-adjust:100%;
+    padding-bottom:env(safe-area-inset-bottom);overflow-x:hidden}
+  button{font-family:inherit;cursor:pointer} a{color:var(--brand-ink)}
+  ::selection{background:color-mix(in srgb,var(--brand) 30%,transparent)}
+  .hidden{display:none!important}
 
-  /* Header / filters */
-  header{position:sticky;top:0;z-index:5;background:var(--bg);
-    padding:10px 0 8px;border-bottom:1px solid var(--line)}
-  .brand{display:flex;align-items:center;gap:10px;margin-bottom:10px}
-  .brand h1{font-size:18px;margin:0;font-weight:700;letter-spacing:-.2px}
-  .brand .dot{width:10px;height:10px;border-radius:50%;background:var(--brand)}
-  .filters{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-  select{
-    appearance:none;-webkit-appearance:none;
-    background:var(--card);color:var(--ink);border:1px solid var(--line);
-    border-radius:999px;padding:9px 34px 9px 14px;font-size:14px;font-weight:600;
-    box-shadow:var(--shadow);max-width:62vw;
-    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b6b66' stroke-width='3'><path d='M6 9l6 6 6-6'/></svg>");
-    background-repeat:no-repeat;background-position:right 12px center;
-  }
-  .seg{display:inline-flex;background:var(--card);border:1px solid var(--line);
-    border-radius:999px;padding:3px;box-shadow:var(--shadow)}
-  .seg button{border:0;background:transparent;color:var(--muted);
-    padding:7px 13px;border-radius:999px;font-size:14px;font-weight:600;cursor:pointer}
-  .seg button.on{background:var(--brand);color:#fff}
+  /* screens + transitions */
+  .screen{display:none}
+  .screen.on{display:block;animation:rise .38s cubic-bezier(.2,.7,.2,1)}
+  @keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+  .wrap{max-width:1000px;margin:0 auto;padding:22px 18px 64px}
 
-  /* Score strip */
-  .scorebar{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
-  .pill{background:var(--card);border:1px solid var(--line);border-radius:999px;
-    padding:5px 11px;font-size:12.5px;font-weight:600;color:var(--muted)}
-  .pill b{color:var(--ink)}
+  /* ===== APP BAR ===== */
+  .appbar{position:sticky;top:0;z-index:40;background:color-mix(in srgb,var(--bg) 82%,transparent);
+    backdrop-filter:blur(14px) saturate(1.4);border-bottom:1px solid var(--line);height:58px;
+    display:flex;align-items:center;gap:12px;padding:0 16px}
+  .appbar .brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:15.5px;letter-spacing:-.2px}
+  .appbar .brand .mk{width:30px;height:30px;border-radius:9px;background:var(--grad);display:grid;place-items:center;color:#fff;box-shadow:0 4px 12px rgba(90,84,240,.4)}
+  .appbar .back{display:inline-flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--line);
+    color:var(--ink);border-radius:10px;padding:7px 12px;font-weight:700;font-size:13px;box-shadow:var(--sh-sm)}
+  .appbar .sp{margin-left:auto}
+  .appbar .chipstreak{display:inline-flex;align-items:center;gap:5px;background:var(--amber-bg);color:var(--amber);
+    border-radius:999px;padding:5px 11px;font-weight:800;font-size:12.5px}
+  .selwrap{position:relative}
+  .src{appearance:none;-webkit-appearance:none;background:var(--surface);color:var(--ink);border:1px solid var(--line);
+    border-radius:10px;padding:8px 28px 8px 11px;font-weight:600;font-size:12.5px;box-shadow:var(--sh-sm);
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23929aad' stroke-width='3'><path d='M6 9l6 6 6-6'/></svg>");
+    background-repeat:no-repeat;background-position:right 9px center}
 
-  /* Progress */
-  .meta{display:flex;justify-content:space-between;align-items:center;
-    color:var(--muted);font-size:13px;margin:16px 2px 8px}
-  .tag{display:inline-block;background:var(--pick);color:var(--brand-ink);
-    border:1px solid var(--line);border-radius:6px;padding:1px 7px;font-weight:700;
-    font-size:11.5px;letter-spacing:.3px}
+  /* ===== LANDING ===== */
+  #landing{min-height:100vh;display:flex;flex-direction:column;
+    background:radial-gradient(1100px 560px at 50% -8%,color-mix(in srgb,var(--brand) 26%,transparent),transparent 62%),var(--bg)}
+  .lp{max-width:1000px;margin:0 auto;width:100%;padding:26px 20px 60px;flex:1;display:flex;flex-direction:column}
+  .lp .top{display:flex;align-items:center;gap:11px}
+  .lp .top .mk{width:40px;height:40px;border-radius:12px;background:var(--grad);display:grid;place-items:center;color:#fff;font-weight:800;box-shadow:0 8px 20px rgba(90,84,240,.45)}
+  .lp .top b{font-size:17px;letter-spacing:-.3px}
+  .hero{flex:1;display:flex;flex-direction:column;justify-content:center;padding:40px 0 30px;max-width:680px}
+  .hero .eyebrow{display:inline-flex;align-items:center;gap:8px;align-self:flex-start;background:var(--surface);
+    border:1px solid var(--line);border-radius:999px;padding:6px 13px;font-weight:700;font-size:12.5px;color:var(--brand-ink);box-shadow:var(--sh-sm)}
+  .hero .eyebrow .d{width:7px;height:7px;border-radius:50%;background:var(--accent)}
+  .hero h1{font-size:clamp(32px,6vw,52px);line-height:1.04;letter-spacing:-1.5px;margin:18px 0 0;font-weight:850}
+  .hero h1 .g{background:var(--grad);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+  .hero p.sub{font-size:clamp(15px,2.4vw,18px);color:var(--muted);max-width:560px;margin:16px 0 0;line-height:1.6}
+  .cta-row{display:flex;gap:12px;flex-wrap:wrap;margin-top:28px}
+  .cta{border:0;border-radius:14px;padding:15px 26px;font:800 16px var(--sans);background:var(--grad);color:#fff;
+    box-shadow:0 10px 26px rgba(90,84,240,.42);transition:transform .1s,box-shadow .2s}
+  .cta:hover{transform:translateY(-2px);box-shadow:0 16px 34px rgba(90,84,240,.5)}
+  .cta.ghost{background:var(--surface);color:var(--ink);border:1px solid var(--line);box-shadow:var(--sh-sm)}
+  .cta.ghost:hover{box-shadow:var(--sh)}
+  .trust{display:flex;gap:18px;flex-wrap:wrap;margin-top:26px;color:var(--muted);font-size:13px}
+  .trust span{display:inline-flex;align-items:center;gap:7px} .trust .ok{color:var(--green);font-weight:800}
+  .resume{margin-top:26px;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px 18px;
+    display:flex;align-items:center;gap:16px;box-shadow:var(--sh);max-width:460px}
+  .resume .rr{display:flex;flex-direction:column} .resume .rr b{font-size:15px} .resume .rr small{color:var(--muted);font-size:12.5px}
+  .resume .go{margin-left:auto;background:var(--grad);color:#fff;border:0;border-radius:11px;padding:11px 18px;font-weight:800;font-size:13.5px}
+  .feats{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:14px}
+  @media (max-width:720px){ .feats{grid-template-columns:1fr} }
+  .feat{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:18px;box-shadow:var(--sh-sm)}
+  .feat .fi{width:40px;height:40px;border-radius:11px;background:var(--grad-soft);color:var(--brand-ink);display:grid;place-items:center;margin-bottom:10px}
+  .feat b{font-size:15px} .feat p{color:var(--muted);font-size:13px;margin:5px 0 0;line-height:1.5}
+  .lp .legal{color:var(--faint);font-size:11.5px;text-align:center;margin-top:34px;line-height:1.6}
 
-  /* Card */
-  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);
-    box-shadow:var(--shadow);padding:18px;margin-bottom:14px}
-  .passage{font-size:14.5px;color:var(--ink);background:transparent;
-    border-left:3px solid var(--brand);padding:2px 0 2px 14px;margin:0 0 4px;
-    white-space:pre-wrap}
-  details.psg{margin-bottom:14px}
-  details.psg summary{cursor:pointer;font-weight:700;color:var(--brand-ink);
-    font-size:13.5px;list-style:none;display:flex;align-items:center;gap:6px;
-    padding:8px 0}
-  details.psg summary::-webkit-details-marker{display:none}
-  details.psg summary .chev{transition:transform .15s}
-  details.psg[open] summary .chev{transform:rotate(90deg)}
-  .qtext{font-size:17px;line-height:1.5;white-space:pre-wrap;margin:0 0 4px}
-  .qtext .title{display:block;font-weight:700;margin-bottom:6px}
+  /* ===== SECTION HEADERS ===== */
+  .pagehead{margin:6px 2px 18px}
+  .pagehead .kick{color:var(--brand-ink);font-weight:800;font-size:12.5px;letter-spacing:.4px;text-transform:uppercase}
+  .pagehead h2{margin:4px 0 0;font-size:24px;letter-spacing:-.5px}
+  .pagehead p{margin:6px 0 0;color:var(--muted);font-size:13.5px}
+  h3.sec{font-size:12.5px;letter-spacing:.5px;text-transform:uppercase;color:var(--faint);margin:26px 2px 12px;font-weight:800}
 
-  /* Options */
-  .opts{list-style:none;margin:14px 0 0;padding:0;display:flex;flex-direction:column;gap:10px}
-  .opt{display:flex;gap:12px;align-items:flex-start;width:100%;text-align:left;
-    background:var(--card);border:1.5px solid var(--line);border-radius:14px;
-    padding:14px 14px;font-size:15.5px;line-height:1.45;color:var(--ink);
-    cursor:pointer;min-height:52px;transition:border-color .12s,background .12s;
-    -webkit-tap-highlight-color:transparent}
-  .opt:active{transform:scale(.995)}
-  .opt .lab{flex:0 0 26px;height:26px;border-radius:50%;border:1.5px solid var(--line);
-    display:grid;place-items:center;font-weight:700;font-size:13px;color:var(--muted)}
-  .opt.sel{border-color:var(--pick-line);background:var(--pick)}
-  .opt.sel .lab{border-color:var(--pick-line);color:var(--brand-ink)}
-  .opt.correct{border-color:var(--right);background:var(--right-bg)}
-  .opt.correct .lab{background:var(--right);border-color:var(--right);color:#fff}
-  .opt.wrong{border-color:var(--wrong);background:var(--wrong-bg)}
-  .opt.wrong .lab{background:var(--wrong);border-color:var(--wrong);color:#fff}
-  .opt[disabled]{cursor:default}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--sh);padding:18px}
 
-  /* Explanation */
-  .reveal{margin-top:16px;border-top:1px dashed var(--line);padding-top:14px}
-  .verdict{font-weight:700;font-size:15px;margin-bottom:8px;display:flex;gap:8px;align-items:center}
-  .verdict.ok{color:var(--right)} .verdict.no{color:var(--wrong)}
-  .expl{font-size:14.5px;line-height:1.6;color:var(--ink);white-space:pre-wrap}
-  .expl h4{margin:0 0 6px;font-size:12px;letter-spacing:.4px;text-transform:uppercase;color:var(--muted)}
+  /* ===== DASHBOARD HERO ===== */
+  .dhero{background:var(--grad);color:#fff;border-radius:22px;padding:22px;box-shadow:var(--sh-lg);
+    display:flex;gap:22px;align-items:center;flex-wrap:wrap;position:relative;overflow:hidden}
+  .dhero::after{content:"";position:absolute;right:-40px;top:-60px;width:220px;height:220px;border-radius:50%;
+    background:rgba(255,255,255,.12);filter:blur(8px)}
+  .dhero .ringbox{display:flex;align-items:center;gap:16px;z-index:1}
+  .dhero .pc{font:850 30px/1 var(--sans);letter-spacing:-1px} .dhero .subt{opacity:.9;font-size:12.5px;margin-top:4px}
+  .dhero .quick{display:flex;gap:22px;margin-left:auto;flex-wrap:wrap;z-index:1}
+  .dhero .q .n{font:850 24px/1 var(--sans)} .dhero .q .l{opacity:.82;font-size:11px;margin-top:5px;letter-spacing:.4px;text-transform:uppercase}
 
-  /* Bottom action bar */
-  .bar{position:fixed;left:0;right:0;bottom:0;z-index:6;
-    background:color-mix(in srgb,var(--bg) 86%, transparent);
-    backdrop-filter:saturate(1.4) blur(8px);
-    border-top:1px solid var(--line);
-    padding:10px 16px calc(10px + env(safe-area-inset-bottom));
-  }
-  .bar .inner{max-width:760px;margin:0 auto;display:flex;gap:10px}
-  .btn{flex:1;border:0;border-radius:14px;padding:15px 16px;font-size:16px;
-    font-weight:700;cursor:pointer;min-height:52px;-webkit-tap-highlight-color:transparent}
-  .btn.primary{background:var(--brand);color:#fff}
-  .btn.primary:disabled{opacity:.4}
-  .btn.ghost{background:var(--card);color:var(--ink);border:1px solid var(--line)}
+  /* recommended action */
+  .reco-cta{margin-top:14px;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:15px 17px;
+    display:flex;align-items:center;gap:14px;box-shadow:var(--sh)}
+  .reco-cta .ic{width:42px;height:42px;border-radius:12px;background:var(--grad-soft);color:var(--brand-ink);display:grid;place-items:center;flex:0 0 auto}
+  .reco-cta .tx b{font-size:14.5px} .reco-cta .tx small{display:block;color:var(--muted);font-size:12.5px;margin-top:2px}
+  .reco-cta .go{margin-left:auto;background:var(--grad);color:#fff;border:0;border-radius:11px;padding:11px 17px;font-weight:800;font-size:13.5px;white-space:nowrap}
+
+  /* mode cards */
+  .modes{display:grid;grid-template-columns:repeat(auto-fill,minmax(232px,1fr));gap:14px}
+  .mode{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:17px;text-align:left;
+    box-shadow:var(--sh-sm);display:flex;flex-direction:column;gap:7px;transition:transform .1s,box-shadow .2s,border-color .2s;position:relative;overflow:hidden}
+  .mode:hover{transform:translateY(-3px);box-shadow:var(--sh);border-color:color-mix(in srgb,var(--brand) 40%,var(--line))}
+  .mode .ic{width:42px;height:42px;border-radius:12px;background:var(--grad-soft);color:var(--brand-ink);display:grid;place-items:center;margin-bottom:3px}
+  .mode .t{font-weight:800;font-size:15.5px} .mode .d{color:var(--muted);font-size:12.5px;line-height:1.45}
+  .mode .badge{align-self:flex-start;margin-top:5px;background:var(--surface2);border:1px solid var(--line);border-radius:999px;
+    padding:3px 10px;font-size:11px;font-weight:800;color:var(--muted)}
+  .mode.feature{grid-column:span 1}
+  .mode.feature .ic{background:var(--grad);color:#fff;box-shadow:0 6px 16px rgba(90,84,240,.4)}
+  .mode[disabled]{opacity:.55;cursor:not-allowed;transform:none}
+  .mode[disabled]:hover{box-shadow:var(--sh-sm);border-color:var(--line)}
+
+  /* analytics */
+  .anly{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media (max-width:760px){ .anly{grid-template-columns:1fr} }
+  .card h4{margin:0 0 3px;font-size:15px} .card .hint{color:var(--muted);font-size:12.5px;margin:0 0 14px}
+  .barrow{display:flex;align-items:center;gap:10px;margin:10px 0}
+  .barrow .nm{width:120px;font-size:12.5px;font-weight:600;flex:0 0 auto}
+  .barrow .tr{flex:1;height:10px;border-radius:6px;background:var(--line2);overflow:hidden}
+  .barrow .tr i{display:block;height:100%;border-radius:6px;width:0;transition:width .6s cubic-bezier(.2,.7,.2,1)}
+  .barrow .vv{width:58px;text-align:right;font:600 12px var(--mono);color:var(--muted);flex:0 0 auto}
+  .barrow.weak .nm{color:var(--red);font-weight:800}
+  .callout{background:var(--grad-soft);border:1px solid var(--line);border-radius:13px;padding:13px 15px;margin-top:14px;font-size:13.5px}
+  .nodata{color:var(--muted);font-size:13px;padding:18px 0;text-align:center}
+  .syl{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+  .syl .c{background:var(--surface2);border:1px solid var(--line);border-radius:12px;padding:13px}
+  .syl .c b{font-size:13px} .syl .c .big{font:850 22px var(--sans);background:var(--grad);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+  .syl .c ul{margin:7px 0 0;padding-left:15px;color:var(--muted);font-size:12px;line-height:1.7}
+  .toolrow{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+  .tbtn{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:9px 14px;font-weight:700;font-size:13px;color:var(--ink);box-shadow:var(--sh-sm)}
+  .tbtn.danger{color:var(--red);border-color:color-mix(in srgb,var(--red) 40%,var(--line))}
+  .foot{color:var(--faint);font-size:11.5px;text-align:center;margin-top:30px;line-height:1.7}
+
+  /* ===== SETUP ===== */
+  .setup-card{max-width:600px;margin:0 auto}
+  .field{margin-bottom:18px}
+  .field>label{display:block;font:800 11px var(--sans);letter-spacing:.6px;text-transform:uppercase;color:var(--faint);margin-bottom:9px}
+  .opts-wrap{display:flex;gap:8px;flex-wrap:wrap}
+  .chip{border:1.5px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:9px 15px;font:700 13px var(--sans);box-shadow:var(--sh-sm);transition:.12s}
+  .chip:hover{border-color:color-mix(in srgb,var(--brand) 40%,var(--line))}
+  .chip.on{background:var(--pick);border-color:var(--brand);color:var(--brand-ink)}
+  .field select{width:100%;appearance:none;-webkit-appearance:none;background:var(--surface);color:var(--ink);border:1px solid var(--line);
+    border-radius:12px;padding:12px 32px 12px 14px;font:600 14.5px var(--sans);box-shadow:var(--sh-sm);
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23929aad' stroke-width='3'><path d='M6 9l6 6 6-6'/></svg>");
+    background-repeat:no-repeat;background-position:right 12px center}
+  .startbtn{width:100%;background:var(--grad);color:#fff;border:0;border-radius:13px;padding:15px;font:800 16px var(--sans);margin-top:6px;box-shadow:0 10px 24px rgba(90,84,240,.38)}
+  .startbtn:disabled{opacity:.5;box-shadow:none}
+  .poolnote{text-align:center;color:var(--muted);font-size:12.5px;margin-top:11px}
+
+  /* ===== RUNNER ===== */
+  .runbar{background:color-mix(in srgb,var(--bg) 82%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);
+    display:flex;align-items:center;gap:12px;padding:9px 16px;position:sticky;top:0;z-index:30}
+  .runbar .qof{font-weight:800;font-size:13.5px} .runbar .tags{display:flex;gap:6px;align-items:center}
+  .pill{font:800 11px var(--sans);padding:4px 9px;border-radius:7px;background:var(--pick);color:var(--brand-ink);border:1px solid var(--line)}
+  .pill.d-Easy{background:var(--green-bg);color:var(--green);border:0}
+  .pill.d-Medium{background:var(--amber-bg);color:var(--amber);border:0}
+  .pill.d-Hard{background:var(--red-bg);color:var(--red);border:0}
+  .pill.hide{visibility:hidden}
+  .runbar .sp{margin-left:auto}
+  .runbar .prog{flex:0 0 90px;height:6px;border-radius:6px;background:var(--line2);overflow:hidden}
+  .runbar .prog i{display:block;height:100%;background:var(--grad);width:0;transition:width .3s}
+  .runbar .timer{font:800 14px var(--mono);color:var(--muted)} .runbar .timer.low{color:var(--red)}
+  .runbar .flag{background:var(--surface);border:1px solid var(--line);border-radius:9px;padding:6px 11px;font-weight:700;font-size:12.5px;color:var(--muted);box-shadow:var(--sh-sm)}
+  .runbar .flag.on{border-color:var(--flag);color:var(--flag);background:var(--amber-bg)}
+  .rbody{max-width:1000px;margin:0 auto;padding:18px 16px 132px}
+  .splitcols{display:grid;gap:20px;grid-template-columns:1fr}
+  .splitcols.has-psg{grid-template-columns:1fr 1fr}
+  @media (max-width:820px){ .splitcols.has-psg{grid-template-columns:1fr} }
+  .pcard{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--sh);padding:20px}
+  .pcard.psg{align-self:start}
+  @media (min-width:821px){ .pcard.psg.sticky{position:sticky;top:74px;max-height:calc(100vh - 96px);overflow:auto} }
+  .lbl{font:800 10.5px var(--sans);letter-spacing:.6px;text-transform:uppercase;color:var(--faint);margin-bottom:11px;display:flex;gap:8px;align-items:center}
+  .lbl .ln{flex:1;height:1px;background:var(--line)}
+  .passage{font:16px/1.8 var(--serif);white-space:pre-wrap}
+  .directions{font-size:12.5px;color:var(--muted);font-style:italic;margin-bottom:14px;border-bottom:1px solid var(--line2);padding-bottom:11px}
+  .qtext{font:500 17px/1.55 var(--sans);white-space:pre-wrap;margin:0}
+  .choices{list-style:none;margin:18px 0 0;padding:0;display:flex;flex-direction:column;gap:4px}
+  .choice{display:flex;gap:13px;align-items:flex-start;padding:13px 14px;border-radius:11px;border:1px solid transparent;transition:background .1s,transform .05s}
+  .choice:hover{background:color-mix(in srgb,var(--brand) 7%,transparent)} .choice:active{transform:scale(.995)}
+  .choice .radio{flex:0 0 21px;height:21px;border-radius:50%;border:2px solid var(--faint);margin-top:1px;display:grid;place-items:center}
+  .choice .radio::after{content:"";width:9px;height:9px;border-radius:50%;background:var(--brand);transform:scale(0);transition:.12s}
+  .choice.sel{background:var(--pick);border-color:var(--brand)} .choice.sel .radio{border-color:var(--brand)} .choice.sel .radio::after{transform:scale(1)}
+  .choice.correct{background:var(--green-bg);border-color:color-mix(in srgb,var(--green) 45%,transparent)} .choice.correct .radio{border-color:var(--green)} .choice.correct .radio::after{background:var(--green);transform:scale(1)}
+  .choice.wrong{background:var(--red-bg);border-color:color-mix(in srgb,var(--red) 45%,transparent)} .choice.wrong .radio{border-color:var(--red)} .choice.wrong .radio::after{background:var(--red);transform:scale(1)}
+  .choice .ctext{font-size:15.5px;line-height:1.5} .choice .mk{margin-left:auto;font-weight:800;font-size:11.5px;align-self:center}
+  .choice.correct .mk{color:var(--green)} .choice.wrong .mk{color:var(--red)}
+  .fb{margin-top:20px;border:1px solid var(--line);border-radius:13px;overflow:hidden;animation:rise .3s}
+  .fb .fh{padding:12px 15px;font-weight:800;font-size:14px;display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+  .fb.ok .fh{background:var(--green-bg);color:var(--green)} .fb.no .fh{background:var(--red-bg);color:var(--red)}
+  .fb .typetag{margin-left:auto;display:flex;gap:6px} .fb .typetag .pill{background:var(--surface)}
+  .fb .body{padding:14px 15px;font-size:14px;line-height:1.7;white-space:pre-wrap}
+  .fb .body h5{margin:0 0 7px;font:800 10.5px var(--sans);letter-spacing:.6px;text-transform:uppercase;color:var(--faint)}
+  .runfoot{position:fixed;left:0;right:0;bottom:0;z-index:35;background:color-mix(in srgb,var(--bg) 88%,transparent);
+    backdrop-filter:blur(10px);border-top:1px solid var(--line);padding:11px 16px calc(11px + env(safe-area-inset-bottom))}
+  .runfoot .in{max-width:1000px;margin:0 auto;display:flex;gap:10px;align-items:center}
+  .runfoot .meta{color:var(--muted);font-size:12.5px}
+  .runfoot .nav{margin-left:auto;display:flex;gap:10px}
+  .btn{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:12px;padding:12px 18px;font:800 14.5px var(--sans);min-height:46px;box-shadow:var(--sh-sm)}
+  .btn.primary{background:var(--grad);border:0;color:#fff;box-shadow:0 8px 20px rgba(90,84,240,.36)} .btn.primary:disabled{opacity:.5;box-shadow:none}
+  .btn.end{background:linear-gradient(135deg,#16a34a,#15803d);box-shadow:0 8px 20px rgba(22,128,74,.34)}
+
+  /* ===== REPORT ===== */
+  .repHero{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:26px;text-align:center;box-shadow:var(--sh);margin-bottom:16px}
+  .repHero .big{font:850 54px/1 var(--sans);background:var(--grad);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+  .repHero .big small{font-size:24px;-webkit-text-fill-color:var(--faint)}
+  .repHero .s{color:var(--muted);margin-top:8px;font-size:14px}
+  .repGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:18px}
+  @media (max-width:560px){ .repGrid{grid-template-columns:1fr 1fr} }
+  .repGrid .c{background:var(--surface2);border:1px solid var(--line);border-radius:12px;padding:13px}
+  .repGrid .c .n{font:850 20px var(--sans)} .repGrid .c .l{color:var(--muted);font-size:12px;margin-top:3px}
+  .center-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:18px}
+  .rlist{display:flex;flex-direction:column;gap:9px}
+  .ri{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:13px 15px;box-shadow:var(--sh-sm)}
+  .ri .h{display:flex;align-items:center;gap:9px;margin-bottom:6px;flex-wrap:wrap}
+  .ri .dotr{width:22px;height:22px;border-radius:50%;color:#fff;font-weight:800;font-size:12px;display:grid;place-items:center;flex:0 0 auto}
+  .ri.ok .dotr{background:var(--green)} .ri.no .dotr{background:var(--red)} .ri.skip .dotr{background:var(--faint)}
+  .ri .meta{margin-left:auto;color:var(--faint);font-size:11.5px;display:flex;gap:5px}
+  .ri .stem{font-size:14px;margin:0 0 7px} .ri .ans{font-size:12.5px;color:var(--muted)} .ri .ans b{color:var(--ink)}
+  .ri details{margin-top:7px} .ri summary{color:var(--brand-ink);font-weight:700;font-size:12.5px}
+  .ri .expl{font-size:13px;line-height:1.65;white-space:pre-wrap;margin-top:8px;border-top:1px solid var(--line2);padding-top:9px}
+
   .empty{text-align:center;color:var(--muted);padding:60px 20px}
-  .note{font-size:12px;color:var(--muted);text-align:center;margin-top:18px;line-height:1.5}
-  .kbd{font:inherit;font-size:11px;border:1px solid var(--line);border-bottom-width:2px;
-    border-radius:5px;padding:0 5px;color:var(--muted)}
+  .kbd{font:11px var(--mono);border:1px solid var(--line);border-radius:5px;padding:0 5px}
 </style>
 </head>
 <body>
-<div class="wrap">
-  <header>
-    <div class="brand"><span class="dot"></span><h1>GMAT Verbal Practice</h1></div>
-    <div class="filters">
-      <select id="sourceSel" aria-label="Question source"></select>
-      <div class="seg" id="typeSeg">
-        <button data-type="ALL" class="on">All</button>
-        <button data-type="CR">CR</button>
-        <button data-type="RC">RC</button>
+
+<header class="appbar hidden" id="appbar">
+  <div class="brand"><span class="mk">GV</span> Verbal Trainer</div>
+  <button class="back hidden" id="backBtn">← Dashboard</button>
+  <span class="sp"></span>
+  <span class="chipstreak hidden" id="streakChip">🔥 <span id="streakChipN">0</span></span>
+  <div class="selwrap"><select class="src" id="srcSel" title="Question bank"></select></div>
+</header>
+
+<!-- ============ LANDING ============ -->
+<section id="landing" class="screen">
+  <div class="lp">
+    <div class="top"><span class="mk">GV</span><b>GMAT Verbal Trainer</b></div>
+    <div class="hero">
+      <span class="eyebrow"><span class="d"></span> Official Guide 2024–25 · Focus Edition</span>
+      <h1>Master GMAT <span class="g">Verbal</span><br>the smart way.</h1>
+      <p class="sub">Reading Comprehension &amp; Critical Reasoning with real, answer-verified official
+        questions — that <b>adapt to you</b>, reveal each question's type, and pinpoint exactly where you're losing points.</p>
+      <div class="cta-row">
+        <button class="cta" id="startBtn">Start training →</button>
+        <button class="cta ghost" id="examQuick">Try an exam sim</button>
       </div>
-      <select id="chapterSel" aria-label="Filter by chapter"></select>
-      <div class="seg"><button id="shuffleBtn" title="Shuffle order">Shuffle</button></div>
+      <div class="trust">
+        <span><span class="ok">346</span> official questions</span>
+        <span><span class="ok">✓</span> answers verified vs the book key</span>
+        <span><span class="ok">↻</span> adaptive difficulty</span>
+      </div>
+      <div class="resume hidden" id="resumeCard">
+        <div class="rr"><b id="resumeTitle">Welcome back</b><small id="resumeSub"></small></div>
+        <button class="go" id="resumeBtn">Continue →</button>
+      </div>
     </div>
-    <div class="scorebar" id="scorebar"></div>
-  </header>
-
-  <main id="main"></main>
-
-  <p class="note" id="footnote"></p>
-</div>
-
-<div class="bar">
-  <div class="inner">
-    <button class="btn ghost" id="skipBtn">Skip</button>
-    <button class="btn primary" id="actionBtn" disabled>Reveal</button>
+    <div class="feats">
+      <div class="feat"><div class="fi">🎯</div><b>Know your weak spots</b><p>Accuracy tracked by question type — Inference, Weaken, Assumption and more — so you drill what matters.</p></div>
+      <div class="feat"><div class="fi">📈</div><b>Adaptive practice</b><p>Daily passages and a continuous column that get harder as you improve, easier when you slip.</p></div>
+      <div class="feat"><div class="fi">⏱️</div><b>Real exam feel</b><p>Timed, split-screen sections that mirror the GMAT Focus interface, with a full score report.</p></div>
+    </div>
+    <p class="legal" id="landingLegal"></p>
   </div>
-</div>
+</section>
+
+<!-- ============ DASHBOARD ============ -->
+<section id="dash" class="screen"><div class="wrap">
+  <div class="pagehead"><div class="kick">Dashboard</div><h2 id="dashGreet">Your training</h2>
+    <p>Pick a mode, or follow the recommendation below.</p></div>
+
+  <div class="dhero">
+    <div class="ringbox">
+      <svg width="66" height="66" viewBox="0 0 66 66" aria-hidden="true">
+        <circle cx="33" cy="33" r="28" fill="none" stroke="rgba(255,255,255,.22)" stroke-width="7"/>
+        <circle id="heroArc" cx="33" cy="33" r="28" fill="none" stroke="#fff" stroke-width="7" stroke-linecap="round"
+          stroke-dasharray="175.9" stroke-dashoffset="175.9" transform="rotate(-90 33 33)" style="transition:stroke-dashoffset .8s"/>
+      </svg>
+      <div><div class="pc" id="heroPct">—</div><div class="subt" id="heroSub">no attempts yet</div></div>
+    </div>
+    <div class="quick">
+      <div class="q"><div class="n" id="qSeen">0</div><div class="l">Done</div></div>
+      <div class="q"><div class="n" id="qWrong">0</div><div class="l">To redo</div></div>
+      <div class="q"><div class="n" id="qStreak">0</div><div class="l">Day streak</div></div>
+    </div>
+  </div>
+  <div class="reco-cta" id="recoCta"></div>
+
+  <h3 class="sec">Practice modes</h3>
+  <div class="modes" id="modeGrid"></div>
+
+  <h3 class="sec">Where you're losing points</h3>
+  <div class="anly">
+    <div class="card"><h4>Reading Comprehension</h4><p class="hint">Accuracy by question type (the book's own labels).</p><div id="rcBars"></div></div>
+    <div class="card"><h4>Critical Reasoning</h4><p class="hint">Accuracy by task (inferred from question wording).</p><div id="crBars"></div></div>
+  </div>
+  <div class="card" style="margin-top:14px"><h4>By difficulty</h4><p class="hint">Across everything you've answered.</p>
+    <div id="diffBars"></div><div class="callout" id="recoBox"></div></div>
+
+  <h3 class="sec">GMAT Focus — Verbal syllabus</h3>
+  <div class="card"><div class="syl" id="sylGrid"></div></div>
+
+  <h3 class="sec">Your data</h3>
+  <div class="card"><div style="color:var(--muted);font-size:13px;margin-bottom:4px" id="storeNote"></div>
+    <div class="toolrow">
+      <button class="tbtn" id="exportBtn">Export progress</button>
+      <button class="tbtn" id="importBtn">Import</button>
+      <button class="tbtn danger" id="resetBtn">Reset all</button>
+    </div></div>
+  <p class="foot" id="dashFoot"></p>
+</div></section>
+
+<!-- ============ SETUP ============ -->
+<section id="setup" class="screen"><div class="wrap"><div class="setup-card">
+  <div class="pagehead"><div class="kick" id="setupKick">Practice</div><h2 id="setupTitle">Set up your session</h2>
+    <p id="setupDesc"></p></div>
+  <div class="field" id="fType"><label>Question type</label><div class="opts-wrap" id="typeChips"></div></div>
+  <div class="field" id="fConcept"><label id="conceptLbl">Concept</label><div class="opts-wrap" id="conceptChips"></div></div>
+  <div class="field" id="fDiff"><label>Difficulty</label><div class="opts-wrap" id="diffChips"></div></div>
+  <div class="field" id="fCount"><label>How many</label><select id="countSel"></select></div>
+  <div class="field" id="fOrder"><label>Order</label><div class="opts-wrap" id="orderChips">
+    <button class="chip on" data-v="shuffle">Shuffle</button><button class="chip" data-v="order">In book order</button></div></div>
+  <button class="startbtn" id="goBtn">Start →</button>
+  <div class="poolnote" id="poolNote"></div>
+</div></div></section>
+
+<!-- ============ RUNNER ============ -->
+<section id="run" class="screen">
+  <div class="runbar">
+    <span class="qof" id="qof">1 / 1</span>
+    <div class="tags" id="tags"></div>
+    <span class="sp"></span>
+    <div class="prog"><i id="prog"></i></div>
+    <button class="flag" id="flagBtn">⚑ Flag</button>
+    <span class="timer hidden" id="timer">00:00</span>
+  </div>
+  <div class="rbody"><div class="splitcols" id="splitcols"></div></div>
+  <div class="runfoot"><div class="in">
+    <span class="meta" id="runMeta"></span>
+    <div class="nav"><button class="btn" id="prevBtn">◀</button><button class="btn primary" id="actBtn" disabled>Submit</button></div>
+  </div></div>
+</section>
+
+<!-- ============ REPORT ============ -->
+<section id="report" class="screen"><div class="wrap">
+  <div class="repHero">
+    <div class="big" id="repScore">0<small>%</small></div>
+    <div class="s" id="repSub"></div>
+    <div class="repGrid" id="repGrid"></div>
+    <div class="center-actions">
+      <button class="btn" id="repExpl">Show all explanations</button>
+      <button class="btn" id="repRedo">Redo the ones I missed</button>
+      <button class="btn primary" id="repNext" hidden>Next passage →</button>
+      <button class="btn primary" id="repHome">Back to dashboard</button>
+    </div>
+  </div>
+  <div class="rlist" id="repList"></div>
+</div></section>
 
 <script>
-// Two independently extracted question banks, each its own JSON file. The source
-// selector swaps between them; the chapter selector below then filters within.
-const SOURCES = {
-  og: {
-    file: "questions-og.json",
-    label: "Official Guide 2024–25",
-    note: q => `${q} Reading Comprehension &amp; Critical Reasoning questions ` +
-      `extracted from <i>GMAT Official Guide 2024–2025</i> (Focus Edition). Every ` +
-      `answer is confirmed by the book's numbered answer key and independently ` +
-      `cross-checked against its answer-explanation marker. Grouped by the book's ` +
-      `own difficulty bands. Session stats only — nothing is saved.`,
-  },
-  manhattan: {
-    file: "questions.json",
-    label: "Manhattan: All the Verbal",
-    note: q => `${q} questions extracted from <i>GMAT All the Verbal</i> (Manhattan ` +
-      `Prep). Critical Reasoning &amp; Reading Comprehension are the Verbal question ` +
-      `types on the current GMAT (Focus Edition); Sentence Correction was removed ` +
-      `and is not included. Session stats only — nothing is saved.`,
-  },
-};
-const DEFAULT_SOURCE = "og";
-
-const State = {
-  source: DEFAULT_SOURCE,
-  all: [], pool: [], idx: 0, shuffle: false,
-  type: "ALL", chapter: "ALL",
-  selected: null, revealed: false,
-  // session score: {CR:{c,t}, RC:{c,t}}
-  score: { CR:{c:0,t:0}, RC:{c:0,t:0} },
-  answered: new Set(),   // ids already counted (so re-reveal doesn't double count)
+/* =================================================================== */
+const SOURCES={ og:{file:"questions-og.json",label:"Official Guide 2024–25"},
+  manhattan:{file:"questions.json",label:"Manhattan: All the Verbal"} };
+const RC_TYPES=["Main Idea","Supporting Idea","Inference","Application","Evaluation","Logical Structure"];
+const CR_TASKS=["Weaken","Strengthen","Assumption","Inference / Conclusion","Flaw","Evaluate",
+  "Boldface / Method","Explain a Discrepancy","Plan","Complete the Argument"];
+const DIFFS=["Easy","Medium","Hard"];
+const MIN_ATTEMPTS=3;
+const ICON={
+  daily:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="17" rx="3"/><path d="M8 2v4M16 2v4M3 9h18"/></svg>',
+  column:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19V10M10 19V5M16 19v-7M22 19H2"/></svg>',
+  practice:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>',
+  exam:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2M9 2h6"/></svg>',
+  redo:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>',
+  weak:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/></svg>',
 };
 
-const $ = s => document.querySelector(s);
-const main = $("#main");
-
-function buildSourceFilter(){
-  const sel = $("#sourceSel");
-  sel.innerHTML = Object.entries(SOURCES)
-    .map(([k,v]) => `<option value="${k}"${k===State.source?" selected":""}>${esc(v.label)}</option>`)
-    .join("");
-}
-
-async function loadSource(){
-  const src = SOURCES[State.source];
-  try{
-    const res = await fetch(src.file);
-    if(!res.ok) throw new Error(res.status);
-    State.all = await res.json();
-  }catch(e){
-    main.innerHTML = `<div class="empty">Couldn't load <b>${esc(src.file)}</b>.<br>
-      Run this app from the same folder via a local server, e.g.<br>
-      <span class="kbd">python -m http.server</span> then open
-      <span class="kbd">localhost:8000</span>.</div>`;
-    return;
+/* ===== STORE (localStorage, Supabase-ready) ===== */
+const Store=(()=>{
+  const KEY="gmat_verbal_v1";
+  let data=load();
+  function blank(){ return {version:1, history:{}, daily:{date:null,level:"Easy",streak:0,lastPct:null,recent:[]}, adaptive:{level:"Easy"}}; }
+  function load(){ try{ const d=JSON.parse(localStorage.getItem(KEY)); return d&&d.history?d:blank(); }catch(e){ return blank(); } }
+  function save(){ try{ localStorage.setItem(KEY,JSON.stringify(data)); }catch(e){} }
+  const LADDER=["Easy","Medium","Hard"];
+  const dstr=d=>d.toISOString().slice(0,10);
+  const todayStr=()=>dstr(new Date());
+  const yesterdayStr=()=>{ const d=new Date(); d.setDate(d.getDate()-1); return dstr(d); };
+  function adaptLevel(level,pct){ let i=LADDER.indexOf(level); if(pct>=75)i++; else if(pct<50)i--; return LADDER[Math.max(0,Math.min(2,i))]; }
+  function record(q,picked,correct){
+    const h=data.history[q.id]||(data.history[q.id]={n:q.number,type:q.type,subtype:q.subtype||null,difficulty:q.difficulty||null,attempts:0,correct:0,lastResult:null,lastSeen:0});
+    h.attempts++; if(correct)h.correct++; h.lastResult=correct?"correct":"wrong"; h.lastSeen=Date.now();
+    h.subtype=q.subtype||h.subtype; h.difficulty=q.difficulty||h.difficulty; h.type=q.type; save();
   }
-  // fresh session when switching banks (ids/pools differ between books)
-  State.chapter = "ALL"; State.shuffle = false;
-  State.score = { CR:{c:0,t:0}, RC:{c:0,t:0} }; State.answered = new Set();
-  $("#shuffleBtn").classList.remove("on");
-  buildChapterFilter();
-  applyFilters();
-  $("#footnote").innerHTML = src.note(State.all.length);
+  function overall(){ let seen=0,corr=0; for(const h of Object.values(data.history)){ seen++; if(h.lastResult==="correct")corr++; } return {seen,corr,pct:seen?Math.round(100*corr/seen):null}; }
+  function byField(field,type){ const a={}; for(const h of Object.values(data.history)){ if(type&&h.type!==type)continue; const k=h[field]; if(!k)continue; const x=a[k]||(a[k]={c:0,t:0}); x.t++; if(h.lastResult==="correct")x.c++; } return a; }
+  return {
+    get data(){return data;}, record, save, adaptLevel,
+    wrongIds(){ return Object.entries(data.history).filter(([,h])=>h.lastResult==="wrong").map(([id])=>id); },
+    overall, byField, daily(){return data.daily;}, adaptive(){return data.adaptive;},
+    getDaily(){ return {...data.daily, doneToday:data.daily.date===todayStr()}; },
+    completeDaily(pct,used,pid){ const d=data.daily,t=todayStr();
+      if(d.date!==t){ d.streak=(d.date===yesterdayStr())?(d.streak||0)+1:1; d.date=t; }
+      d.lastPct=pct; d.level=adaptLevel(used,pct); d.recent=[pid,...(d.recent||[]).filter(x=>x!==pid)].slice(0,6); save(); },
+    setColumnLevel(l){ data.adaptive.level=l; save(); },
+    exportJSON(){return JSON.stringify(data,null,2);},
+    importJSON(s){ const d=JSON.parse(s); if(!d.history)throw 0; data=d; save(); },
+    reset(){ data=blank(); save(); },
+  };
+})();
+
+/* ===== APP STATE ===== */
+const App={ source:"og", all:[], _loaded:{}, mode:null, cfg:null,
+  qs:[], idx:0, answers:{}, flags:new Set(), checked:new Set(),
+  timer:null, timeLeft:0, elapsed:0, showTimer:false, _repExpl:false };
+const $=s=>document.querySelector(s);
+const esc=s=>String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+const shuffle=a=>{for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]];}return a;};
+const mmss=s=>{s=Math.max(0,s|0);return String(s/60|0).padStart(2,"0")+":"+String(s%60).padStart(2,"0");};
+const SCREENS=["landing","dash","setup","run","report"];
+function show(id){
+  SCREENS.forEach(s=>$("#"+s).classList.toggle("on",s===id));
+  $("#appbar").classList.toggle("hidden",id==="landing");
+  $("#backBtn").classList.toggle("hidden",id==="dash"||id==="landing");
+  window.scrollTo(0,0);
 }
 
-async function load(){
-  buildSourceFilter();
-  bind();
-  await loadSource();
+/* ===== LOADING ===== */
+async function loadBank(){
+  if(App._loaded[App.source]){ App.all=App._loaded[App.source]; return true; }
+  try{ const r=await fetch(SOURCES[App.source].file); if(!r.ok)throw 0; App.all=await r.json(); App._loaded[App.source]=App.all; return true; }
+  catch(e){ alert("Couldn't load "+SOURCES[App.source].file+".\nServe the folder: python -m http.server 8000"); return false; }
 }
 
-function buildChapterFilter(){
-  const sel = $("#chapterSel");
-  const chapters = [];
-  State.all.forEach(q => { if(!chapters.includes(q.chapter)) chapters.push(q.chapter); });
-  sel.innerHTML = `<option value="ALL">All chapters</option>` +
-    chapters.map(c => `<option value="${esc(c)}">${esc(shortChap(c))}</option>`).join("");
+/* ===== ADAPTIVE PASSAGE ENGINE ===== */
+function buildPassages(){
+  if(App._passagesFor===App.source) return App._passages;
+  const m=new Map();
+  App.all.filter(q=>q.type==="RC"&&q.passage).forEach(q=>{ let p=m.get(q.passage);
+    if(!p){ p={pid:"p"+q.number,text:q.passage,difficulty:q.difficulty,qs:[]}; m.set(q.passage,p); } p.qs.push(q); });
+  const list=[...m.values()]; list.forEach(p=>p.qs.sort((a,b)=>(a.number||0)-(b.number||0)));
+  list.sort((a,b)=>(a.qs[0].number||0)-(b.qs[0].number||0));
+  App._passages=list; App._passagesFor=App.source; return list;
 }
-function shortChap(c){ return c.length > 34 ? c.slice(0,33).trimEnd()+"…" : c; }
+const passagesAt=l=>buildPassages().filter(p=>p.difficulty===l);
+function pickPassage(level,exclude){ let pool=passagesAt(level).filter(p=>!(exclude||[]).includes(p.pid));
+  if(!pool.length)pool=passagesAt(level); if(!pool.length)pool=buildPassages(); return pool.length?pool[Math.random()*pool.length|0]:null; }
+function startDaily(bonus){ const d=Store.getDaily(),level=d.level||"Easy";
+  const p=pickPassage(level,bonus?[]:d.recent); if(!p){ alert("This bank has no leveled passages."); return; }
+  App.mode="daily"; App._dailyBonus=!!bonus; App._curPassage=p; App._usedLevel=level;
+  App.qs=p.qs.slice(); resetRun(); startRun(); }
+function startColumn(){ App.mode="column"; App._colLevel=Store.adaptive().level||"Easy"; App._colDone=[]; App._colC=0; App._colT=0; App._colP=0; nextColumnPassage(); }
+function nextColumnPassage(){ const p=pickPassage(App._colLevel,App._colDone); if(!p){ alert("No passages available."); renderDash(); return; }
+  App._curPassage=p; App._usedLevel=App._colLevel; App._colDone.push(p.pid); App.qs=p.qs.slice(); resetRun(); startRun(); }
+function isAdaptive(){ return App.mode==="daily"||App.mode==="column"; }
+function resetRun(){ App.idx=0; App.answers={}; App.flags=new Set(); App.checked=new Set(); }
 
-function bind(){
-  $("#sourceSel").addEventListener("change", e=>{
-    State.source = e.target.value; loadSource();
-  });
-  $("#typeSeg").addEventListener("click", e=>{
-    const b = e.target.closest("button"); if(!b) return;
-    [...e.currentTarget.children].forEach(x=>x.classList.toggle("on", x===b));
-    State.type = b.dataset.type; applyFilters();
-  });
-  $("#chapterSel").addEventListener("change", e=>{ State.chapter = e.target.value; applyFilters(); });
-  $("#shuffleBtn").addEventListener("click", e=>{
-    State.shuffle = !State.shuffle;
-    e.target.classList.toggle("on", State.shuffle);
-    applyFilters();
-  });
-  $("#skipBtn").addEventListener("click", next);
-  $("#actionBtn").addEventListener("click", ()=>{
-    if(State.revealed) next(); else reveal();
-  });
-  document.addEventListener("keydown", e=>{
-    if(e.key === "Enter"){ $("#actionBtn").click(); }
-    else if(e.key === "ArrowRight"){ next(); }
-    else if(/^[1-5]$/.test(e.key)){
-      const i = +e.key - 1; const opts = State.pool[State.idx]?.options || [];
-      if(opts[i] && !State.revealed) selectOption(opts[i].label);
-    }
-  });
+/* ===== DASHBOARD ===== */
+const MODES=[
+  {id:"daily",ic:ICON.daily,t:"One RC a day",d:"A single passage daily. Difficulty adapts to last time, and your streak grows.",feature:true,adaptive:true},
+  {id:"column",ic:ICON.column,t:"GMAT RC column",d:"Continuous passages that get harder as you improve — like the adaptive exam.",feature:true,adaptive:true},
+  {id:"practice",ic:ICON.practice,t:"Practice",d:"Filter by type, concept & difficulty. Instant feedback + the question type after each answer."},
+  {id:"exam",ic:ICON.exam,t:"Exam simulation",d:"Timed section like the real GMAT Focus — no feedback, full score report at the end."},
+  {id:"redo",ic:ICON.redo,t:"Redo my misses",d:"Re-attempt only the questions you got wrong before.",needWrong:true},
+  {id:"weak",ic:ICON.weak,t:"Target weak spots",d:"Auto-builds a set from your lowest-accuracy question types.",needData:true},
+];
+function renderModes(){
+  const wrong=Store.wrongIds().length, seen=Store.overall().seen;
+  const d=Store.getDaily(), col=Store.adaptive().level, noPsg=!buildPassages().length;
+  $("#modeGrid").innerHTML=MODES.map(m=>{
+    const dis=(m.needWrong&&!wrong)||(m.needData&&seen<5)||(m.adaptive&&noPsg);
+    let badge="";
+    if(m.id==="daily") badge=noPsg?"needs OG bank":d.doneToday?`✓ done · 🔥${d.streak}`:`ready · ${d.level}`;
+    else if(m.id==="column") badge=noPsg?"needs OG bank":`resume at ${col}`;
+    else if(m.id==="redo") badge=`${wrong} saved`;
+    else if(m.needData) badge=seen<5?"need 5+ answers":"ready";
+    return `<button class="mode${m.feature?' feature':''}" data-mode="${m.id}" ${dis?"disabled":""}>
+      <span class="ic">${m.ic}</span><span class="t">${m.t}</span><span class="d">${m.d}</span>${badge?`<span class="badge">${badge}</span>`:""}</button>`;
+  }).join("");
+  $("#modeGrid").querySelectorAll(".mode").forEach(b=>b.addEventListener("click",()=>{
+    if(b.disabled)return; const id=b.dataset.mode;
+    if(id==="daily"){ const dd=Store.getDaily();
+      if(dd.doneToday){ if(confirm(`You've done today's RC (🔥 ${dd.streak}-day streak). Do a bonus passage? It won't change your streak or level.`)) startDaily(true); }
+      else startDaily(false); }
+    else if(id==="column") startColumn(); else openSetup(id);
+  }));
+}
+function bar(name,a,weak){ const pct=a&&a.t?Math.round(100*a.c/a.t):null;
+  const col=pct==null?"var(--line)":pct>=75?"var(--green)":pct>=50?"var(--amber)":"var(--red)";
+  return `<div class="barrow${weak?' weak':''}"><div class="nm">${esc(name)}</div>
+    <div class="tr"><i style="width:${pct==null?0:pct}%;background:${col}"></i></div>
+    <div class="vv">${a&&a.t?`${a.c}/${a.t}`:'—'}</div></div>`; }
+function findWeakest(rc,cr){ let best=null;
+  for(const [grp,agg] of [["RC",rc],["CR",cr]]) for(const [name,a] of Object.entries(agg)){
+    if(a.t<MIN_ATTEMPTS)continue; const p=a.c/a.t; if(!best||p<best.p)best={grp,name,a,p}; } return best; }
+function renderAnalytics(){
+  const ov=Store.overall();
+  $("#heroPct").textContent=ov.pct==null?"—":ov.pct+"%";
+  $("#heroSub").textContent=ov.seen?`${ov.corr}/${ov.seen} correct`:"no attempts yet";
+  const C=175.9; $("#heroArc").style.strokeDashoffset=ov.pct==null?C:C-C*ov.pct/100;
+  $("#qSeen").textContent=ov.seen; $("#qWrong").textContent=Store.wrongIds().length;
+  const streak=Store.daily().streak||0; $("#qStreak").textContent=streak;
+  $("#streakChip").classList.toggle("hidden",!streak); $("#streakChipN").textContent=streak;
+  const rc=Store.byField("subtype","RC"), cr=Store.byField("subtype","CR"), df=Store.byField("difficulty");
+  const weak=findWeakest(rc,cr);
+  $("#rcBars").innerHTML=Object.keys(rc).length?RC_TYPES.map(t=>bar(t,rc[t],weak&&weak.grp==="RC"&&weak.name===t)).join(""):`<div class="nodata">No RC attempts yet.</div>`;
+  $("#crBars").innerHTML=Object.keys(cr).length?CR_TASKS.filter(t=>cr[t]).map(t=>bar(t,cr[t],weak&&weak.grp==="CR"&&weak.name===t)).join(""):`<div class="nodata">No CR attempts yet.</div>`;
+  $("#diffBars").innerHTML=DIFFS.map(d=>bar(d,df[d])).join("");
+  $("#recoBox").innerHTML=weak?`💡 <b>Focus area:</b> your weakest type is <b>${esc(weak.name)}</b>
+    (${weak.a.c}/${weak.a.t}, ${Math.round(100*weak.a.c/weak.a.t)}%). Use <b>Target weak spots</b> or filter Practice to it.`
+    :`Answer a few questions and this highlights the types to drill.`;
+  // recommended CTA
+  const d2=Store.getDaily();
+  let rec;
+  if(!ov.seen) rec={ic:"📅",t:"Start with today's passage",s:"One RC a day builds the habit — difficulty adapts to you.",act:()=>startDaily(false)};
+  else if(!d2.doneToday && !buildPassages().length===false) rec={ic:"📅",t:"Do today's RC",s:`Keep your 🔥 ${d2.streak}-day streak alive · level ${d2.level}.`,act:()=>startDaily(false)};
+  else if(weak) rec={ic:"🎯",t:`Drill ${weak.name}`,s:`Your weakest type at ${Math.round(100*weak.a.c/weak.a.t)}%. Build a focused set.`,act:()=>openSetup("weak")};
+  else rec={ic:"📈",t:"Continue the adaptive column",s:`Resume at ${Store.adaptive().level}.`,act:()=>startColumn()};
+  $("#recoCta").innerHTML=`<span class="ic">${rec.ic}</span><span class="tx"><b>${esc(rec.t)}</b><small>${esc(rec.s)}</small></span><button class="go" id="recoGo">Go →</button>`;
+  $("#recoGo").onclick=rec.act;
+}
+function renderSyllabus(){
+  $("#sylGrid").innerHTML=`
+    <div class="c"><div class="big">23</div><b>questions</b><ul><li>in 45 minutes</li><li>≈1 min 57 s each</li></ul></div>
+    <div class="c"><div class="big">2</div><b>types</b><ul><li>Reading Comprehension</li><li>Critical Reasoning</li><li>no Sentence Correction</li></ul></div>
+    <div class="c"><b>RC types</b><ul>${RC_TYPES.map(t=>`<li>${t}</li>`).join("")}</ul></div>
+    <div class="c"><b>CR tasks</b><ul>${["Weaken","Strengthen","Assumption","Inference","Flaw","Evaluate","Boldface","Explain","Plan"].map(t=>`<li>${t}</li>`).join("")}</ul></div>
+    <div class="c"><b>Format</b><ul><li>Computer-adaptive</li><li>Review &amp; edit up to 3</li><li>Score 60–90 / section</li></ul></div>`;
+  $("#storeNote").textContent=`Saved on this device (localStorage) · ${Store.overall().seen} questions tracked.`;
+  $("#dashFoot").innerHTML=`Questions from <i>GMAT Official Guide 2024–2025</i>, answers verified against the book's key. `+
+    `RC types are the book's own labels; CR tasks are inferred from question wording. Nothing leaves your device.`;
+}
+function renderDash(){ clearInterval(App.timer); renderModes(); renderAnalytics(); renderSyllabus(); show("dash"); }
+
+/* ===== SETUP ===== */
+function chipRow(el,items,multi,active,onChange){
+  el.innerHTML=items.map(it=>`<button class="chip${active.includes(it.v)?' on':''}" data-v="${esc(it.v)}">${esc(it.label)}</button>`).join("");
+  el.querySelectorAll(".chip").forEach(b=>b.addEventListener("click",()=>{ const v=b.dataset.v;
+    if(multi){ if(v==="ALL"){active.length=0;active.push("ALL");}
+      else { const i=active.indexOf("ALL"); if(i>=0)active.splice(i,1); const j=active.indexOf(v); if(j>=0)active.splice(j,1); else active.push(v); if(!active.length)active.push("ALL"); } }
+    else { active.length=0; active.push(v); }
+    el.querySelectorAll(".chip").forEach(x=>x.classList.toggle("on",active.includes(x.dataset.v))); onChange&&onChange(); }));
+}
+function openSetup(mode){
+  App.mode=mode; const cfg={type:["ALL"],concept:["ALL"],diff:["ALL"],count:10,order:"shuffle"}; App.cfg=cfg;
+  const meta={practice:["Practice","Set up your session","Instant feedback after each answer, with the question type revealed."],
+    exam:["Exam","Timed section","Mirrors the GMAT Focus pace. No feedback until your score report."],
+    redo:["Review","Redo your misses","Re-attempt the questions you previously got wrong."],
+    weak:["Targeted","Target your weak spots","Auto-built from your lowest-accuracy question type."]}[mode];
+  $("#setupKick").textContent=meta[0]; $("#setupTitle").textContent=meta[1]; $("#setupDesc").textContent=meta[2];
+  chipRow($("#typeChips"),[{v:"ALL",label:"All Verbal"},{v:"RC",label:"Reading Comp"},{v:"CR",label:"Critical Reasoning"}],false,cfg.type,()=>{updateConcept();updatePool();});
+  chipRow($("#diffChips"),[{v:"ALL",label:"All levels"},...DIFFS.map(d=>({v:d,label:d}))],true,cfg.diff,updatePool);
+  $("#countSel").innerHTML=[5,10,15,21,"All"].map(c=>`<option value="${c}"${c===10?" selected":""}>${c==="All"?"All matching":c+" questions"}</option>`).join("");
+  $("#countSel").onchange=e=>{cfg.count=e.target.value==="All"?"All":+e.target.value;updatePool();};
+  chipRow($("#orderChips"),[{v:"shuffle",label:"Shuffle"},{v:"order",label:"In book order"}],false,[cfg.order],()=>{cfg.order=$("#orderChips .on").dataset.v;});
+  $("#fCount").classList.toggle("hidden",mode==="weak");
+  $("#fConcept").classList.toggle("hidden",mode==="redo"||mode==="weak");
+  $("#fDiff").classList.toggle("hidden",mode==="weak");
+  if(mode==="exam")cfg.count=21;
+  updateConcept(); updatePool();
+  $("#goBtn").textContent=mode==="exam"?"Start timed section →":"Start →";
+  show("setup");
+}
+function updateConcept(){ const t=App.cfg.type[0];
+  $("#conceptLbl").textContent=t==="CR"?"CR task":t==="RC"?"RC type":"Concept";
+  let items=t==="RC"?RC_TYPES:t==="CR"?CR_TASKS:[...RC_TYPES,...CR_TASKS];
+  const present=new Set(App.all.map(q=>q.subtype));
+  App.cfg.concept=["ALL"];
+  chipRow($("#conceptChips"),[{v:"ALL",label:"All concepts"},...items.filter(x=>present.has(x)).map(x=>({v:x,label:x}))],true,App.cfg.concept,updatePool);
+}
+function poolFor(cfg,mode){ let p=App.all.filter(q=>q.format!=="open_ended");
+  if(mode==="redo"){ const w=new Set(Store.wrongIds()); p=p.filter(q=>w.has(q.id)); }
+  if(mode==="weak"){ const wk=findWeakest(Store.byField("subtype","RC"),Store.byField("subtype","CR")); if(wk)p=p.filter(q=>q.subtype===wk.name); }
+  if(!cfg.type.includes("ALL"))p=p.filter(q=>cfg.type.includes(q.type));
+  if(!cfg.concept.includes("ALL"))p=p.filter(q=>cfg.concept.includes(q.subtype));
+  if(!cfg.diff.includes("ALL"))p=p.filter(q=>cfg.diff.includes(q.difficulty));
+  return p; }
+function updatePool(){ const p=poolFor(App.cfg,App.mode);
+  const n=App.mode==="weak"?Math.min(p.length,15):(App.cfg.count==="All"?p.length:Math.min(App.cfg.count,p.length));
+  $("#poolNote").textContent=p.length?`${p.length} questions match — you'll get ${n}.`:"No questions match this selection.";
+  $("#goBtn").disabled=!p.length; }
+$("#goBtn").addEventListener("click",()=>{ let p=poolFor(App.cfg,App.mode);
+  if(App.cfg.order==="shuffle"||App.mode==="weak"||App.mode==="redo")p=shuffle(p.slice());
+  const lim=App.mode==="weak"?Math.min(p.length,15):(App.cfg.count==="All"?p.length:Math.min(App.cfg.count,p.length));
+  App.qs=p.slice(0,lim); resetRun(); startRun(); });
+
+/* ===== RUNNER ===== */
+function isExam(){ return App.mode==="exam"; }
+function startRun(){
+  clearInterval(App.timer); App.elapsed=0;
+  if(isExam()){ App.timeLeft=Math.round(App.qs.length*(45*60/23)); App.showTimer=true; $("#timer").classList.remove("hidden"); }
+  else { App.showTimer=false; $("#timer").classList.add("hidden"); }
+  tick();
+  App.timer=setInterval(()=>{ App.elapsed++; if(isExam()){ App.timeLeft--; if(App.timeLeft<=0){tick();finish();return;} } tick(); },1000);
+  show("run"); renderQ();
+}
+function tick(){ if(!App.showTimer)return; $("#timer").textContent=mmss(App.timeLeft); $("#timer").classList.toggle("low",App.timeLeft<=60); }
+function renderQ(){
+  const q=App.qs[App.idx], n=App.qs.length, answered=App.checked.has(App.idx), showType=!isExam()&&answered;
+  $("#qof").textContent=`${App.idx+1} / ${n}`;
+  $("#prog").style.width=`${(App.idx)/n*100}%`;
+  $("#tags").innerHTML=`<span class="pill">${q.type}</span>`+
+    `<span class="pill ${showType?'':'hide'}">${esc(q.subtype||'—')}</span>`+
+    `<span class="pill d-${q.difficulty||''} ${showType?'':'hide'}">${esc(q.difficulty||'')}</span>`;
+  $("#flagBtn").classList.toggle("on",App.flags.has(App.idx));
+  $("#runMeta").textContent=isExam()?"Exam mode — no feedback until you finish":
+    App.mode==="daily"?`Daily RC · ${App._usedLevel} passage${App._dailyBonus?' (bonus)':''}`:
+    App.mode==="column"?`Adaptive column · ${App._usedLevel} · passage ${(App._colP||0)+1}`:
+    App.mode==="redo"?"Redo mode":App.mode==="weak"?"Targeting your weak type":"Practice mode";
+  const parts=String(q.question).split("\n\n");
+  const titled=parts.length>1&&parts[0].length<60&&!/[.?]$/.test(parts[0]);
+  const qhtml=titled?`<b>${esc(parts[0])}</b><br>${esc(parts.slice(1).join("\n\n"))}`:esc(q.question);
+  const dir=q.type==="RC"?"The questions refer to the passage. Select the best answer.":"Select the best answer of the choices given.";
+  const sel=App.answers[q.id], reveal=!isExam()&&answered;
+  const choices=(q.options||[]).map(o=>{ let cls="choice",mk="";
+    if(reveal){ if(o.label===q.correct_answer){cls+=" correct";mk='<span class="mk">Correct</span>';} else if(o.label===sel){cls+=" wrong";mk='<span class="mk">Your pick</span>';} }
+    else if(o.label===sel)cls+=" sel";
+    return `<li class="${cls}" data-label="${o.label}"><span class="radio"></span><span class="ctext">${esc(o.text)}</span>${mk}</li>`; }).join("");
+  let fb="";
+  if(reveal){ const ok=sel===q.correct_answer;
+    fb=`<div class="fb ${ok?'ok':'no'}"><div class="fh">${ok?'✓ Correct':(sel?'✗ Incorrect — answer is '+q.correct_answer:'Answer is '+q.correct_answer)}
+      <span class="typetag"><span class="pill">${esc(q.subtype||q.type)}</span><span class="pill d-${q.difficulty||''}">${esc(q.difficulty||'')}</span></span></div>
+      <div class="body"><h5>Explanation</h5>${esc(q.explanation||'No explanation available.')}</div></div>`; }
+  const qpane=`<div class="pcard"><div class="directions">${esc(dir)}</div><div class="lbl">Question<span class="ln"></span></div>
+    <p class="qtext">${qhtml}</p><ul class="choices">${choices}</ul>${fb}</div>`;
+  const col=$("#splitcols");
+  if(q.passage){ col.className="splitcols has-psg";
+    col.innerHTML=`<div class="pcard psg sticky"><div class="lbl">Reading passage<span class="ln"></span></div><div class="passage">${esc(q.passage)}</div></div>`+qpane; }
+  else { col.className="splitcols"; col.innerHTML=qpane; }
+  col.querySelectorAll(".choice").forEach(li=>li.addEventListener("click",()=>pick(li.dataset.label)));
+  updateAct();
+}
+function pick(label){ const q=App.qs[App.idx]; if(!isExam()&&App.checked.has(App.idx))return;
+  App.answers[q.id]=label; $("#splitcols").querySelectorAll(".choice").forEach(li=>li.classList.toggle("sel",li.dataset.label===label)); updateAct(); }
+function updateAct(){ const q=App.qs[App.idx], last=App.idx===App.qs.length-1, b=$("#actBtn");
+  $("#prevBtn").disabled=App.idx===0;
+  if(!isExam()&&!App.checked.has(App.idx)){ b.textContent="Submit"; b.className="btn primary"; b.disabled=!App.answers[q.id]; }
+  else { b.disabled=false; b.textContent=last?(isExam()?"End section ✓":"Finish ✓"):"Next ▶"; b.className="btn primary"+(last?" end":""); } }
+$("#actBtn").addEventListener("click",()=>{ const q=App.qs[App.idx], last=App.idx===App.qs.length-1;
+  if(!isExam()&&!App.checked.has(App.idx)){ App.checked.add(App.idx); Store.record(q,App.answers[q.id],App.answers[q.id]===q.correct_answer); renderQ(); return; }
+  if(last){ finish(); return; } App.idx++; renderQ(); });
+$("#prevBtn").addEventListener("click",()=>{ if(App.idx>0){App.idx--;renderQ();} });
+$("#flagBtn").addEventListener("click",()=>{ App.flags.has(App.idx)?App.flags.delete(App.idx):App.flags.add(App.idx); renderQ(); });
+
+/* ===== FINISH + REPORT ===== */
+function finish(){
+  clearInterval(App.timer);
+  if(isExam()) App.qs.forEach(q=>{ if(App.answers[q.id]!=null) Store.record(q,App.answers[q.id],App.answers[q.id]===q.correct_answer); });
+  if(isAdaptive()){ finishAdaptive(); return; }
+  let correct=0,ans=0; const bd={RC:{c:0,t:0},CR:{c:0,t:0}};
+  App.qs.forEach(q=>{ const a=App.answers[q.id]; if(a!=null){ans++; const g=bd[q.type]; g.t++; if(a===q.correct_answer){correct++;g.c++;}} });
+  const pct=ans?Math.round(100*correct/ans):0;
+  $("#repScore").innerHTML=pct+'<small>%</small>';
+  $("#repSub").textContent=`${correct} correct of ${ans} answered · ${App.qs.length} in set · time ${mmss(App.elapsed)}`;
+  const cell=(l,s)=>`<div class="c"><div class="n">${s.t?Math.round(100*s.c/s.t):0}%</div><div class="l">${l} · ${s.c}/${s.t}</div></div>`;
+  $("#repGrid").innerHTML=`<div class="c"><div class="n">${correct}/${App.qs.length}</div><div class="l">Overall</div></div>`+cell("RC",bd.RC)+cell("CR",bd.CR);
+  $("#repNext").hidden=true; $("#repRedo").hidden=false; $("#repHome").textContent="Back to dashboard";
+  App._repExpl=false; $("#repExpl").textContent="Show all explanations"; buildRepList(); show("report");
+}
+function finishAdaptive(){
+  const correct=App.qs.filter(q=>App.answers[q.id]===q.correct_answer).length;
+  const pct=App.qs.length?Math.round(100*correct/App.qs.length):0;
+  const used=App._usedLevel, next=Store.adaptLevel(used,pct);
+  const up=DIFFS.indexOf(next)>DIFFS.indexOf(used), down=DIFFS.indexOf(next)<DIFFS.indexOf(used);
+  const move=up?"⬆ promoted":down?"⬇ eased":"→ holding steady";
+  if(App.mode==="daily"&&!App._dailyBonus) Store.completeDaily(pct,used,App._curPassage.pid);
+  if(App.mode==="column"){ App._colLevel=next; Store.setColumnLevel(next); App._colC+=correct; App._colT+=App.qs.length; App._colP++; }
+  $("#repScore").innerHTML=pct+'<small>%</small>';
+  let sub=`${correct}/${App.qs.length} on this ${used} passage`;
+  if(App.mode==="daily"){ const d=Store.getDaily(); sub+=App._dailyBonus?` · bonus (streak unchanged)`:` · 🔥 ${d.streak}-day streak`; sub+=` · next time: ${next}`; }
+  else { sub+=` · ${used} ${move} → next: ${next} · passage ${App._colP} this session`; }
+  $("#repSub").textContent=sub;
+  $("#repGrid").innerHTML=DIFFS.map(l=>{ const on=l===next,cur=l===used;
+    return `<div class="c" style="${on?'border-color:var(--brand)':''}"><div class="n">${on?'●':'○'}</div><div class="l">${l}${cur&&!on?' (was)':''}</div></div>`; }).join("");
+  $("#repRedo").hidden=true;
+  if(App.mode==="column"){ $("#repNext").hidden=false; $("#repNext").textContent=`Next passage (${next}) →`; $("#repHome").textContent="End session"; }
+  else { $("#repNext").hidden=true; $("#repHome").textContent="Back to dashboard"; }
+  App._repExpl=false; $("#repExpl").textContent="Show all explanations"; buildRepList(); show("report");
+}
+function buildRepList(){
+  $("#repList").innerHTML=App.qs.map((q,i)=>{ const a=App.answers[q.id], ok=a===q.correct_answer, skip=a==null;
+    const stem=(()=>{const p=String(q.question).split("\n\n");return p[p.length-1];})();
+    const cls=skip?"skip":ok?"ok":"no", sym=skip?"–":ok?"✓":"✗";
+    const expl=App._repExpl?`<div class="expl">${esc(q.explanation||'')}</div>`:`<details><summary>Explanation</summary><div class="expl">${esc(q.explanation||'')}</div></details>`;
+    return `<div class="ri ${cls}"><div class="h"><span class="dotr">${sym}</span><b>Q${i+1}</b>
+      <span class="meta"><span class="pill">${esc(q.subtype||q.type)}</span><span class="pill d-${q.difficulty||''}">${esc(q.difficulty||'')}</span></span></div>
+      <p class="stem">${esc(stem)}</p><div class="ans">Your answer: <b>${skip?'—':esc(a)}</b> · Correct: <b>${esc(q.correct_answer)}</b></div>${expl}</div>`; }).join("");
+}
+$("#repExpl").addEventListener("click",()=>{ App._repExpl=!App._repExpl; buildRepList(); $("#repExpl").textContent=App._repExpl?"Hide explanations":"Show all explanations"; });
+$("#repRedo").addEventListener("click",()=>{ const wrong=App.qs.filter(q=>App.answers[q.id]!==q.correct_answer);
+  if(!wrong.length){ renderDash(); return; } App.qs=shuffle(wrong.slice()); App.mode="redo"; resetRun(); startRun(); });
+$("#repNext").addEventListener("click",()=>{ if(App.mode==="column") nextColumnPassage(); });
+$("#repHome").addEventListener("click",renderDash);
+
+/* ===== TOOLBAR / LANDING / DATA ===== */
+function buildSrc(){ $("#srcSel").innerHTML=Object.entries(SOURCES).map(([k,v])=>`<option value="${k}"${k===App.source?" selected":""}>${esc(v.label)}</option>`).join(""); }
+$("#srcSel").addEventListener("change",async e=>{ App.source=e.target.value; if(await loadBank()) renderDash(); });
+$("#backBtn").addEventListener("click",()=>{ clearInterval(App.timer); renderDash(); });
+$("#startBtn").addEventListener("click",renderDash);
+$("#examQuick").addEventListener("click",()=>{ openSetup("exam"); });
+$("#resumeBtn").addEventListener("click",renderDash);
+$("#exportBtn").addEventListener("click",()=>{ const b=new Blob([Store.exportJSON()],{type:"application/json"});
+  const a=document.createElement("a"); a.href=URL.createObjectURL(b); a.download="gmat-progress.json"; a.click(); URL.revokeObjectURL(a.href); });
+$("#importBtn").addEventListener("click",()=>{ const inp=document.createElement("input"); inp.type="file"; inp.accept="application/json";
+  inp.onchange=()=>{ const f=inp.files[0]; if(!f)return; const r=new FileReader();
+    r.onload=()=>{ try{ Store.importJSON(r.result); renderDash(); alert("Progress imported."); }catch(e){ alert("Couldn't import that file."); } }; r.readAsText(f); }; inp.click(); });
+$("#resetBtn").addEventListener("click",()=>{ if(confirm("Erase all saved progress on this device?")){ Store.reset(); renderDash(); } });
+
+document.addEventListener("keydown",e=>{ if(!$("#run").classList.contains("on"))return;
+  if(e.key==="Enter")$("#actBtn").click(); else if(e.key==="ArrowLeft")$("#prevBtn").click();
+  else if(/^[1-5]$/.test(e.key)){const o=App.qs[App.idx]?.options||[];if(o[+e.key-1])pick(o[+e.key-1].label);}
+  else if(e.key.toLowerCase()==="f")$("#flagBtn").click(); });
+
+function renderLanding(){
+  $("#landingLegal").textContent="Personal, fair-use study tool · 346 official Verbal questions · progress saved on this device.";
+  const ov=Store.overall(), d=Store.getDaily();
+  if(ov.seen){ $("#resumeCard").classList.remove("hidden");
+    $("#resumeSub").textContent=`${ov.pct}% accuracy · ${ov.seen} done${d.streak?` · 🔥 ${d.streak}-day streak`:""}`; }
+  show("landing");
 }
 
-function applyFilters(){
-  let pool = State.all.filter(q =>
-    (State.type === "ALL" || q.type === State.type) &&
-    (State.chapter === "ALL" || q.chapter === State.chapter));
-  if(State.shuffle) pool = shuffle(pool.slice());
-  State.pool = pool; State.idx = 0;
-  resetQuestionState();
-  render();
-}
-
-function resetQuestionState(){ State.selected = null; State.revealed = false; }
-
-function render(){
-  renderScore();
-  const q = State.pool[State.idx];
-  if(!q){
-    main.innerHTML = `<div class="empty">No questions match this filter.</div>`;
-    setAction("Reveal", true); return;
-  }
-  const total = State.pool.length;
-  const passage = q.passage ? `
-    <details class="psg" open>
-      <summary><span class="chev">▸</span> Reading passage</summary>
-      <p class="passage">${esc(q.passage)}</p>
-    </details>` : "";
-
-  const qhtml = formatQuestion(q.question);
-  const opts = (q.options||[]).map((o,i)=>`
-    <button class="opt" data-label="${o.label}" aria-label="Option ${o.label}">
-      <span class="lab">${o.label}</span><span class="otxt">${esc(o.text)}</span>
-    </button>`).join("");
-
-  main.innerHTML = `
-    <div class="meta">
-      <span>Question ${State.idx+1} of ${total}</span>
-      <span><span class="tag">${q.type}</span> &nbsp;${esc(shortChap(q.chapter))}</span>
-    </div>
-    <div class="card">
-      ${passage}
-      <div class="qtext">${qhtml}</div>
-      <div class="opts">${opts}</div>
-      <div id="revealArea"></div>
-    </div>`;
-
-  main.querySelectorAll(".opt").forEach(btn=>{
-    btn.addEventListener("click", ()=> !State.revealed && selectOption(btn.dataset.label));
-  });
-  setAction("Reveal", true);
-  window.scrollTo({top:0, behavior:"smooth"});
-}
-
-function formatQuestion(text){
-  const parts = String(text).split("\n\n");
-  if(parts.length > 1 && parts[0].length < 60 && !/[.?]$/.test(parts[0])){
-    return `<span class="title">${esc(parts[0])}</span>${esc(parts.slice(1).join("\n\n"))}`;
-  }
-  return esc(text);
-}
-
-function selectOption(label){
-  State.selected = label;
-  main.querySelectorAll(".opt").forEach(b=>
-    b.classList.toggle("sel", b.dataset.label === label));
-  setAction("Reveal", false);
-}
-
-function reveal(){
-  const q = State.pool[State.idx];
-  if(!q) return;
-  State.revealed = true;
-  const correct = q.correct_answer;
-
-  main.querySelectorAll(".opt").forEach(b=>{
-    b.setAttribute("disabled","");
-    const lab = b.dataset.label;
-    if(lab === correct) b.classList.add("correct");
-    else if(lab === State.selected) b.classList.add("wrong");
-    b.classList.remove("sel");
-  });
-
-  const isRight = State.selected === correct;
-  // score once per question id
-  if(!State.answered.has(q.id)){
-    State.answered.add(q.id);
-    const s = State.score[q.type] || (State.score[q.type] = {c:0,t:0});
-    s.t++; if(isRight) s.c++;
-    renderScore();
-  }
-
-  const verdict = isRight
-    ? `<div class="verdict ok">✓ Correct</div>`
-    : `<div class="verdict no">✗ Not quite — correct answer is ${correct}</div>`;
-
-  $("#revealArea").innerHTML = `
-    <div class="reveal">
-      ${verdict}
-      <h4 class="explh">Explanation</h4>
-      <div class="expl">${esc(q.explanation || "No explanation available.")}</div>
-    </div>`;
-  // restyle the explanation heading
-  const h = main.querySelector(".explh");
-  if(h){ h.style.margin="0 0 6px"; h.style.fontSize="12px"; h.style.letterSpacing=".4px";
-         h.style.textTransform="uppercase"; h.style.color="var(--muted)"; }
-  setAction("Next →", false);
-}
-
-function next(){
-  if(State.pool.length === 0) return;
-  State.idx = (State.idx + 1) % State.pool.length;
-  resetQuestionState();
-  render();
-}
-
-function setAction(text, disabled){
-  const b = $("#actionBtn");
-  b.textContent = text;
-  b.disabled = !!disabled && !State.revealed;
-}
-
-function renderScore(){
-  const sc = State.score;
-  const overallC = sc.CR.c + sc.RC.c, overallT = sc.CR.t + sc.RC.t;
-  const pct = overallT ? Math.round(100*overallC/overallT) : 0;
-  const cell = (label, s) => `<span class="pill">${label}: <b>${s.c}/${s.t}</b></span>`;
-  $("#scorebar").innerHTML =
-    `<span class="pill">Session: <b>${overallC}/${overallT}</b>${overallT?` &middot; ${pct}%`:""}</span>` +
-    cell("CR", sc.CR) + cell("RC", sc.RC);
-}
-
-/* utils */
-function esc(s){ return String(s==null?"":s)
-  .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
-function shuffle(a){ for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; }
-
-load();
+/* boot */
+(async()=>{ buildSrc(); await loadBank(); renderLanding(); })();
 </script>
 </body>
 </html>

@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#0f766e" />
+<title>GMAT Verbal — Focus</title>
+<style>
+  :root{
+    --bg:#f4f1ea; --paper:#fbf9f4; --card:#ffffff; --ink:#23211c; --muted:#7a766c;
+    --line:#e4ddcd; --line2:#efe9dc; --brand:#0f766e; --brand-ink:#0b5a54;
+    --pick:#e9f4f2; --right:#15803d; --right-bg:#eef8ef; --wrong:#b91c1c; --wrong-bg:#fbeeee;
+    --shadow:0 1px 2px rgba(60,50,30,.04),0 12px 30px rgba(60,50,30,.07);
+    --serif:Georgia,"Iowan Old Style","Times New Roman",serif;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#15140f; --paper:#1c1b15; --card:#222018; --ink:#ece8dd; --muted:#a39d8d;
+      --line:#34322a; --line2:#2a281f; --brand:#2dd4bf; --brand-ink:#5eead4;
+      --pick:#15302c; --right:#4ade80; --right-bg:#13291b; --wrong:#f87171; --wrong-bg:#311a1a;
+      --shadow:0 1px 2px rgba(0,0,0,.3),0 14px 36px rgba(0,0,0,.4);
+    }
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{background:var(--bg);color:var(--ink);font:16px/1.6 var(--sans);
+    -webkit-text-size-adjust:100%;padding-bottom:env(safe-area-inset-bottom)}
+
+  header{position:sticky;top:0;z-index:10;background:color-mix(in srgb,var(--bg) 90%,transparent);
+    backdrop-filter:blur(10px) saturate(1.3);border-bottom:1px solid var(--line)}
+  .head-in{max-width:1080px;margin:0 auto;padding:12px 20px}
+  .brandrow{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}
+  .brand{display:flex;align-items:center;gap:10px}
+  .brand .mark{width:30px;height:30px;border-radius:9px;background:var(--brand);color:#fff;
+    display:grid;place-items:center;font-weight:800;font-size:15px;font-family:var(--serif)}
+  .brand h1{font:700 18px/1 var(--serif);margin:0;letter-spacing:.2px}
+  .brand small{display:block;color:var(--muted);font:500 11.5px/1.3 var(--sans);margin-top:3px}
+
+  .stats{display:flex;gap:18px;align-items:center}
+  .stat{text-align:right;line-height:1.1}
+  .stat .n{font:700 18px/1 var(--serif);color:var(--ink)}
+  .stat .l{font-size:10.5px;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);margin-top:3px}
+  .stat.acc .n{color:var(--brand-ink)}
+
+  .filters{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:12px}
+  .chips{display:inline-flex;background:var(--card);border:1px solid var(--line);border-radius:999px;padding:3px}
+  .chips button{border:0;background:transparent;color:var(--muted);font:600 13px var(--sans);
+    padding:6px 13px;border-radius:999px;cursor:pointer;transition:.15s}
+  .chips button.on{background:var(--brand);color:#fff}
+  select{appearance:none;-webkit-appearance:none;background:var(--card);color:var(--ink);
+    border:1px solid var(--line);border-radius:999px;padding:8px 30px 8px 14px;font:600 13px var(--sans);
+    cursor:pointer;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%237a766c' stroke-width='3'><path d='M6 9l6 6 6-6'/></svg>");
+    background-repeat:no-repeat;background-position:right 11px center}
+  .progress{height:3px;background:var(--line2);border-radius:3px;overflow:hidden;margin-top:12px}
+  .progress > i{display:block;height:100%;background:var(--brand);width:0;transition:width .3s}
+
+  .wrap{max-width:1080px;margin:0 auto;padding:22px 20px 140px}
+  .layout{display:grid;gap:22px;grid-template-columns:1fr}
+  .layout.has-passage{grid-template-columns:minmax(0,1.05fr) minmax(0,1fr)}
+  @media (max-width:860px){ .layout.has-passage{grid-template-columns:1fr} }
+
+  .reader{background:var(--paper);border:1px solid var(--line);border-radius:18px;
+    box-shadow:var(--shadow);padding:26px 28px;align-self:start}
+  @media (min-width:861px){ .reader.sticky{position:sticky;top:150px;max-height:calc(100vh - 175px);overflow:auto} }
+  .reader .ptag{font:700 11px var(--sans);letter-spacing:.6px;text-transform:uppercase;color:var(--brand-ink);
+    display:flex;align-items:center;gap:8px;margin-bottom:14px}
+  .reader .ptag::before{content:"";width:18px;height:2px;background:var(--brand)}
+  .passage{font:17px/1.75 var(--serif);color:var(--ink);white-space:pre-wrap}
+
+  .qpanel{min-width:0}
+  .qmeta{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:13px;margin-bottom:12px}
+  .badge{font:700 11px var(--sans);letter-spacing:.4px;padding:3px 9px;border-radius:6px;
+    background:var(--pick);color:var(--brand-ink);border:1px solid var(--line)}
+  .badge.diff{background:transparent}
+  .badge.diff.Easy{color:#15803d;border-color:#bfe3c6}
+  .badge.diff.Medium{color:#b45309;border-color:#f0d49a}
+  .badge.diff.Hard{color:#b91c1c;border-color:#f0bcbc}
+  .qtext{font:500 19px/1.55 var(--sans);white-space:pre-wrap;margin:0 0 6px}
+  .qtext .title{display:block;font:700 16px var(--serif);color:var(--brand-ink);margin-bottom:8px}
+
+  .opts{list-style:none;margin:18px 0 0;padding:0;display:flex;flex-direction:column;gap:10px}
+  .opt{display:flex;gap:13px;align-items:flex-start;text-align:left;background:var(--card);
+    border:1.5px solid var(--line);border-radius:13px;padding:13px 15px;font-size:15.5px;line-height:1.5;
+    color:var(--ink);cursor:pointer;transition:border-color .12s,background .12s,transform .05s;
+    -webkit-tap-highlight-color:transparent}
+  .opt:hover{border-color:var(--brand)}
+  .opt:active{transform:scale(.995)}
+  .opt .lab{flex:0 0 26px;height:26px;border-radius:8px;border:1.5px solid var(--line);
+    display:grid;place-items:center;font:700 13px var(--sans);color:var(--muted)}
+  .opt.sel{border-color:var(--brand);background:var(--pick)}
+  .opt.sel .lab{border-color:var(--brand);background:var(--brand);color:#fff}
+  .opt.correct{border-color:var(--right);background:var(--right-bg)}
+  .opt.correct .lab{background:var(--right);border-color:var(--right);color:#fff}
+  .opt.wrong{border-color:var(--wrong);background:var(--wrong-bg)}
+  .opt.wrong .lab{background:var(--wrong);border-color:var(--wrong);color:#fff}
+  .opt[disabled]{cursor:default}
+  .opt[disabled]:hover{border-color:var(--line)}
+  .opt.correct[disabled]:hover{border-color:var(--right)}
+  .opt.wrong[disabled]:hover{border-color:var(--wrong)}
+
+  .reveal{margin-top:20px;border-top:1px dashed var(--line);padding-top:16px}
+  .verdict{font:700 16px var(--sans);display:flex;gap:8px;align-items:center;margin-bottom:10px}
+  .verdict.ok{color:var(--right)} .verdict.no{color:var(--wrong)}
+  .explh{font:700 11px var(--sans);letter-spacing:.5px;text-transform:uppercase;color:var(--muted);margin:0 0 8px}
+  .expl{font:15px/1.7 var(--sans);color:var(--ink);white-space:pre-wrap}
+
+  .bar{position:fixed;left:0;right:0;bottom:0;z-index:20;
+    background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(10px) saturate(1.4);
+    border-top:1px solid var(--line);padding:12px 20px calc(12px + env(safe-area-inset-bottom))}
+  .bar-in{max-width:1080px;margin:0 auto;display:flex;gap:12px;align-items:center}
+  .bar .hint{color:var(--muted);font-size:12.5px;margin-right:auto}
+  .btn{border:0;border-radius:13px;padding:13px 22px;font:700 15px var(--sans);cursor:pointer;
+    min-height:50px;-webkit-tap-highlight-color:transparent}
+  .btn.primary{background:var(--brand);color:#fff}
+  .btn.primary:disabled{opacity:.4;cursor:default}
+  .btn.ghost{background:var(--card);color:var(--ink);border:1px solid var(--line)}
+  .empty{text-align:center;color:var(--muted);padding:80px 20px;font-size:15px}
+  .kbd{font:inherit;font-size:11px;border:1px solid var(--line);border-bottom-width:2px;border-radius:5px;padding:0 5px}
+  @media (max-width:560px){ .stats{display:none} .bar .hint{display:none} .head-in{padding:10px 14px} .wrap{padding:16px 14px 130px} .reader{padding:20px} }
+</style>
+</head>
+<body>
+<header>
+  <div class="head-in">
+    <div class="brandrow">
+      <div class="brand">
+        <span class="mark">G</span>
+        <div><h1>Verbal Practice</h1><small id="srcline">Official Guide 2024–25</small></div>
+      </div>
+      <div class="stats" id="stats"></div>
+    </div>
+    <div class="filters">
+      <select id="sourceSel" aria-label="Source"></select>
+      <div class="chips" id="typeChips">
+        <button data-v="ALL" class="on">All</button>
+        <button data-v="RC">RC</button>
+        <button data-v="CR">CR</button>
+      </div>
+      <select id="diffSel" aria-label="Difficulty"></select>
+      <div class="chips"><button id="shuffleBtn">Shuffle</button></div>
+    </div>
+    <div class="progress"><i id="pbar"></i></div>
+  </div>
+</header>
+
+<div class="wrap"><div class="layout" id="layout"></div></div>
+
+<div class="bar"><div class="bar-in">
+  <span class="hint">Keys: <span class="kbd">1–5</span> pick · <span class="kbd">Enter</span> reveal/next · <span class="kbd">→</span> skip</span>
+  <button class="btn ghost" id="skipBtn">Skip</button>
+  <button class="btn primary" id="actionBtn" disabled>Reveal answer</button>
+</div></div>
+
+<script>
+const SOURCES={
+  og:{file:"questions-og.json",label:"Official Guide 2024–25",line:"Official Guide 2024–25 (Focus Edition)"},
+  manhattan:{file:"questions.json",label:"Manhattan: All the Verbal",line:"Manhattan Prep — All the Verbal"},
+};
+const S={source:"og",all:[],pool:[],idx:0,shuffle:false,type:"ALL",diff:"ALL",
+  selected:null,revealed:false,score:{CR:{c:0,t:0},RC:{c:0,t:0}},answered:new Set()};
+const $=s=>document.querySelector(s);
+const esc=s=>String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+const shuffle=a=>{for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]];}return a;};
+
+function buildSource(){ $("#sourceSel").innerHTML=Object.entries(SOURCES)
+  .map(([k,v])=>`<option value="${k}"${k===S.source?" selected":""}>${esc(v.label)}</option>`).join(""); }
+
+function buildDiff(){
+  const present=[...new Set(S.all.map(q=>q.difficulty).filter(Boolean))];
+  const order=["Easy","Medium","Hard"].filter(d=>present.includes(d));
+  $("#diffSel").innerHTML=`<option value="ALL">All levels</option>`+
+    order.map(d=>`<option value="${d}">${d}</option>`).join("");
+  $("#diffSel").disabled=order.length===0;
+  S.diff="ALL";
+}
+
+async function loadSource(){
+  const src=SOURCES[S.source];
+  try{ const r=await fetch(src.file); if(!r.ok) throw 0; S.all=await r.json(); }
+  catch(e){ $("#layout").innerHTML=`<div class="empty">Couldn't load <b>${esc(src.file)}</b>.<br>
+    Serve this folder: <span class="kbd">python -m http.server 8000</span></div>`; return; }
+  S.type="ALL"; S.shuffle=false; S.score={CR:{c:0,t:0},RC:{c:0,t:0}}; S.answered=new Set();
+  $("#srcline").textContent=src.line;
+  [...$("#typeChips").children].forEach(b=>b.classList.toggle("on",b.dataset.v==="ALL"));
+  $("#shuffleBtn").classList.remove("on");
+  buildDiff(); apply();
+}
+
+function apply(){
+  let p=S.all.filter(q=>(S.type==="ALL"||q.type===S.type)&&(S.diff==="ALL"||q.difficulty===S.diff));
+  if(S.shuffle) p=shuffle(p.slice());
+  S.pool=p; S.idx=0; S.selected=null; S.revealed=false; render();
+}
+
+function renderStats(){
+  const sc=S.score, c=sc.CR.c+sc.RC.c, t=sc.CR.t+sc.RC.t, pct=t?Math.round(100*c/t):0;
+  $("#stats").innerHTML=
+    `<div class="stat acc"><div class="n">${pct}%</div><div class="l">Accuracy</div></div>`+
+    `<div class="stat"><div class="n">${c}/${t}</div><div class="l">Answered</div></div>`+
+    `<div class="stat"><div class="n">${sc.RC.c}/${sc.RC.t} · ${sc.CR.c}/${sc.CR.t}</div><div class="l">RC · CR</div></div>`;
+}
+
+function render(){
+  renderStats();
+  const q=S.pool[S.idx];
+  const total=S.pool.length;
+  $("#pbar").style.width=total?`${(S.idx)/total*100}%`:"0";
+  if(!q){ $("#layout").className="layout"; $("#layout").innerHTML=`<div class="empty">No questions match these filters.</div>`;
+    setAction("Reveal answer",true); return; }
+
+  const parts=String(q.question).split("\n\n");
+  const titled=parts.length>1&&parts[0].length<60&&!/[.?]$/.test(parts[0]);
+  const qhtml=titled?`<span class="title">${esc(parts[0])}</span>${esc(parts.slice(1).join("\n\n"))}`:esc(q.question);
+  const diff=q.difficulty?`<span class="badge diff ${q.difficulty}">${q.difficulty}</span>`:"";
+  const num=q.number?`<span style="margin-left:auto;color:var(--muted);font-size:12px">#${q.number}</span>`:"";
+
+  const reader=q.passage?`<div class="reader sticky">
+      <div class="ptag">Reading passage</div>
+      <div class="passage">${esc(q.passage)}</div></div>`:"";
+
+  const opts=(q.options||[]).map(o=>`<button class="opt" data-label="${o.label}">
+      <span class="lab">${o.label}</span><span>${esc(o.text)}</span></button>`).join("");
+
+  const panel=`<div class="qpanel">
+      <div class="qmeta"><span class="badge">${q.type}</span>${diff}
+        <span>Question ${S.idx+1} of ${total}</span>${num}</div>
+      <div class="qtext">${qhtml}</div>
+      <ul class="opts">${opts}</ul>
+      <div id="revealArea"></div></div>`;
+
+  const L=$("#layout"); L.className="layout"+(q.passage?" has-passage":"");
+  L.innerHTML=reader+panel;
+  L.querySelectorAll(".opt").forEach(b=>b.addEventListener("click",()=>!S.revealed&&select(b.dataset.label)));
+  setAction("Reveal answer",true);
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+function select(label){ S.selected=label;
+  document.querySelectorAll(".opt").forEach(b=>b.classList.toggle("sel",b.dataset.label===label));
+  setAction("Reveal answer",false); }
+
+function reveal(){
+  const q=S.pool[S.idx]; if(!q) return; S.revealed=true; const correct=q.correct_answer;
+  document.querySelectorAll(".opt").forEach(b=>{ b.setAttribute("disabled","");
+    const l=b.dataset.label; if(l===correct)b.classList.add("correct"); else if(l===S.selected)b.classList.add("wrong");
+    b.classList.remove("sel"); });
+  const ok=S.selected===correct;
+  if(!S.answered.has(q.id)){ S.answered.add(q.id); const s=S.score[q.type]||(S.score[q.type]={c:0,t:0});
+    s.t++; if(ok)s.c++; renderStats(); }
+  $("#revealArea").innerHTML=`<div class="reveal">
+    <div class="verdict ${ok?'ok':'no'}">${ok?'✓ Correct':'✗ Correct answer is '+correct}</div>
+    <div class="explh">Explanation</div><div class="expl">${esc(q.explanation||'No explanation available.')}</div></div>`;
+  setAction("Next →",false);
+}
+
+function next(){ if(!S.pool.length)return; S.idx=(S.idx+1)%S.pool.length; S.selected=null; S.revealed=false; render(); }
+function setAction(t,dis){ const b=$("#actionBtn"); b.textContent=t; b.disabled=!!dis&&!S.revealed; }
+
+$("#sourceSel").addEventListener("change",e=>{S.source=e.target.value;loadSource();});
+$("#typeChips").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;
+  [...e.currentTarget.children].forEach(x=>x.classList.toggle("on",x===b));S.type=b.dataset.v;apply();});
+$("#diffSel").addEventListener("change",e=>{S.diff=e.target.value;apply();});
+$("#shuffleBtn").addEventListener("click",e=>{S.shuffle=!S.shuffle;e.target.classList.toggle("on",S.shuffle);apply();});
+$("#skipBtn").addEventListener("click",next);
+$("#actionBtn").addEventListener("click",()=>S.revealed?next():reveal());
+document.addEventListener("keydown",e=>{
+  if(e.key==="Enter")$("#actionBtn").click();
+  else if(e.key==="ArrowRight")next();
+  else if(/^[1-5]$/.test(e.key)){const o=S.pool[S.idx]?.options||[];if(o[+e.key-1]&&!S.revealed)select(o[+e.key-1].label);}
+});
+
+buildSource(); loadSource();
+</script>
+</body>
+</html>

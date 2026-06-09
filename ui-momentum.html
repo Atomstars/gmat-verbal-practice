@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#6d28d9" />
+<title>GMAT Verbal — Momentum</title>
+<style>
+  :root{
+    --bg:#0e0b18; --bg2:#161126; --card:#1b1530; --card2:#221a3b; --ink:#f2eefb; --muted:#a99fc7;
+    --line:#2e2547; --brand:#8b5cf6; --brand2:#22d3ee; --accent:#a78bfa;
+    --right:#34d399; --right-bg:#0f2e23; --wrong:#fb7185; --wrong-bg:#311523;
+    --grad:linear-gradient(135deg,#8b5cf6,#22d3ee);
+    --shadow:0 10px 30px rgba(0,0,0,.45);
+  }
+  @media (prefers-color-scheme: light){
+    :root{ --bg:#f5f3ff; --bg2:#ffffff; --card:#ffffff; --card2:#f6f3ff; --ink:#1c1530;
+      --muted:#6b6385; --line:#e7e1f7; --right:#059669; --right-bg:#e7f8f0; --wrong:#e11d48; --wrong-bg:#fdeef1;
+      --shadow:0 10px 30px rgba(80,40,160,.10); }
+  }
+  *{box-sizing:border-box} html,body{margin:0}
+  body{background:radial-gradient(1200px 600px at 100% -10%,rgba(139,92,246,.18),transparent 60%),var(--bg);
+    color:var(--ink);font:16px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-text-size-adjust:100%;min-height:100vh}
+  .app{max-width:680px;margin:0 auto;padding:16px 16px calc(150px + env(safe-area-inset-bottom))}
+
+  .top{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+  .logo{font-weight:800;font-size:18px;letter-spacing:-.3px;display:flex;align-items:center;gap:9px}
+  .logo .o{width:30px;height:30px;border-radius:9px;background:var(--grad);display:grid;place-items:center;color:#fff;font-size:16px}
+  .ring{margin-left:auto;display:flex;align-items:center;gap:10px;cursor:pointer}
+  .ring svg{display:block} .ring .pc{font-weight:800;font-size:14px}
+  .ring small{color:var(--muted);font-size:11px;font-weight:600}
+
+  .filt{display:flex;gap:8px;align-items:center;margin-bottom:16px;flex-wrap:wrap}
+  .seg{display:inline-flex;background:var(--card);border:1px solid var(--line);border-radius:999px;padding:3px}
+  .seg button{border:0;background:transparent;color:var(--muted);font:700 13px;padding:7px 14px;border-radius:999px;cursor:pointer;transition:.15s}
+  .seg button.on{background:var(--grad);color:#fff}
+  .fbtn{margin-left:auto;background:var(--card);border:1px solid var(--line);color:var(--ink);
+    border-radius:999px;padding:8px 14px;font:700 13px;cursor:pointer;display:inline-flex;align-items:center;gap:7px}
+  .fbtn .dot{width:7px;height:7px;border-radius:50%;background:var(--brand2)}
+
+  .meta{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+  .pill{font:800 11px;letter-spacing:.4px;padding:4px 10px;border-radius:999px;background:var(--card2);
+    border:1px solid var(--line);color:var(--accent)}
+  .pill.E{color:#34d399} .pill.M{color:#fbbf24} .pill.H{color:#fb7185}
+  .count{margin-left:auto;color:var(--muted);font-size:12.5px;font-weight:600}
+
+  .psg details{background:var(--card);border:1px solid var(--line);border-radius:16px;margin-bottom:14px;overflow:hidden}
+  .psg summary{cursor:pointer;list-style:none;padding:14px 16px;font-weight:700;font-size:13.5px;color:var(--accent);
+    display:flex;align-items:center;gap:9px}
+  .psg summary::-webkit-details-marker{display:none}
+  .psg .chev{transition:.2s;color:var(--muted)} .psg details[open] .chev{transform:rotate(90deg)}
+  .psg .ptext{padding:0 18px 18px;font-size:15px;line-height:1.7;color:var(--ink);white-space:pre-wrap;
+    border-top:1px solid var(--line);padding-top:14px}
+
+  .card{background:linear-gradient(180deg,var(--card),var(--bg2));border:1px solid var(--line);
+    border-radius:22px;box-shadow:var(--shadow);padding:20px}
+  .qtext{font-size:18.5px;line-height:1.5;font-weight:600;white-space:pre-wrap;margin:0}
+  .qtext .title{display:block;font-weight:800;color:var(--accent);font-size:15px;margin-bottom:8px}
+
+  .opts{list-style:none;margin:18px 0 0;padding:0;display:flex;flex-direction:column;gap:11px}
+  .opt{display:flex;gap:13px;align-items:center;text-align:left;background:var(--card2);
+    border:2px solid transparent;border-radius:16px;padding:15px;font-size:15.5px;line-height:1.45;color:var(--ink);
+    cursor:pointer;transition:.14s;-webkit-tap-highlight-color:transparent}
+  .opt:active{transform:scale(.985)}
+  .opt .lab{flex:0 0 30px;height:30px;border-radius:50%;background:var(--bg2);border:2px solid var(--line);
+    display:grid;place-items:center;font-weight:800;font-size:14px;color:var(--muted);transition:.14s}
+  .opt.sel{border-color:var(--brand);background:color-mix(in srgb,var(--brand) 14%,var(--card2))}
+  .opt.sel .lab{background:var(--grad);border-color:transparent;color:#fff}
+  .opt.correct{border-color:var(--right);background:var(--right-bg)}
+  .opt.correct .lab{background:var(--right);border-color:var(--right);color:#04231a}
+  .opt.wrong{border-color:var(--wrong);background:var(--wrong-bg)}
+  .opt.wrong .lab{background:var(--wrong);border-color:var(--wrong);color:#3a0d18}
+  .opt[disabled]{cursor:default}
+
+  .reveal{margin-top:18px;padding-top:16px;border-top:1px solid var(--line)}
+  .verdict{display:flex;align-items:center;gap:9px;font-weight:800;font-size:16px;margin-bottom:10px}
+  .verdict .em{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-size:15px;color:#fff}
+  .verdict.ok{color:var(--right)} .verdict.ok .em{background:var(--right)}
+  .verdict.no{color:var(--wrong)} .verdict.no .em{background:var(--wrong)}
+  .explh{font:800 11px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin:0 0 8px}
+  .expl{font-size:14.5px;line-height:1.7;color:var(--ink);white-space:pre-wrap}
+
+  /* bottom action */
+  .dock{position:fixed;left:0;right:0;bottom:0;z-index:30;padding:0 16px calc(16px + env(safe-area-inset-bottom));
+    background:linear-gradient(180deg,transparent,var(--bg) 38%);pointer-events:none}
+  .dock-in{max-width:680px;margin:0 auto;display:flex;gap:12px;pointer-events:auto}
+  .act{flex:1;border:0;border-radius:16px;padding:16px;font:800 16px;cursor:pointer;color:#fff;background:var(--grad);
+    box-shadow:0 8px 24px rgba(139,92,246,.4);min-height:54px}
+  .act:disabled{opacity:.45;box-shadow:none;cursor:default}
+  .skip{flex:0 0 auto;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:16px;
+    padding:16px 18px;font:800 15px;cursor:pointer}
+
+  /* sheets */
+  .scrim{position:fixed;inset:0;background:rgba(5,3,12,.55);z-index:40;opacity:0;pointer-events:none;transition:.2s}
+  .scrim.on{opacity:1;pointer-events:auto}
+  .sheet{position:fixed;left:0;right:0;bottom:0;z-index:50;background:var(--bg2);border:1px solid var(--line);
+    border-radius:22px 22px 0 0;padding:18px 18px calc(22px + env(safe-area-inset-bottom));transform:translateY(110%);
+    transition:transform .25s cubic-bezier(.2,.8,.2,1);max-width:680px;margin:0 auto}
+  .sheet.on{transform:translateY(0)}
+  .grab{width:40px;height:4px;border-radius:4px;background:var(--line);margin:0 auto 14px}
+  .sheet h3{margin:0 0 14px;font-size:16px}
+  .frow{margin-bottom:16px} .frow label{display:block;font:700 11px;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+  .opts-wrap{display:flex;gap:8px;flex-wrap:wrap}
+  .chip{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;padding:9px 15px;font:700 13px;cursor:pointer}
+  .chip.on{background:var(--grad);color:#fff;border-color:transparent}
+  .statgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .scell{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px}
+  .scell .n{font-weight:800;font-size:22px} .scell .l{color:var(--muted);font-size:12px;font-weight:600;margin-top:2px}
+  .bar2{height:8px;border-radius:6px;background:var(--line);overflow:hidden;margin-top:8px}
+  .bar2 i{display:block;height:100%;background:var(--grad)}
+  .empty{text-align:center;color:var(--muted);padding:70px 16px}
+  .kbd{font-size:11px;border:1px solid var(--line);border-radius:5px;padding:0 5px}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="top">
+    <div class="logo"><span class="o">⚡</span> Momentum</div>
+    <div class="ring" id="ringBtn" title="View stats">
+      <svg width="40" height="40" viewBox="0 0 40 40">
+        <circle cx="20" cy="20" r="16" fill="none" stroke="var(--line)" stroke-width="5"/>
+        <circle id="ringArc" cx="20" cy="20" r="16" fill="none" stroke="url(#g)" stroke-width="5"
+          stroke-linecap="round" stroke-dasharray="100.5" stroke-dashoffset="100.5" transform="rotate(-90 20 20)"/>
+        <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#8b5cf6"/><stop offset="1" stop-color="#22d3ee"/></linearGradient></defs>
+      </svg>
+      <div><div class="pc" id="ringPct">0%</div><small id="ringSub">0 done</small></div>
+    </div>
+  </div>
+
+  <div class="filt">
+    <div class="seg" id="typeSeg">
+      <button data-v="ALL" class="on">All</button><button data-v="RC">RC</button><button data-v="CR">CR</button>
+    </div>
+    <button class="fbtn" id="openFilters"><span class="dot"></span> Filters</button>
+  </div>
+
+  <div id="view"></div>
+</div>
+
+<div class="dock"><div class="dock-in">
+  <button class="skip" id="skipBtn">Skip</button>
+  <button class="act" id="actBtn" disabled>Reveal answer</button>
+</div></div>
+
+<div class="scrim" id="scrim"></div>
+
+<div class="sheet" id="filterSheet">
+  <div class="grab"></div><h3>Filters</h3>
+  <div class="frow"><label>Source</label><div class="opts-wrap" id="srcChips"></div></div>
+  <div class="frow"><label>Difficulty</label><div class="opts-wrap" id="diffChips"></div></div>
+  <div class="frow"><label>Order</label><div class="opts-wrap">
+    <button class="chip on" data-sh="0">In order</button><button class="chip" data-sh="1">Shuffle</button></div></div>
+</div>
+
+<div class="sheet" id="statSheet">
+  <div class="grab"></div><h3>Your session</h3>
+  <div class="statgrid" id="statGrid"></div>
+</div>
+
+<script>
+const SOURCES={ og:{file:"questions-og.json",label:"Official Guide 2024–25"},
+  manhattan:{file:"questions.json",label:"Manhattan: All the Verbal"} };
+const S={source:"og",all:[],pool:[],idx:0,shuffle:false,type:"ALL",diff:"ALL",
+  selected:null,revealed:false,score:{CR:{c:0,t:0},RC:{c:0,t:0}},answered:new Set()};
+const $=s=>document.querySelector(s);
+const esc=s=>String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+const shuffle=a=>{for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]];}return a;};
+const DC={Easy:"E",Medium:"M",Hard:"H"};
+
+function chips(el,items,active,on){ el.innerHTML=items.map(it=>
+  `<button class="chip${it.v===active?' on':''}" data-v="${esc(it.v)}">${esc(it.label)}</button>`).join("");
+  el.querySelectorAll(".chip").forEach(b=>b.onclick=()=>on(b.dataset.v)); }
+
+function buildFilterSheet(){
+  chips($("#srcChips"),Object.entries(SOURCES).map(([v,o])=>({v,label:o.label})),S.source,v=>{S.source=v;closeSheets();loadSource();});
+  const present=[...new Set(S.all.map(q=>q.difficulty).filter(Boolean))];
+  const ditems=[{v:"ALL",label:"All"},...["Easy","Medium","Hard"].filter(d=>present.includes(d)).map(d=>({v:d,label:d}))];
+  chips($("#diffChips"),ditems,S.diff,v=>{S.diff=v;buildFilterSheet();apply();});
+  document.querySelectorAll('[data-sh]').forEach(b=>b.classList.toggle('on',(b.dataset.sh==="1")===S.shuffle));
+}
+document.querySelectorAll('[data-sh]').forEach(b=>b.onclick=()=>{S.shuffle=b.dataset.sh==="1";buildFilterSheet();apply();});
+
+async function loadSource(){
+  const src=SOURCES[S.source];
+  try{const r=await fetch(src.file);if(!r.ok)throw 0;S.all=await r.json();}
+  catch(e){$("#view").innerHTML=`<div class="empty">Couldn't load <b>${esc(src.file)}</b>.<br>Serve via <span class="kbd">python -m http.server 8000</span></div>`;return;}
+  S.type="ALL";S.diff="ALL";S.shuffle=false;S.score={CR:{c:0,t:0},RC:{c:0,t:0}};S.answered=new Set();
+  [...$("#typeSeg").children].forEach(b=>b.classList.toggle("on",b.dataset.v==="ALL"));
+  buildFilterSheet(); apply();
+}
+
+function apply(){
+  let p=S.all.filter(q=>(S.type==="ALL"||q.type===S.type)&&(S.diff==="ALL"||q.difficulty===S.diff));
+  if(S.shuffle)p=shuffle(p.slice());
+  S.pool=p;S.idx=0;S.selected=null;S.revealed=false;render();
+}
+
+function stat(){ const sc=S.score,c=sc.CR.c+sc.RC.c,t=sc.CR.t+sc.RC.t,pct=t?Math.round(100*c/t):0;
+  const C=100.5,off=C-C*(pct/100);
+  $("#ringArc").style.strokeDashoffset=off; $("#ringPct").textContent=pct+"%"; $("#ringSub").textContent=t+" done";
+  const bar=(s)=>{const p=s.t?Math.round(100*s.c/s.t):0;return `<div class="scell"><div class="n">${s.c}/${s.t}</div><div class="l">${p}% correct</div><div class="bar2"><i style="width:${p}%"></i></div></div>`;};
+  $("#statGrid").innerHTML=
+    `<div class="scell"><div class="n">${pct}%</div><div class="l">Overall · ${t} answered</div><div class="bar2"><i style="width:${pct}%"></i></div></div>`+
+    `<div class="scell"><div class="n">${S.pool.length}</div><div class="l">In current filter</div></div>`+
+    `<div class="l" style="grid-column:1/-1;margin-top:2px">Reading Comprehension</div>${bar(sc.RC)}`+
+    `<div class="scell"></div>`.replace('<div class="scell"></div>','')+
+    `<div class="l" style="grid-column:1/-1">Critical Reasoning</div>${bar(sc.CR)}`;
+}
+
+function render(){
+  stat();
+  const q=S.pool[S.idx],total=S.pool.length,v=$("#view");
+  if(!q){v.innerHTML=`<div class="empty">No questions match these filters.</div>`;setAct("Reveal answer",true);return;}
+  const parts=String(q.question).split("\n\n");
+  const titled=parts.length>1&&parts[0].length<60&&!/[.?]$/.test(parts[0]);
+  const qhtml=titled?`<span class="title">${esc(parts[0])}</span>${esc(parts.slice(1).join("\n\n"))}`:esc(q.question);
+  const diff=q.difficulty?`<span class="pill ${DC[q.difficulty]}">${q.difficulty}</span>`:"";
+  const psg=q.passage?`<div class="psg"><details open><summary><span class="chev">▸</span> Reading passage</summary>
+    <div class="ptext">${esc(q.passage)}</div></details></div>`:"";
+  const opts=(q.options||[]).map(o=>`<button class="opt" data-label="${o.label}"><span class="lab">${o.label}</span><span>${esc(o.text)}</span></button>`).join("");
+  v.innerHTML=`<div class="meta"><span class="pill">${q.type}</span>${diff}<span class="count">${S.idx+1} / ${total}${q.number?' · #'+q.number:''}</span></div>
+    ${psg}<div class="card"><p class="qtext">${qhtml}</p><ul class="opts">${opts}</ul><div id="rev"></div></div>`;
+  v.querySelectorAll(".opt").forEach(b=>b.addEventListener("click",()=>!S.revealed&&select(b.dataset.label)));
+  setAct("Reveal answer",true); window.scrollTo({top:0,behavior:"smooth"});
+}
+function select(l){S.selected=l;document.querySelectorAll(".opt").forEach(b=>b.classList.toggle("sel",b.dataset.label===l));setAct("Reveal answer",false);}
+function reveal(){const q=S.pool[S.idx];if(!q)return;S.revealed=true;const cor=q.correct_answer;
+  document.querySelectorAll(".opt").forEach(b=>{b.setAttribute("disabled","");const l=b.dataset.label;
+    if(l===cor)b.classList.add("correct");else if(l===S.selected)b.classList.add("wrong");b.classList.remove("sel");});
+  const ok=S.selected===cor;
+  if(!S.answered.has(q.id)){S.answered.add(q.id);const s=S.score[q.type]||(S.score[q.type]={c:0,t:0});s.t++;if(ok)s.c++;stat();}
+  $("#rev").innerHTML=`<div class="reveal"><div class="verdict ${ok?'ok':'no'}"><span class="em">${ok?'✓':'✗'}</span>${ok?'Correct!':'Correct answer is '+cor}</div>
+    <div class="explh">Explanation</div><div class="expl">${esc(q.explanation||'No explanation available.')}</div></div>`;
+  setAct("Next question →",false);
+}
+function next(){if(!S.pool.length)return;S.idx=(S.idx+1)%S.pool.length;S.selected=null;S.revealed=false;render();}
+function setAct(t,d){const b=$("#actBtn");b.textContent=t;b.disabled=!!d&&!S.revealed;}
+
+function openSheet(id){$("#scrim").classList.add("on");$(id).classList.add("on");}
+function closeSheets(){$("#scrim").classList.remove("on");document.querySelectorAll(".sheet").forEach(s=>s.classList.remove("on"));}
+$("#scrim").onclick=closeSheets;
+$("#openFilters").onclick=()=>{buildFilterSheet();openSheet("#filterSheet");};
+$("#ringBtn").onclick=()=>{stat();openSheet("#statSheet");};
+$("#typeSeg").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;
+  [...e.currentTarget.children].forEach(x=>x.classList.toggle("on",x===b));S.type=b.dataset.v;apply();});
+$("#skipBtn").onclick=next;
+$("#actBtn").onclick=()=>S.revealed?next():reveal();
+document.addEventListener("keydown",e=>{if(e.key==="Enter")$("#actBtn").click();else if(e.key==="ArrowRight")next();
+  else if(/^[1-5]$/.test(e.key)){const o=S.pool[S.idx]?.options||[];if(o[+e.key-1]&&!S.revealed)select(o[+e.key-1].label);}});
+
+loadSource();
+</script>
+</body>
+</html>

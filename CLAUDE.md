@@ -132,19 +132,47 @@ Array of objects: `id` (`{cr|rc}-ch{n}-q{n}`, or `og-{cr|rc}-q{n}`), `type`
 (`CR`|`RC`), `chapter`, `title` (CR topic label or null), `question` (title + stem,
 `\n\n`-joined), `passage` (RC only, else null), `options` (`[{label:"A", text}...]`,
 A–E), `correct_answer` (single letter; never null in the shipped CR/RC set),
-`explanation`, `format` (`multiple_choice`). `questions-og.json` records add
-`difficulty`, `number` (book question #), and `source`; both files share the schema
-so the app reads either.
+`explanation`, `format` (`multiple_choice`). `questions-og.json` records also carry
+`difficulty` (Easy/Medium/Hard), `number` (book question #), `source`, and the
+sub-type fields below; both files share the schema so the app reads either.
 
-## index.html (the app)
+### Sub-type fields (OG only)
+- `subtype` — the question's fine type used for filtering/analytics. **RC**: the
+  book's own printed label (`_og_category` reads it verbatim from the explanation:
+  Main Idea / Supporting Idea / Inference / Application / Evaluation / Logical
+  Structure) — source-faithful, 164/164. **CR**: a task **inferred from the stem
+  wording** (`_og_cr_task`: Weaken/Strengthen/Assumption/Inference / Conclusion/Flaw/
+  Evaluate/Boldface / Method/Explain a Discrepancy/Plan/Complete the Argument), or
+  `"Unclassified"` when no rule matches with confidence (~12%). The CR inference is
+  the ONE place a label isn't taken verbatim from the book — keep it conservative.
+- `category` — the book's printed label verbatim (RC: same as subtype; CR: the 3
+  broad buckets Argument Construction / Argument Evaluation / Evaluation of a Plan).
 
-One self-contained file: plain HTML/CSS/JS, no build, no backend, **no
-localStorage** — all state in memory for the session (intentional). Mobile-first,
-auto light/dark via `prefers-color-scheme`. A **source selector** (`SOURCES` map in
-the script) switches between `questions-og.json` (Official Guide, default) and
-`questions.json` (Manhattan), re-fetching and resetting the session on change.
-Filters by type (CR/RC) and chapter, tracks session accuracy split by type, Reveal
-shows correct/incorrect + the book's explanation. Edit the source directly for UI
-changes; do not regenerate it from the parser. The per-source footnote messaging
-(SC/Focus-Edition exclusion for Manhattan; key+marker cross-check for the OG) is
-deliberate — keep it accurate if you change scope.
+## index.html (the app) — "GMAT Verbal Trainer"
+
+One self-contained file: plain HTML/CSS/JS, no build, no backend. Mobile-first,
+responsive, auto light/dark. A **source selector** (`SOURCES` map) switches between
+`questions-og.json` (default) and `questions.json`. The app is a dashboard + several
+modes; the original simple single-question app is preserved as `index-classic.html`,
+and `ui-{focus,momentum,console,exam}.html` are earlier design explorations.
+
+- **Persistence:** uses **localStorage** (key `gmat_verbal_v1`) via the `Store`
+  abstraction — per-question history, daily streak/level, column level. This
+  deliberately reverses the classic app's session-only design (needed for streaks,
+  redo-failed, and cross-session analytics). `Store` is written so a Supabase
+  backend can be dropped in for cross-device sync (swap the backend, keep the API);
+  Export/Import/Reset are exposed. Nothing is uploaded by default.
+- **Modes:** Daily RC (one passage/day, adaptive difficulty + streak), GMAT RC
+  column (continuous passage-level adaptive), Practice (filter by type / `subtype`
+  concept / difficulty, instant feedback + a sub-type badge **revealed only after
+  answering** so it isn't a hint), Exam simulation (timed 45min/23Q pace, no
+  feedback, score report), Redo-my-misses (from saved wrong set), Target-weak-spots
+  (lowest-accuracy `subtype`).
+- **Adaptive engine** (`buildPassages`/`pickPassage`/`Store.adaptLevel`): RC grouped
+  into passages (OG: 36 — 11 Easy/13 Medium/12 Hard); after a passage, **≥75% → up,
+  <50% → down, else stay** (clamped Easy↔Hard). Same rule drives Daily and Column.
+- **Analytics dashboard:** accuracy bars per RC `subtype`, per CR `subtype`, per
+  difficulty, with a weakest-area callout (needs ≥`MIN_ATTEMPTS`). Plus a GMAT Focus
+  Verbal syllabus card (23Q/45min, the types).
+
+Edit the source directly for UI changes; do not regenerate it from the parser.

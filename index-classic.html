@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#0f766e" />
+<title>GMAT Verbal Practice</title>
+<style>
+  :root{
+    --bg:#f7f7f5; --card:#ffffff; --ink:#1c1c1a; --muted:#6b6b66;
+    --line:#e6e6e1; --brand:#0f766e; --brand-ink:#0b5a54;
+    --pick:#eef6f5; --pick-line:#0f766e;
+    --right:#16a34a; --right-bg:#ecfdf3; --wrong:#dc2626; --wrong-bg:#fef2f2;
+    --shadow:0 1px 2px rgba(0,0,0,.04),0 8px 24px rgba(0,0,0,.05);
+    --r:16px;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#16161a; --card:#1f1f25; --ink:#ececec; --muted:#a0a0a8;
+      --line:#33333c; --brand:#2dd4bf; --brand-ink:#5eead4;
+      --pick:#10302d; --pick-line:#2dd4bf;
+      --right:#34d399; --right-bg:#0f2e23; --wrong:#f87171; --wrong-bg:#3a1d1d;
+      --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 30px rgba(0,0,0,.35);
+    }
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{
+    background:var(--bg); color:var(--ink);
+    font:16px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-text-size-adjust:100%;
+    padding-bottom:env(safe-area-inset-bottom);
+  }
+  .wrap{max-width:760px;margin:0 auto;padding:16px 16px 120px}
+
+  /* Header / filters */
+  header{position:sticky;top:0;z-index:5;background:var(--bg);
+    padding:10px 0 8px;border-bottom:1px solid var(--line)}
+  .brand{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+  .brand h1{font-size:18px;margin:0;font-weight:700;letter-spacing:-.2px}
+  .brand .dot{width:10px;height:10px;border-radius:50%;background:var(--brand)}
+  .filters{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  select{
+    appearance:none;-webkit-appearance:none;
+    background:var(--card);color:var(--ink);border:1px solid var(--line);
+    border-radius:999px;padding:9px 34px 9px 14px;font-size:14px;font-weight:600;
+    box-shadow:var(--shadow);max-width:62vw;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b6b66' stroke-width='3'><path d='M6 9l6 6 6-6'/></svg>");
+    background-repeat:no-repeat;background-position:right 12px center;
+  }
+  .seg{display:inline-flex;background:var(--card);border:1px solid var(--line);
+    border-radius:999px;padding:3px;box-shadow:var(--shadow)}
+  .seg button{border:0;background:transparent;color:var(--muted);
+    padding:7px 13px;border-radius:999px;font-size:14px;font-weight:600;cursor:pointer}
+  .seg button.on{background:var(--brand);color:#fff}
+
+  /* Score strip */
+  .scorebar{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+  .pill{background:var(--card);border:1px solid var(--line);border-radius:999px;
+    padding:5px 11px;font-size:12.5px;font-weight:600;color:var(--muted)}
+  .pill b{color:var(--ink)}
+
+  /* Progress */
+  .meta{display:flex;justify-content:space-between;align-items:center;
+    color:var(--muted);font-size:13px;margin:16px 2px 8px}
+  .tag{display:inline-block;background:var(--pick);color:var(--brand-ink);
+    border:1px solid var(--line);border-radius:6px;padding:1px 7px;font-weight:700;
+    font-size:11.5px;letter-spacing:.3px}
+
+  /* Card */
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);
+    box-shadow:var(--shadow);padding:18px;margin-bottom:14px}
+  .passage{font-size:14.5px;color:var(--ink);background:transparent;
+    border-left:3px solid var(--brand);padding:2px 0 2px 14px;margin:0 0 4px;
+    white-space:pre-wrap}
+  details.psg{margin-bottom:14px}
+  details.psg summary{cursor:pointer;font-weight:700;color:var(--brand-ink);
+    font-size:13.5px;list-style:none;display:flex;align-items:center;gap:6px;
+    padding:8px 0}
+  details.psg summary::-webkit-details-marker{display:none}
+  details.psg summary .chev{transition:transform .15s}
+  details.psg[open] summary .chev{transform:rotate(90deg)}
+  .qtext{font-size:17px;line-height:1.5;white-space:pre-wrap;margin:0 0 4px}
+  .qtext .title{display:block;font-weight:700;margin-bottom:6px}
+
+  /* Options */
+  .opts{list-style:none;margin:14px 0 0;padding:0;display:flex;flex-direction:column;gap:10px}
+  .opt{display:flex;gap:12px;align-items:flex-start;width:100%;text-align:left;
+    background:var(--card);border:1.5px solid var(--line);border-radius:14px;
+    padding:14px 14px;font-size:15.5px;line-height:1.45;color:var(--ink);
+    cursor:pointer;min-height:52px;transition:border-color .12s,background .12s;
+    -webkit-tap-highlight-color:transparent}
+  .opt:active{transform:scale(.995)}
+  .opt .lab{flex:0 0 26px;height:26px;border-radius:50%;border:1.5px solid var(--line);
+    display:grid;place-items:center;font-weight:700;font-size:13px;color:var(--muted)}
+  .opt.sel{border-color:var(--pick-line);background:var(--pick)}
+  .opt.sel .lab{border-color:var(--pick-line);color:var(--brand-ink)}
+  .opt.correct{border-color:var(--right);background:var(--right-bg)}
+  .opt.correct .lab{background:var(--right);border-color:var(--right);color:#fff}
+  .opt.wrong{border-color:var(--wrong);background:var(--wrong-bg)}
+  .opt.wrong .lab{background:var(--wrong);border-color:var(--wrong);color:#fff}
+  .opt[disabled]{cursor:default}
+
+  /* Explanation */
+  .reveal{margin-top:16px;border-top:1px dashed var(--line);padding-top:14px}
+  .verdict{font-weight:700;font-size:15px;margin-bottom:8px;display:flex;gap:8px;align-items:center}
+  .verdict.ok{color:var(--right)} .verdict.no{color:var(--wrong)}
+  .expl{font-size:14.5px;line-height:1.6;color:var(--ink);white-space:pre-wrap}
+  .expl h4{margin:0 0 6px;font-size:12px;letter-spacing:.4px;text-transform:uppercase;color:var(--muted)}
+
+  /* Bottom action bar */
+  .bar{position:fixed;left:0;right:0;bottom:0;z-index:6;
+    background:color-mix(in srgb,var(--bg) 86%, transparent);
+    backdrop-filter:saturate(1.4) blur(8px);
+    border-top:1px solid var(--line);
+    padding:10px 16px calc(10px + env(safe-area-inset-bottom));
+  }
+  .bar .inner{max-width:760px;margin:0 auto;display:flex;gap:10px}
+  .btn{flex:1;border:0;border-radius:14px;padding:15px 16px;font-size:16px;
+    font-weight:700;cursor:pointer;min-height:52px;-webkit-tap-highlight-color:transparent}
+  .btn.primary{background:var(--brand);color:#fff}
+  .btn.primary:disabled{opacity:.4}
+  .btn.ghost{background:var(--card);color:var(--ink);border:1px solid var(--line)}
+  .empty{text-align:center;color:var(--muted);padding:60px 20px}
+  .note{font-size:12px;color:var(--muted);text-align:center;margin-top:18px;line-height:1.5}
+  .kbd{font:inherit;font-size:11px;border:1px solid var(--line);border-bottom-width:2px;
+    border-radius:5px;padding:0 5px;color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand"><span class="dot"></span><h1>GMAT Verbal Practice</h1></div>
+    <div class="filters">
+      <select id="sourceSel" aria-label="Question source"></select>
+      <div class="seg" id="typeSeg">
+        <button data-type="ALL" class="on">All</button>
+        <button data-type="CR">CR</button>
+        <button data-type="RC">RC</button>
+      </div>
+      <select id="chapterSel" aria-label="Filter by chapter"></select>
+      <div class="seg"><button id="shuffleBtn" title="Shuffle order">Shuffle</button></div>
+    </div>
+    <div class="scorebar" id="scorebar"></div>
+  </header>
+
+  <main id="main"></main>
+
+  <p class="note" id="footnote"></p>
+</div>
+
+<div class="bar">
+  <div class="inner">
+    <button class="btn ghost" id="skipBtn">Skip</button>
+    <button class="btn primary" id="actionBtn" disabled>Reveal</button>
+  </div>
+</div>
+
+<script>
+// Two independently extracted question banks, each its own JSON file. The source
+// selector swaps between them; the chapter selector below then filters within.
+const SOURCES = {
+  og: {
+    file: "questions-og.json",
+    label: "Official Guide 2024–25",
+    note: q => `${q} Reading Comprehension &amp; Critical Reasoning questions ` +
+      `extracted from <i>GMAT Official Guide 2024–2025</i> (Focus Edition). Every ` +
+      `answer is confirmed by the book's numbered answer key and independently ` +
+      `cross-checked against its answer-explanation marker. Grouped by the book's ` +
+      `own difficulty bands. Session stats only — nothing is saved.`,
+  },
+  manhattan: {
+    file: "questions.json",
+    label: "Manhattan: All the Verbal",
+    note: q => `${q} questions extracted from <i>GMAT All the Verbal</i> (Manhattan ` +
+      `Prep). Critical Reasoning &amp; Reading Comprehension are the Verbal question ` +
+      `types on the current GMAT (Focus Edition); Sentence Correction was removed ` +
+      `and is not included. Session stats only — nothing is saved.`,
+  },
+};
+const DEFAULT_SOURCE = "og";
+
+const State = {
+  source: DEFAULT_SOURCE,
+  all: [], pool: [], idx: 0, shuffle: false,
+  type: "ALL", chapter: "ALL",
+  selected: null, revealed: false,
+  // session score: {CR:{c,t}, RC:{c,t}}
+  score: { CR:{c:0,t:0}, RC:{c:0,t:0} },
+  answered: new Set(),   // ids already counted (so re-reveal doesn't double count)
+};
+
+const $ = s => document.querySelector(s);
+const main = $("#main");
+
+function buildSourceFilter(){
+  const sel = $("#sourceSel");
+  sel.innerHTML = Object.entries(SOURCES)
+    .map(([k,v]) => `<option value="${k}"${k===State.source?" selected":""}>${esc(v.label)}</option>`)
+    .join("");
+}
+
+async function loadSource(){
+  const src = SOURCES[State.source];
+  try{
+    const res = await fetch(src.file);
+    if(!res.ok) throw new Error(res.status);
+    State.all = await res.json();
+  }catch(e){
+    main.innerHTML = `<div class="empty">Couldn't load <b>${esc(src.file)}</b>.<br>
+      Run this app from the same folder via a local server, e.g.<br>
+      <span class="kbd">python -m http.server</span> then open
+      <span class="kbd">localhost:8000</span>.</div>`;
+    return;
+  }
+  // fresh session when switching banks (ids/pools differ between books)
+  State.chapter = "ALL"; State.shuffle = false;
+  State.score = { CR:{c:0,t:0}, RC:{c:0,t:0} }; State.answered = new Set();
+  $("#shuffleBtn").classList.remove("on");
+  buildChapterFilter();
+  applyFilters();
+  $("#footnote").innerHTML = src.note(State.all.length);
+}
+
+async function load(){
+  buildSourceFilter();
+  bind();
+  await loadSource();
+}
+
+function buildChapterFilter(){
+  const sel = $("#chapterSel");
+  const chapters = [];
+  State.all.forEach(q => { if(!chapters.includes(q.chapter)) chapters.push(q.chapter); });
+  sel.innerHTML = `<option value="ALL">All chapters</option>` +
+    chapters.map(c => `<option value="${esc(c)}">${esc(shortChap(c))}</option>`).join("");
+}
+function shortChap(c){ return c.length > 34 ? c.slice(0,33).trimEnd()+"…" : c; }
+
+function bind(){
+  $("#sourceSel").addEventListener("change", e=>{
+    State.source = e.target.value; loadSource();
+  });
+  $("#typeSeg").addEventListener("click", e=>{
+    const b = e.target.closest("button"); if(!b) return;
+    [...e.currentTarget.children].forEach(x=>x.classList.toggle("on", x===b));
+    State.type = b.dataset.type; applyFilters();
+  });
+  $("#chapterSel").addEventListener("change", e=>{ State.chapter = e.target.value; applyFilters(); });
+  $("#shuffleBtn").addEventListener("click", e=>{
+    State.shuffle = !State.shuffle;
+    e.target.classList.toggle("on", State.shuffle);
+    applyFilters();
+  });
+  $("#skipBtn").addEventListener("click", next);
+  $("#actionBtn").addEventListener("click", ()=>{
+    if(State.revealed) next(); else reveal();
+  });
+  document.addEventListener("keydown", e=>{
+    if(e.key === "Enter"){ $("#actionBtn").click(); }
+    else if(e.key === "ArrowRight"){ next(); }
+    else if(/^[1-5]$/.test(e.key)){
+      const i = +e.key - 1; const opts = State.pool[State.idx]?.options || [];
+      if(opts[i] && !State.revealed) selectOption(opts[i].label);
+    }
+  });
+}
+
+function applyFilters(){
+  let pool = State.all.filter(q =>
+    (State.type === "ALL" || q.type === State.type) &&
+    (State.chapter === "ALL" || q.chapter === State.chapter));
+  if(State.shuffle) pool = shuffle(pool.slice());
+  State.pool = pool; State.idx = 0;
+  resetQuestionState();
+  render();
+}
+
+function resetQuestionState(){ State.selected = null; State.revealed = false; }
+
+function render(){
+  renderScore();
+  const q = State.pool[State.idx];
+  if(!q){
+    main.innerHTML = `<div class="empty">No questions match this filter.</div>`;
+    setAction("Reveal", true); return;
+  }
+  const total = State.pool.length;
+  const passage = q.passage ? `
+    <details class="psg" open>
+      <summary><span class="chev">▸</span> Reading passage</summary>
+      <p class="passage">${esc(q.passage)}</p>
+    </details>` : "";
+
+  const qhtml = formatQuestion(q.question);
+  const opts = (q.options||[]).map((o,i)=>`
+    <button class="opt" data-label="${o.label}" aria-label="Option ${o.label}">
+      <span class="lab">${o.label}</span><span class="otxt">${esc(o.text)}</span>
+    </button>`).join("");
+
+  main.innerHTML = `
+    <div class="meta">
+      <span>Question ${State.idx+1} of ${total}</span>
+      <span><span class="tag">${q.type}</span> &nbsp;${esc(shortChap(q.chapter))}</span>
+    </div>
+    <div class="card">
+      ${passage}
+      <div class="qtext">${qhtml}</div>
+      <div class="opts">${opts}</div>
+      <div id="revealArea"></div>
+    </div>`;
+
+  main.querySelectorAll(".opt").forEach(btn=>{
+    btn.addEventListener("click", ()=> !State.revealed && selectOption(btn.dataset.label));
+  });
+  setAction("Reveal", true);
+  window.scrollTo({top:0, behavior:"smooth"});
+}
+
+function formatQuestion(text){
+  const parts = String(text).split("\n\n");
+  if(parts.length > 1 && parts[0].length < 60 && !/[.?]$/.test(parts[0])){
+    return `<span class="title">${esc(parts[0])}</span>${esc(parts.slice(1).join("\n\n"))}`;
+  }
+  return esc(text);
+}
+
+function selectOption(label){
+  State.selected = label;
+  main.querySelectorAll(".opt").forEach(b=>
+    b.classList.toggle("sel", b.dataset.label === label));
+  setAction("Reveal", false);
+}
+
+function reveal(){
+  const q = State.pool[State.idx];
+  if(!q) return;
+  State.revealed = true;
+  const correct = q.correct_answer;
+
+  main.querySelectorAll(".opt").forEach(b=>{
+    b.setAttribute("disabled","");
+    const lab = b.dataset.label;
+    if(lab === correct) b.classList.add("correct");
+    else if(lab === State.selected) b.classList.add("wrong");
+    b.classList.remove("sel");
+  });
+
+  const isRight = State.selected === correct;
+  // score once per question id
+  if(!State.answered.has(q.id)){
+    State.answered.add(q.id);
+    const s = State.score[q.type] || (State.score[q.type] = {c:0,t:0});
+    s.t++; if(isRight) s.c++;
+    renderScore();
+  }
+
+  const verdict = isRight
+    ? `<div class="verdict ok">✓ Correct</div>`
+    : `<div class="verdict no">✗ Not quite — correct answer is ${correct}</div>`;
+
+  $("#revealArea").innerHTML = `
+    <div class="reveal">
+      ${verdict}
+      <h4 class="explh">Explanation</h4>
+      <div class="expl">${esc(q.explanation || "No explanation available.")}</div>
+    </div>`;
+  // restyle the explanation heading
+  const h = main.querySelector(".explh");
+  if(h){ h.style.margin="0 0 6px"; h.style.fontSize="12px"; h.style.letterSpacing=".4px";
+         h.style.textTransform="uppercase"; h.style.color="var(--muted)"; }
+  setAction("Next →", false);
+}
+
+function next(){
+  if(State.pool.length === 0) return;
+  State.idx = (State.idx + 1) % State.pool.length;
+  resetQuestionState();
+  render();
+}
+
+function setAction(text, disabled){
+  const b = $("#actionBtn");
+  b.textContent = text;
+  b.disabled = !!disabled && !State.revealed;
+}
+
+function renderScore(){
+  const sc = State.score;
+  const overallC = sc.CR.c + sc.RC.c, overallT = sc.CR.t + sc.RC.t;
+  const pct = overallT ? Math.round(100*overallC/overallT) : 0;
+  const cell = (label, s) => `<span class="pill">${label}: <b>${s.c}/${s.t}</b></span>`;
+  $("#scorebar").innerHTML =
+    `<span class="pill">Session: <b>${overallC}/${overallT}</b>${overallT?` &middot; ${pct}%`:""}</span>` +
+    cell("CR", sc.CR) + cell("RC", sc.RC);
+}
+
+/* utils */
+function esc(s){ return String(s==null?"":s)
+  .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+function shuffle(a){ for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; }
+
+load();
+</script>
+</body>
+</html>
