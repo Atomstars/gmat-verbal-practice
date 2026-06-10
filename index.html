@@ -236,7 +236,7 @@
   .repHero .big{font:850 54px/1 var(--sans);background:var(--grad);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
   .repHero .big small{font-size:24px;-webkit-text-fill-color:var(--faint)}
   .repHero .s{color:var(--muted);margin-top:8px;font-size:14px}
-  .repGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:18px}
+  .repGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:10px;margin-top:18px}
   @media (max-width:560px){ .repGrid{grid-template-columns:1fr 1fr} }
   .repGrid .c{background:var(--surface2);border:1px solid var(--line);border-radius:12px;padding:13px}
   .repGrid .c .n{font:850 20px var(--sans)} .repGrid .c .l{color:var(--muted);font-size:12px;margin-top:3px}
@@ -250,6 +250,7 @@
   .ri .stem{font-size:14px;margin:0 0 7px} .ri .ans{font-size:12.5px;color:var(--muted)} .ri .ans b{color:var(--ink)}
   .ri details{margin-top:7px} .ri summary{color:var(--brand-ink);font-weight:700;font-size:12.5px}
   .ri .expl{font-size:13px;line-height:1.65;white-space:pre-wrap;margin-top:8px;border-top:1px solid var(--line2);padding-top:9px}
+  .ri .qtime{font:600 11px var(--mono);background:var(--surface2);border:1px solid var(--line);border-radius:6px;padding:1px 6px;color:var(--muted)}
 
   .empty{text-align:center;color:var(--muted);padding:60px 20px}
   .kbd{font:11px var(--mono);border:1px solid var(--line);border-radius:5px;padding:0 5px}
@@ -445,7 +446,8 @@ const Store=(()=>{
 /* ===== APP STATE ===== */
 const App={ source:"og", all:[], _loaded:{}, mode:null, cfg:null,
   qs:[], idx:0, answers:{}, flags:new Set(), checked:new Set(),
-  timer:null, timeLeft:0, elapsed:0, showTimer:false, _repExpl:false };
+  timer:null, timeLeft:0, elapsed:0, showTimer:false, _repExpl:false,
+  qTimes:{}, _qTimedSet:new Set(), _timingLastIdx:-1, _qStart:0 };
 const $=s=>document.querySelector(s);
 const esc=s=>String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
 const shuffle=a=>{for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]];}return a;};
@@ -486,7 +488,8 @@ function startColumn(){ App.mode="column"; App._colLevel=Store.adaptive().level|
 function nextColumnPassage(){ const p=pickPassage(App._colLevel,App._colDone); if(!p){ alert("No passages available."); renderDash(); return; }
   App._curPassage=p; App._usedLevel=App._colLevel; App._colDone.push(p.pid); App.qs=p.qs.slice(); resetRun(); startRun(); }
 function isAdaptive(){ return App.mode==="daily"||App.mode==="column"; }
-function resetRun(){ App.idx=0; App.answers={}; App.flags=new Set(); App.checked=new Set(); }
+function resetRun(){ App.idx=0; App.answers={}; App.flags=new Set(); App.checked=new Set();
+  App.qTimes={}; App._qTimedSet=new Set(); App._timingLastIdx=-1; App._qStart=Date.now(); }
 
 /* ===== DASHBOARD ===== */
 const MODES=[
@@ -630,6 +633,7 @@ function startRun(){
 function tick(){ if(!App.showTimer)return; $("#timer").textContent=mmss(App.timeLeft); $("#timer").classList.toggle("low",App.timeLeft<=60); }
 function renderQ(){
   const q=App.qs[App.idx], n=App.qs.length, answered=App.checked.has(App.idx), showType=!isExam()&&answered;
+  if(App._timingLastIdx!==App.idx){ App._qStart=Date.now(); App._timingLastIdx=App.idx; }
   $("#qof").textContent=`${App.idx+1} / ${n}`;
   $("#prog").style.width=`${(App.idx)/n*100}%`;
   $("#tags").innerHTML=`<span class="pill">${q.type}</span>`+
@@ -670,9 +674,15 @@ function updateAct(){ const q=App.qs[App.idx], last=App.idx===App.qs.length-1, b
   if(!isExam()&&!App.checked.has(App.idx)){ b.textContent="Submit"; b.className="btn primary"; b.disabled=!App.answers[q.id]; }
   else { b.disabled=false; b.textContent=last?(isExam()?"End section ✓":"Finish ✓"):"Next ▶"; b.className="btn primary"+(last?" end":""); } }
 $("#actBtn").addEventListener("click",()=>{ const q=App.qs[App.idx], last=App.idx===App.qs.length-1;
-  if(!isExam()&&!App.checked.has(App.idx)){ App.checked.add(App.idx); Store.record(q,App.answers[q.id],App.answers[q.id]===q.correct_answer); renderQ(); return; }
-  if(last){ finish(); return; } App.idx++; renderQ(); });
-$("#prevBtn").addEventListener("click",()=>{ if(App.idx>0){App.idx--;renderQ();} });
+  if(!isExam()&&!App.checked.has(App.idx)){
+    if(!App._qTimedSet.has(App.idx)){ App.qTimes[App.idx]=Math.round((Date.now()-App._qStart)/1000); App._qTimedSet.add(App.idx); }
+    App.checked.add(App.idx); Store.record(q,App.answers[q.id],App.answers[q.id]===q.correct_answer); renderQ(); return; }
+  if(last){ if(isExam()) App.qTimes[App.idx]=(App.qTimes[App.idx]||0)+Math.round((Date.now()-App._qStart)/1000); finish(); return; }
+  if(isExam()) App.qTimes[App.idx]=(App.qTimes[App.idx]||0)+Math.round((Date.now()-App._qStart)/1000);
+  App.idx++; renderQ(); });
+$("#prevBtn").addEventListener("click",()=>{ if(App.idx>0){
+  if(isExam()) App.qTimes[App.idx]=(App.qTimes[App.idx]||0)+Math.round((Date.now()-App._qStart)/1000);
+  App.idx--;renderQ();} });
 $("#flagBtn").addEventListener("click",()=>{ App.flags.has(App.idx)?App.flags.delete(App.idx):App.flags.add(App.idx); renderQ(); });
 
 /* ===== FINISH + REPORT ===== */
@@ -683,10 +693,12 @@ function finish(){
   let correct=0,ans=0; const bd={RC:{c:0,t:0},CR:{c:0,t:0}};
   App.qs.forEach(q=>{ const a=App.answers[q.id]; if(a!=null){ans++; const g=bd[q.type]; g.t++; if(a===q.correct_answer){correct++;g.c++;}} });
   const pct=ans?Math.round(100*correct/ans):0;
+  const tVals=Object.values(App.qTimes); const avgSec=tVals.length?Math.round(tVals.reduce((a,b)=>a+b,0)/tVals.length):0;
   $("#repScore").innerHTML=pct+'<small>%</small>';
   $("#repSub").textContent=`${correct} correct of ${ans} answered · ${App.qs.length} in set · time ${mmss(App.elapsed)}`;
   const cell=(l,s)=>`<div class="c"><div class="n">${s.t?Math.round(100*s.c/s.t):0}%</div><div class="l">${l} · ${s.c}/${s.t}</div></div>`;
-  $("#repGrid").innerHTML=`<div class="c"><div class="n">${correct}/${App.qs.length}</div><div class="l">Overall</div></div>`+cell("RC",bd.RC)+cell("CR",bd.CR);
+  $("#repGrid").innerHTML=`<div class="c"><div class="n">${correct}/${App.qs.length}</div><div class="l">Overall</div></div>`+cell("RC",bd.RC)+cell("CR",bd.CR)+
+    `<div class="c"><div class="n">${avgSec?mmss(avgSec):'—'}</div><div class="l">Avg / question</div></div>`;
   $("#repNext").hidden=true; $("#repRedo").hidden=false; $("#repHome").textContent="Back to dashboard";
   App._repExpl=false; $("#repExpl").textContent="Show all explanations"; buildRepList(); show("report");
 }
@@ -698,13 +710,16 @@ function finishAdaptive(){
   const move=up?"⬆ promoted":down?"⬇ eased":"→ holding steady";
   if(App.mode==="daily"&&!App._dailyBonus) Store.completeDaily(pct,used,App._curPassage.pid);
   if(App.mode==="column"){ App._colLevel=next; Store.setColumnLevel(next); App._colC+=correct; App._colT+=App.qs.length; App._colP++; }
+  const tVals2=Object.values(App.qTimes); const avgSec2=tVals2.length?Math.round(tVals2.reduce((a,b)=>a+b,0)/tVals2.length):0;
   $("#repScore").innerHTML=pct+'<small>%</small>';
   let sub=`${correct}/${App.qs.length} on this ${used} passage`;
   if(App.mode==="daily"){ const d=Store.getDaily(); sub+=App._dailyBonus?` · bonus (streak unchanged)`:` · 🔥 ${d.streak}-day streak`; sub+=` · next time: ${next}`; }
   else { sub+=` · ${used} ${move} → next: ${next} · passage ${App._colP} this session`; }
+  sub+=` · ⏱ ${mmss(App.elapsed)}`;
   $("#repSub").textContent=sub;
   $("#repGrid").innerHTML=DIFFS.map(l=>{ const on=l===next,cur=l===used;
-    return `<div class="c" style="${on?'border-color:var(--brand)':''}"><div class="n">${on?'●':'○'}</div><div class="l">${l}${cur&&!on?' (was)':''}</div></div>`; }).join("");
+    return `<div class="c" style="${on?'border-color:var(--brand)':''}"><div class="n">${on?'●':'○'}</div><div class="l">${l}${cur&&!on?' (was)':''}</div></div>`; }).join("")+
+    `<div class="c"><div class="n">${avgSec2?mmss(avgSec2):'—'}</div><div class="l">Avg / question</div></div>`;
   $("#repRedo").hidden=true;
   if(App.mode==="column"){ $("#repNext").hidden=false; $("#repNext").textContent=`Next passage (${next}) →`; $("#repHome").textContent="End session"; }
   else { $("#repNext").hidden=true; $("#repHome").textContent="Back to dashboard"; }
@@ -714,9 +729,10 @@ function buildRepList(){
   $("#repList").innerHTML=App.qs.map((q,i)=>{ const a=App.answers[q.id], ok=a===q.correct_answer, skip=a==null;
     const stem=(()=>{const p=String(q.question).split("\n\n");return p[p.length-1];})();
     const cls=skip?"skip":ok?"ok":"no", sym=skip?"–":ok?"✓":"✗";
+    const t=App.qTimes[i]; const tStr=t!=null?mmss(t):"—";
     const expl=App._repExpl?`<div class="expl">${esc(q.explanation||'')}</div>`:`<details><summary>Explanation</summary><div class="expl">${esc(q.explanation||'')}</div></details>`;
     return `<div class="ri ${cls}"><div class="h"><span class="dotr">${sym}</span><b>Q${i+1}</b>
-      <span class="meta"><span class="pill">${esc(q.subtype||q.type)}</span><span class="pill d-${q.difficulty||''}">${esc(q.difficulty||'')}</span></span></div>
+      <span class="meta"><span class="pill">${esc(q.subtype||q.type)}</span><span class="pill d-${q.difficulty||''}">${esc(q.difficulty||'')}</span><span class="qtime">⏱ ${tStr}</span></span></div>
       <p class="stem">${esc(stem)}</p><div class="ans">Your answer: <b>${skip?'—':esc(a)}</b> · Correct: <b>${esc(q.correct_answer)}</b></div>${expl}</div>`; }).join("");
 }
 $("#repExpl").addEventListener("click",()=>{ App._repExpl=!App._repExpl; buildRepList(); $("#repExpl").textContent=App._repExpl?"Hide explanations":"Show all explanations"; });
