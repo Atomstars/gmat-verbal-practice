@@ -13,3 +13,5 @@ og_pages.json
 # Scratch / local
 _*.py
 .DS_Store
+
+.vercel

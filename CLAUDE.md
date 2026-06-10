@@ -2,6 +2,10 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+> **New session? Read [HANDOFF.md](HANDOFF.md) first** — current status, how to run,
+> open items, and gotchas. Then [TECH_STACK.md](TECH_STACK.md) (stack) and
+> [PROJECT_LOG.md](PROJECT_LOG.md) (how we got here). This file is the deep reference.
+
 ## What this is
 
 A **personal** GMAT Verbal practice app (fair-use, not for distribution). A Python

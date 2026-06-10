@@ -1,0 +1,12 @@
+# Only the static app + its question data should ship to Vercel.
+parser.py
+_*.py
+__pycache__
+og_pages.json
+pdf_pages.json
+*.pdf
+*.epub
+*.md
+.claude
+memory
+.git
