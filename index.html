@@ -67,8 +67,11 @@
     background-repeat:no-repeat;background-position:right 9px center}
 
   /* ===== LANDING ===== */
-  #landing{min-height:100vh;display:flex;flex-direction:column;
+  /* display is controlled by .screen/.screen.on; only add layout when visible
+     (an #id display rule here would beat .screen{display:none} and never hide). */
+  #landing{min-height:100vh;
     background:radial-gradient(1100px 560px at 50% -8%,color-mix(in srgb,var(--brand) 26%,transparent),transparent 62%),var(--bg)}
+  #landing.on{display:flex;flex-direction:column}
   .lp{max-width:1000px;margin:0 auto;width:100%;padding:26px 20px 60px;flex:1;display:flex;flex-direction:column}
   .lp .top{display:flex;align-items:center;gap:11px}
   .lp .top .mk{width:40px;height:40px;border-radius:12px;background:var(--grad);display:grid;place-items:center;color:#fff;font-weight:800;box-shadow:0 8px 20px rgba(90,84,240,.45)}
