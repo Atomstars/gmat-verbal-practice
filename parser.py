@@ -113,6 +113,13 @@ def clean(text):
 def norm(s):
     return re.sub(r"\s+", " ", re.sub(r"[^\w ]", "", s or "")).strip().lower()
 
+def clean_paras(paras):
+    """clean() each paragraph and join them with a blank line, dropping empties.
+    Used for passages/explanations so paragraph structure survives (clean() alone
+    flattens every newline to a single space)."""
+    out = [clean(p) for p in paras]
+    return "\n\n".join(p for p in out if p)
+
 
 # --------------------------------------------------------------------------- #
 # Answer-inference (shared by both backends, operating on plain text)
@@ -480,7 +487,25 @@ def _el_text(el):
         return ""
     parts = [clean(p.get_text(" ", strip=True)) for p in el.find_all("p")]
     parts = [p for p in parts if p]
-    return "\n".join(parts) if parts else clean(el.get_text(" ", strip=True))
+    return clean_paras(parts) if parts else clean(el.get_text(" ", strip=True))
+
+def _epub_passage_text(el):
+    """RC passages in the EPUB are a run of <span class="ktp-numbered-line">, one
+    per visual line, with each paragraph's first line indented by leading (nbsp)
+    spaces. Join wrapped lines, split paragraphs on that indent -> blank-line text.
+    Falls back to _el_text() if the passage isn't structured as numbered lines."""
+    spans = el.find_all("span", class_="ktp-numbered-line")
+    if not spans:
+        return _el_text(el)
+    paras, cur = [], []
+    for s in spans:
+        raw = s.get_text()                       # keep leading whitespace
+        if re.match(r"^[ \t ]{2,}", raw) and cur:
+            paras.append(" ".join(cur)); cur = []
+        cur.append(raw.strip())
+    if cur:
+        paras.append(" ".join(cur))
+    return clean_paras(paras)
 
 def _epub_rc_answer(sol_li, n):
     for ol in sol_li.find_all("ol"):
@@ -524,7 +549,7 @@ def parse_epub(path):
                 o = order.get(id(el), -1)
                 if not (start <= o < end):
                     continue
-                txt = _el_text(el)
+                txt = _epub_passage_text(el)
                 key = norm(txt)[:60]
                 if txt and key not in seen:
                     seen.add(key)
@@ -702,6 +727,53 @@ def _og_cr_task(stem):
     return "Unclassified"
 
 
+_OG_EXPL_HEADERS = {"Situation", "Reasoning"}   # CR explanation sub-headings
+_OG_OPT_LINE = re.compile(r"^([A-E])\.\s")
+_OG_ANS_LINE = re.compile(r"^The correct answer is", re.I)
+
+def _og_format_explanation(blk, category):
+    """
+    Turn a raw explanation block into readable, paragraph-separated text.
+
+    The OG prints each explanation as: the restated question + the five restated
+    options, then a category heading (e.g. "Main Idea" / "Argument Evaluation"),
+    then the reasoning, then a per-choice analysis ("A. ... B. Correct. ..."), then
+    "The correct answer is X." The restated question/options are already shown by
+    the app above the explanation, so they are dropped here; everything from the
+    category heading on is kept, with the heading, the CR "Situation"/"Reasoning"
+    sub-headings, each per-choice note, and the final answer line each on their own
+    paragraph. No words are changed -- only paragraph breaks are (re)introduced.
+    """
+    lines = [l.strip() for l in blk if not _og_is_junk(l) and l.strip()]
+    cat_variants = set()
+    if category:
+        cat_variants.add(category)
+        if category == "Supporting Idea":
+            cat_variants.add("Supporting Ideas")
+    # Drop the restated stem + options preceding the category heading.
+    start = 0
+    for i, s in enumerate(lines):
+        if s in cat_variants:
+            start = i
+            break
+    paras, cur = [], []
+    def flush():
+        if cur:
+            paras.append(" ".join(cur))
+            cur.clear()
+    for s in lines[start:]:
+        is_header = s in cat_variants or s in _OG_EXPL_HEADERS
+        if is_header or _OG_OPT_LINE.match(s) or _OG_ANS_LINE.match(s):
+            flush()
+            cur.append(s)
+            if is_header:                # a heading stands on its own line
+                flush()
+        else:
+            cur.append(s)
+    flush()
+    return clean_paras(paras)
+
+
 def _og_is_junk(line):
     """Page furniture that must never be mistaken for question/option/passage text."""
     s = line.strip()
@@ -799,9 +871,8 @@ def _og_parse_explanations(pages, lo, hi, rng, stop_re=None, cats=None):
             m2 = re.search(r"The correct answer is\s+([A-E])", text)    # CR phrasing
             if m2:
                 ans = m2.group(1)
-        kept = [x for x in blk if not _og_is_junk(x)]
         category = _og_category(blk, cats) if cats else None
-        out[n] = (ans, clean(" ".join(kept)), category)
+        out[n] = (ans, _og_format_explanation(blk, category), category)
     return out
 
 
@@ -822,7 +893,11 @@ def _og_parse_rc_practice(pages, lo, hi):
     lines = lines[start:]
 
     passages, questions = {}, []
+    # pbuf is a list of paragraphs (each a list of line-fragments). The PDF marks
+    # every paragraph's first line with a leading em-space (U+2003); that indent is
+    # the only paragraph-boundary signal in the linear text, so it drives the split.
     mode, pbuf, cur_q = "passage", [], None
+    EMSP = " "
 
     def flush():
         nonlocal cur_q
@@ -842,14 +917,17 @@ def _og_parse_rc_practice(pages, lo, hi):
         if mq:
             flush()
             a = int(mq.group(1)); b = int(mq.group(2)) if mq.group(2) else a
-            ptext = clean(" ".join(x for x in pbuf if x.strip()))
+            ptext = clean_paras([" ".join(p) for p in pbuf])
             for n in range(a, b + 1):
                 passages[n] = ptext
             pbuf, mode = [], "questions"
             continue
         if mode == "passage":
             if not _og_is_junk(l):
-                pbuf.append(l.strip())
+                if l.lstrip(" \t").startswith(EMSP) or not pbuf:
+                    pbuf.append([l.strip()])     # em-space -> start a new paragraph
+                else:
+                    pbuf[-1].append(l.strip())
             continue
         if _og_is_junk(l):
             continue
@@ -1092,6 +1170,37 @@ def cross_check(primary, oracle):
     return agree, disagree, conflicts
 
 
+def merge_format_from_oracle(primary, oracle):
+    """
+    For the Manhattan book the PDF is the answer source of record, but the EPUB
+    extraction is far better formatted: clean paragraph breaks in passages and
+    cleaner, per-question explanations. Borrow that FORMATTING from the EPUB
+    without ever changing a PDF answer, matched by id:
+      * passage     -> use the EPUB's paragraph-formatted passage when its text
+                       essentially matches the PDF's (same words, just breaks);
+      * explanation -> use the EPUB's explanation only when the EPUB's answer
+                       AGREES with the PDF's, so a shipped explanation never argues
+                       for a different letter than the shipped answer. (This leaves
+                       the one known PDF/EPUB conflict on its PDF explanation.)
+    Returns (passages_updated, explanations_updated).
+    """
+    import difflib
+    by_id = {q["id"]: q for q in oracle}
+    npsg = nexp = 0
+    for q in primary:
+        e = by_id.get(q["id"])
+        if not e:
+            continue
+        if q.get("passage") and e.get("passage") and "\n\n" in e["passage"] \
+                and difflib.SequenceMatcher(None, norm(q["passage"]),
+                                            norm(e["passage"])).ratio() >= 0.95:
+            q["passage"] = e["passage"]; npsg += 1
+        if e.get("explanation") and q.get("correct_answer") \
+                and e.get("correct_answer") == q["correct_answer"]:
+            q["explanation"] = e["explanation"]; nexp += 1
+    return npsg, nexp
+
+
 def summarize(all_q):
     by_type = Counter(q["type"] for q in all_q)
     mc = [q for q in all_q if q["format"] == "multiple_choice"]
@@ -1197,6 +1306,14 @@ def main():
             print(f"    CONFLICT {cid}: {primary_src}={pa} {oracle_src}={oa}")
         if disagree == 0:
             print("  => Two independent extractions agree on every shared answer.")
+
+        # Borrow the EPUB's cleaner formatting (paragraph breaks) onto the shipped
+        # PDF records, without changing any PDF answer. See merge_format_from_oracle.
+        npsg, nexp = merge_format_from_oracle(primary, oracle)
+        print(f"\nFORMATTING ({oracle_src} layout, {primary_src} answers kept)")
+        print("-" * 60)
+        print(f"Passages given paragraph breaks : {npsg}")
+        print(f"Explanations replaced (clean, answer-matched) : {nexp}")
 
     # Ship only the current-GMAT Verbal types. Sentence Correction is dropped:
     #   * it was removed from the GMAT in the Focus Edition (current exam);

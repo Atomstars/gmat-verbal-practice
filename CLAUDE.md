@@ -71,6 +71,15 @@ question text and reports agreements/conflicts. Two independent parses agreeing 
 the project's anti-hallucination guarantee — a past run caught a real answer error
 this way (see COVERAGE.md, `rc-ch15-q9`).
 
+The EPUB also doubles as a **formatting** source: pdfplumber drops the PDF's paragraph
+indents, so `merge_format_from_oracle()` borrows the EPUB's clean layout onto the
+PDF-primary records — **without changing any PDF answer**. A passage transfers only when
+its text essentially matches (same words, just paragraph breaks); an explanation transfers
+only when the EPUB's answer *agrees* with the PDF's, so a shipped explanation never argues
+for a different letter than the shipped answer (this is why `rc-ch15-q9`, where PDF=C is
+correct, keeps its PDF explanation). EPUB RC passages are `ktp-numbered-line` spans whose
+paragraph-start lines are indented with leading nbsp — `_epub_passage_text` splits on that.
+
 A **third** backend, `parse_og` (PyMuPDF/`fitz`), handles the GMAT Official Guide
 2024-2025 — a different book, written to `questions-og.json` (see below). It is
 **not** an oracle for the Manhattan book; the two books are independent.
@@ -95,6 +104,19 @@ A **third** backend, `parse_og` (PyMuPDF/`fitz`), handles the GMAT Official Guid
      run: 346/346 confirmed, 346/346 agree, 0 conflicts.
 - **RC passages**: each `Questions X-Y refer to the passage.` line maps a passage to
   question range X..Y (36 passages). `Line` / `(5)`,`(10)` markers are stripped.
+  **Paragraph breaks are preserved**: the PDF indents each paragraph's first line with an
+  **em-space (U+2003)**; `_og_parse_rc_practice` starts a new paragraph on it and joins via
+  `clean_paras` (`\n\n`). That indent is the only paragraph signal in the linear text —
+  don't collapse it. Plain `clean()` flattens every newline, so passages/explanations must
+  use `clean_paras`, not `clean`.
+- **Explanations are formatted, not flattened** (`_og_format_explanation`): the OG prints
+  each explanation as restated question + restated options + a category heading + reasoning
+  + a per-choice analysis + the answer line. The restated question/options are **dropped**
+  (the app shows them already); the **category heading is the divider** (present 346/346)
+  and everything from it on is kept — heading, the CR `Situation`/`Reasoning` sub-headings,
+  each `A.`–`E.` note, and `The correct answer is X.` each on its own paragraph. Formatting
+  only, no words changed. The answer-marker detection still runs on the raw block, so
+  cross-validation is unaffected.
 - **Difficulty bands** (`Questions X-Y — Difficulty: Easy/Medium/Hard`) become the
   `chapter` label, so the app's chapter filter acts as a difficulty filter. OG
   records carry extra `difficulty`, `number`, `source` fields (the app ignores
@@ -178,5 +200,10 @@ and `ui-{focus,momentum,console,exam}.html` are earlier design explorations.
 - **Analytics dashboard:** accuracy bars per RC `subtype`, per CR `subtype`, per
   difficulty, with a weakest-area callout (needs ≥`MIN_ATTEMPTS`). Plus a GMAT Focus
   Verbal syllabus card (23Q/45min, the types).
+- **Report screen** (`finish`/`finishAdaptive`/`buildRepList`): total session time +
+  an Avg/question card; each question item carries a per-question **⏱ time pill** (from
+  `App.qTimes`, recorded in `resetRun`/`renderQ`/submit) and — for RC — a collapsible
+  **📖 Reading passage** toggle so misses can be reviewed in full context.
+- **Data fetch uses `{cache:"no-cache"}`** so a regenerated JSON is never served stale.
 
 Edit the source directly for UI changes; do not regenerate it from the parser.

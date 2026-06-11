@@ -72,6 +72,29 @@ it. Fixed by moving the layout to `#landing.on`. Now exactly one screen shows at
   copyright trade-off). Vercel auto-enabled Deployment Protection (401); disabling it is
   a one-toggle dashboard step left to the user (see HANDOFF open items).
 
+## 8 · Readability pass — paragraphs + report context (2026-06-11)
+User report: passages and explanations rendered as **walls of text** — "everything is
+combined," answer-choice letters buried mid-paragraph. Root cause: `clean()` collapsed
+every newline to a space, so all paragraph structure was lost (the *content* was always
+correct). Fixes, all formatting-only (no answer changed):
+- Added `clean_paras()` (clean each paragraph, join with a blank line).
+- **OG passages:** the PDF indents each paragraph's first line with an em-space (U+2003);
+  `_og_parse_rc_practice` now splits on it. 130/164 are multi-paragraph; the other 34 are
+  genuinely single paragraphs in the book (verified against the PDF).
+- **OG explanations:** `_og_format_explanation` drops the redundant restated question +
+  options (the app already shows them), then lays out the category heading, the CR
+  `Situation`/`Reasoning` sub-headings, each per-choice note, and the answer line as
+  separate paragraphs. The category line is a 100%-present, reliable divider (346/346).
+- **Manhattan:** the EPUB is the better-formatted extraction (indent-marked paragraphs +
+  `<p>` explanations). `merge_format_from_oracle` borrows that layout onto the PDF-primary
+  records **without changing a PDF answer** — passages transfer when the text matches;
+  explanations transfer only when the EPUB answer agrees (so `rc-ch15-q9`, the one known
+  conflict where PDF=C is correct, keeps its PDF explanation).
+- **App:** `fetch(..., {cache:"no-cache"})` so regenerated JSON isn't served stale. Added
+  to the **report**: a per-question **⏱ time pill**, an **Avg/question** card, and a
+  collapsible **📖 Reading passage** per RC item (so misses can be reviewed in full
+  context). Per-question timing itself was already tracked in `App.qTimes`.
+
 ## Recurring principles
 - **Source-faithful or `null`.** Every answer is the book's; the one inferred field
   (CR task) degrades to `"Unclassified"` rather than guess.
