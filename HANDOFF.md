@@ -17,11 +17,21 @@ unconfirmable as `null`.** Correctness beats volume.
     (Focus Edition). Every answer verified (key + explanation agree, 346/346, 0 conflicts).
     Each carries `subtype`, `category`, `difficulty`, `number`.
   - `questions.json` — 64 from Manhattan *All the Verbal* (CR+RC).
+  - **Formatting (added 2026-06-11):** RC passages and explanations now keep their
+    **paragraph breaks** (`\n\n`). The parser had been flattening every newline to a
+    space (walls of text); see PROJECT_LOG / CLAUDE.md "paragraph-aware" notes. No
+    answer changed — pure formatting (passages 130/164 OG multi-para; the rest are
+    genuinely single-paragraph in the book).
 - **App:** `index.html` — "GMAT Verbal Trainer", a multi-screen SPA (landing →
   dashboard → setup → runner → report). Modes: Daily RC (adaptive + streak), GMAT RC
   column (adaptive), Practice (type/concept/difficulty filters), Exam sim (timed),
   Redo-my-misses, Target-weak-spots. Weakness analytics by sub-type/difficulty.
   Progress saved in **localStorage** (`gmat_verbal_v1`).
+  - **Report screen (added 2026-06-11):** each question item shows a per-question
+    **⏱ time pill**, the report has an **Avg/question** card + total session time, and
+    every RC item has a collapsible **📖 Reading passage** toggle. (Per-question timing
+    was already tracked in `App.qTimes`; if it looks missing on Vercel, the deploy is
+    just behind `master`.)
 - **Repo:** `github.com/Atomstars/gmat-verbal-practice` (**private**).
 - **Deploy:** Vercel project **gmat-prep** → **https://gmat-prep-ivory.vercel.app**
   (GitHub-connected, so pushes to `master` auto-deploy).
@@ -55,9 +65,14 @@ python parser.py --og "<path-to>/gmat-official-guide-2024-2025...pdf"
 ## Gotchas / lessons (don't re-learn these the hard way)
 - **OG PDF must be parsed with PyMuPDF (`fitz`), not pdfplumber** — pdfplumber drops
   this file's ligatures and smart quotes. See CLAUDE.md.
-- **The preview screenshot tool is flaky in this environment** (often times out).
-  Verify UI by scripting the live app with `preview_eval` (read `App`/DOM state) instead
-  of relying on screenshots.
+- **The preview screenshot tool is flaky in this environment** (often times out / returns
+  a stale paint). Verify UI by scripting the live app with `preview_eval` (read `App`/DOM
+  state) — that's authoritative even when a screenshot looks wrong.
+- **Browser caches the JSON.** The app `fetch`es `questions-og.json`/`questions.json`;
+  after regenerating data, a normal reload may serve the *old* cached file. The fetch now
+  uses `{cache:"no-cache"}`, but if you ever see stale data do a hard refresh (Ctrl+Shift+R).
+- **The preview server serves whichever worktree it was started in** — if you edit in a
+  worktree, restart the `gmat-app` preview so it serves *your* files, not another worktree's.
 - **CSS specificity bug we already hit:** an `#id { display:flex }` rule beats
   `.screen { display:none }`, so the landing page wouldn't hide and the app felt like
   one long page. Screen visibility is driven by `.screen` / `.screen.on`; never set

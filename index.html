@@ -250,7 +250,9 @@
   .ri .stem{font-size:14px;margin:0 0 7px} .ri .ans{font-size:12.5px;color:var(--muted)} .ri .ans b{color:var(--ink)}
   .ri details{margin-top:7px} .ri summary{color:var(--brand-ink);font-weight:700;font-size:12.5px}
   .ri .expl{font-size:13px;line-height:1.65;white-space:pre-wrap;margin-top:8px;border-top:1px solid var(--line2);padding-top:9px}
-  .ri .qtime{font:600 11px var(--mono);background:var(--surface2);border:1px solid var(--line);border-radius:6px;padding:1px 6px;color:var(--muted)}
+  .ri details.rpsg summary{color:var(--accent-ink,var(--brand-ink))}
+  .ri .psg{font:15px/1.7 var(--serif);white-space:pre-wrap;margin-top:8px;border-top:1px solid var(--line2);padding-top:9px;color:var(--ink)}
+  .ri .qtime{font:700 11px var(--mono);background:var(--pick);border:1px solid var(--line);border-radius:6px;padding:1px 6px;color:var(--brand-ink)}
 
   .empty{text-align:center;color:var(--muted);padding:60px 20px}
   .kbd{font:11px var(--mono);border:1px solid var(--line);border-radius:5px;padding:0 5px}
@@ -463,7 +465,7 @@ function show(id){
 /* ===== LOADING ===== */
 async function loadBank(){
   if(App._loaded[App.source]){ App.all=App._loaded[App.source]; return true; }
-  try{ const r=await fetch(SOURCES[App.source].file); if(!r.ok)throw 0; App.all=await r.json(); App._loaded[App.source]=App.all; return true; }
+  try{ const r=await fetch(SOURCES[App.source].file,{cache:"no-cache"}); if(!r.ok)throw 0; App.all=await r.json(); App._loaded[App.source]=App.all; return true; }
   catch(e){ alert("Couldn't load "+SOURCES[App.source].file+".\nServe the folder: python -m http.server 8000"); return false; }
 }
 
@@ -730,10 +732,11 @@ function buildRepList(){
     const stem=(()=>{const p=String(q.question).split("\n\n");return p[p.length-1];})();
     const cls=skip?"skip":ok?"ok":"no", sym=skip?"–":ok?"✓":"✗";
     const t=App.qTimes[i]; const tStr=t!=null?mmss(t):"—";
+    const psg=q.passage?`<details class="rpsg"><summary>📖 Reading passage</summary><div class="psg">${esc(q.passage)}</div></details>`:"";
     const expl=App._repExpl?`<div class="expl">${esc(q.explanation||'')}</div>`:`<details><summary>Explanation</summary><div class="expl">${esc(q.explanation||'')}</div></details>`;
     return `<div class="ri ${cls}"><div class="h"><span class="dotr">${sym}</span><b>Q${i+1}</b>
       <span class="meta"><span class="pill">${esc(q.subtype||q.type)}</span><span class="pill d-${q.difficulty||''}">${esc(q.difficulty||'')}</span><span class="qtime">⏱ ${tStr}</span></span></div>
-      <p class="stem">${esc(stem)}</p><div class="ans">Your answer: <b>${skip?'—':esc(a)}</b> · Correct: <b>${esc(q.correct_answer)}</b></div>${expl}</div>`; }).join("");
+      <p class="stem">${esc(stem)}</p><div class="ans">Your answer: <b>${skip?'—':esc(a)}</b> · Correct: <b>${esc(q.correct_answer)}</b></div>${psg}${expl}</div>`; }).join("");
 }
 $("#repExpl").addEventListener("click",()=>{ App._repExpl=!App._repExpl; buildRepList(); $("#repExpl").textContent=App._repExpl?"Hide explanations":"Show all explanations"; });
 $("#repRedo").addEventListener("click",()=>{ const wrong=App.qs.filter(q=>App.answers[q.id]!==q.correct_answer);
