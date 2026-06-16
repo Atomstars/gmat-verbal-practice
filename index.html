@@ -17,13 +17,13 @@
     --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
     --serif:Georgia,"Iowan Old Style","Times New Roman",serif;
     --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
-    --r:18px; --r2:14px;
+    --r:18px; --r2:14px; color-scheme:light;
     --sh-sm:0 1px 2px rgba(20,24,50,.05);
     --sh:0 2px 6px rgba(20,24,50,.05),0 14px 34px rgba(20,24,50,.08);
     --sh-lg:0 8px 24px rgba(20,24,50,.10),0 30px 60px rgba(20,24,50,.12);
   }
-  @media (prefers-color-scheme:dark){
-    :root{
+  :root[data-theme="dark"]{
+      color-scheme:dark;
       --bg:#0b0e18; --bg2:#0f1322; --surface:#161b2b; --surface2:#1b2133;
       --ink:#eef0f8; --muted:#9aa3ba; --faint:#6c7690; --line:#262d42; --line2:#1d2335;
       --brand:#7c6cff; --brand2:#9d8cff; --brand-ink:#b3a8ff; --accent:#2dd4ee;
@@ -34,7 +34,6 @@
       --sh-sm:0 1px 2px rgba(0,0,0,.4);
       --sh:0 2px 8px rgba(0,0,0,.35),0 16px 40px rgba(0,0,0,.45);
       --sh-lg:0 10px 30px rgba(0,0,0,.5),0 40px 70px rgba(0,0,0,.55);
-    }
   }
   *{box-sizing:border-box} html,body{margin:0;min-height:100%}
   body{background:var(--bg);color:var(--ink);font:15.5px/1.55 var(--sans);-webkit-text-size-adjust:100%;
@@ -65,6 +64,15 @@
     border-radius:10px;padding:8px 28px 8px 11px;font-weight:600;font-size:12.5px;box-shadow:var(--sh-sm);
     background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23929aad' stroke-width='3'><path d='M6 9l6 6 6-6'/></svg>");
     background-repeat:no-repeat;background-position:right 9px center}
+  .themebtn{display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;flex:0 0 auto;
+    background:var(--surface);border:1px solid var(--line);color:var(--ink);border-radius:10px;
+    font-size:16px;line-height:1;box-shadow:var(--sh-sm);transition:border-color .15s,transform .15s}
+  .themebtn:hover{border-color:var(--brand);transform:translateY(-1px)}
+  .themebtn:active{transform:none}
+  .themebtn .moon{display:none}
+  :root[data-theme="dark"] .themebtn .sun{display:none}
+  :root[data-theme="dark"] .themebtn .moon{display:inline}
+  .lp .top .themebtn{margin-left:auto}
 
   /* ===== LANDING ===== */
   /* display is controlled by .screen/.screen.on; only add layout when visible
@@ -257,6 +265,12 @@
   .empty{text-align:center;color:var(--muted);padding:60px 20px}
   .kbd{font:11px var(--mono);border:1px solid var(--line);border-radius:5px;padding:0 5px}
 </style>
+<script>
+/* Set theme before first paint to avoid a flash. Saved choice wins; else follow the OS. */
+(function(){try{var t=localStorage.getItem("gmat_theme");
+  if(t!=="dark"&&t!=="light")t=matchMedia("(prefers-color-scheme:dark)").matches?"dark":"light";
+  document.documentElement.setAttribute("data-theme",t);}catch(e){document.documentElement.setAttribute("data-theme","light");}})();
+</script>
 </head>
 <body>
 
@@ -265,13 +279,15 @@
   <button class="back hidden" id="backBtn">← Dashboard</button>
   <span class="sp"></span>
   <span class="chipstreak hidden" id="streakChip">🔥 <span id="streakChipN">0</span></span>
+  <button class="themebtn" data-themebtn type="button" title="Toggle dark mode" aria-label="Toggle dark mode"><span class="sun">☀</span><span class="moon">☾</span></button>
   <div class="selwrap"><select class="src" id="srcSel" title="Question bank"></select></div>
 </header>
 
 <!-- ============ LANDING ============ -->
 <section id="landing" class="screen">
   <div class="lp">
-    <div class="top"><span class="mk">GV</span><b>GMAT Verbal Trainer</b></div>
+    <div class="top"><span class="mk">GV</span><b>GMAT Verbal Trainer</b>
+      <button class="themebtn" data-themebtn type="button" title="Toggle dark mode" aria-label="Toggle dark mode"><span class="sun">☀</span><span class="moon">☾</span></button></div>
     <div class="hero">
       <span class="eyebrow"><span class="d"></span> Official Guide 2024–25 · Focus Edition</span>
       <h1>Master GMAT <span class="g">Verbal</span><br>the smart way.</h1>
@@ -770,6 +786,15 @@ function renderLanding(){
     $("#resumeSub").textContent=`${ov.pct}% accuracy · ${ov.seen} done${d.streak?` · 🔥 ${d.streak}-day streak`:""}`; }
   show("landing");
 }
+
+/* theme toggle (the data-theme attr is set pre-paint by the head script) */
+function applyTheme(t){ document.documentElement.setAttribute("data-theme",t);
+  try{ localStorage.setItem("gmat_theme",t); }catch(e){}
+  const m=document.querySelector('meta[name="theme-color"]'); if(m) m.setAttribute("content",t==="dark"?"#0b0e18":"#4f46e5"); }
+document.querySelectorAll("[data-themebtn]").forEach(b=>b.addEventListener("click",()=>{
+  const cur=document.documentElement.getAttribute("data-theme")==="dark"?"dark":"light";
+  applyTheme(cur==="dark"?"light":"dark"); }));
+applyTheme(document.documentElement.getAttribute("data-theme")==="dark"?"dark":"light");
 
 /* boot */
 (async()=>{ buildSrc(); await loadBank(); renderLanding(); })();
