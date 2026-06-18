@@ -18,28 +18,34 @@ unconfirmable as `null`.** Correctness beats volume.
     Each carries `subtype`, `category`, `difficulty`, `number`.
   - `questions.json` — 64 from Manhattan *All the Verbal* (CR+RC).
   - **Formatting (added 2026-06-11):** RC passages and explanations now keep their
-    **paragraph breaks** (`\n\n`). The parser had been flattening every newline to a
-    space (walls of text); see PROJECT_LOG / CLAUDE.md "paragraph-aware" notes. No
-    answer changed — pure formatting (passages 130/164 OG multi-para; the rest are
-    genuinely single-paragraph in the book).
+    **paragraph breaks** (`\n\n`). No answer changed — pure formatting.
 - **App:** `index.html` — "GMAT Verbal Trainer", a multi-screen SPA (landing →
   dashboard → setup → runner → report). Modes: Daily RC (adaptive + streak), GMAT RC
   column (adaptive), Practice (type/concept/difficulty filters), Exam sim (timed),
   Redo-my-misses, Target-weak-spots. Weakness analytics by sub-type/difficulty.
   Progress saved in **localStorage** (`gmat_verbal_v1`).
-  - **Report screen (added 2026-06-11):** each question item shows a per-question
-    **⏱ time pill**, the report has an **Avg/question** card + total session time, and
-    every RC item has a collapsible **📖 Reading passage** toggle. (Per-question timing
-    was already tracked in `App.qTimes`; if it looks missing on Vercel, the deploy is
-    just behind `master`.)
+  - **Report screen:** per-question **time pill**, **Avg/question** card, total session
+    time, collapsible **Reading passage** toggle for RC items.
+  - **Dark/light theme toggle** with persistence (`gmat_theme` in localStorage).
+- **Supabase cross-device sync (added 2026-06-18):** local-first architecture — the
+  existing synchronous `Store` API is untouched. When configured, adds Google OAuth
+  sign-in + cloud progress merge via a `progress` table in Supabase. **Optional:**
+  app runs as a local-only guest if keys are blank or Supabase is down.
+  - **Supabase project:** `bfaaczlxfafsxjnqqvoc` (Seoul), table `progress` with RLS.
+  - **Google OAuth:** configured in Google Cloud project `GMAT`, consent screen set to
+    External/Testing. Test user: `govada.akash@gmail.com`.
+  - **Status:** code deployed, Supabase table + RLS + Google provider configured.
+    **Google login not yet verified end-to-end** — was returning "provider not enabled"
+    error initially; provider was re-enabled in Supabase but not re-tested before
+    session ended. **First priority for next session: test the sign-in flow.**
 - **Repo:** `github.com/Atomstars/gmat-verbal-practice` (**private**).
 - **Deploy:** Vercel project **gmat-prep** → **https://gmat-prep-ivory.vercel.app**
-  (GitHub-connected, so pushes to `master` auto-deploy).
+  (GitHub-connected). **Vercel deploy may be stalled** — see "Open items" below.
 
 ## How to run locally
 ```bash
-python -m http.server 8000      # a server is REQUIRED (app fetch()es the JSON)
-# open http://localhost:8000
+python -m http.server 8754      # a server is REQUIRED (app fetch()es the JSON)
+# open http://localhost:8754
 ```
 Re-generate OG data (needs the source PDF, which lives outside the repo):
 ```bash
@@ -48,19 +54,21 @@ python parser.py --og "<path-to>/gmat-official-guide-2024-2025...pdf"
 ```
 
 ## Open items / next steps
-1. **Make the Vercel deployment public (pending USER action).** It currently returns
-   HTTP 401 — Vercel auto-enabled Deployment Protection. To finish: dashboard →
-   *gmat-prep* → Settings → **Deployment Protection** → set **Vercel Authentication**
-   to **Disabled** → Save. (No CLI/API path worked — the CLI token isn't valid for the
-   REST API.) The user explicitly chose **public** despite the copyright caveat.
-2. **Supabase cross-device sync (requested, not built).** The `Store` object in
-   `index.html` is written as a swappable backend on purpose. To add sync: user creates
-   a free Supabase project and provides **Project URL + anon key**; then add a table and
-   a `SupabaseStore` with the same API as the localStorage one. This also unlocks a
-   real **login page** (the user asked for one — only meaningful with a backend/account).
-3. **CR sub-type precision (~88%).** 21/182 CR questions are honestly left
-   `"Unclassified"`; the `_OG_CR_RULES` keyword classifier in `parser.py` can be tuned
-   if desired (RC is 164/164 from the book and needs no tuning).
+1. **Verify Google sign-in end-to-end.** Click "Sign in" on the landing page →
+   should redirect to Google → back to app with avatar + email in the header bar.
+   If "provider not enabled" error persists, check Supabase → Authentication →
+   Providers → Google is toggled ON with the correct Client ID/Secret. The Google
+   Cloud OAuth consent screen is in "Testing" mode — only test users
+   (`govada.akash@gmail.com`) can sign in until it's published.
+2. **Test two-device sync.** Sign in on two browser profiles with the same Google
+   account. Answer questions in one, reload the other — progress should appear.
+3. **Vercel deploy (may need manual unblock).** Previous session saw every deploy
+   stall with status UNKNOWN / empty build logs. Check Vercel dashboard →
+   `gmat-prep` → Settings → look for banners about usage limits or billing.
+   After unblocking, run `vercel --prod`. The live URL is
+   https://gmat-prep-ivory.vercel.app.
+4. **CR sub-type precision (~88%).** 21/182 CR questions are `"Unclassified"`;
+   the `_OG_CR_RULES` classifier in `parser.py` can be tuned if desired.
 
 ## Gotchas / lessons (don't re-learn these the hard way)
 - **OG PDF must be parsed with PyMuPDF (`fitz`), not pdfplumber** — pdfplumber drops
@@ -68,20 +76,20 @@ python parser.py --og "<path-to>/gmat-official-guide-2024-2025...pdf"
 - **The preview screenshot tool is flaky in this environment** (often times out / returns
   a stale paint). Verify UI by scripting the live app with `preview_eval` (read `App`/DOM
   state) — that's authoritative even when a screenshot looks wrong.
-- **Browser caches the JSON.** The app `fetch`es `questions-og.json`/`questions.json`;
-  after regenerating data, a normal reload may serve the *old* cached file. The fetch now
-  uses `{cache:"no-cache"}`, but if you ever see stale data do a hard refresh (Ctrl+Shift+R).
-- **The preview server serves whichever worktree it was started in** — if you edit in a
-  worktree, restart the `gmat-app` preview so it serves *your* files, not another worktree's.
+- **The preview server serves from CWD** — if you edit in a worktree, either copy the
+  file to the main repo or restart the server with `-d <worktree-path>`.
+- **Browser caches the JSON.** The fetch uses `{cache:"no-cache"}`, but if you ever see
+  stale data do a hard refresh (Ctrl+Shift+R).
 - **CSS specificity bug we already hit:** an `#id { display:flex }` rule beats
-  `.screen { display:none }`, so the landing page wouldn't hide and the app felt like
-  one long page. Screen visibility is driven by `.screen` / `.screen.on`; never set
-  `display` on a screen via an ID selector. Layout-only overrides go on `#id.on`.
+  `.screen { display:none }`, so the landing page wouldn't hide. Screen visibility is
+  driven by `.screen` / `.screen.on`; never set `display` on a screen via an ID selector.
 - **Two source books are independent.** `questions.json` (Manhattan) and
-  `questions-og.json` (OG) are NOT cross-checks for each other. The app's source
-  selector switches between them; OG is the default and the one with sub-types/difficulty.
-- The source books (PDF/EPUB) are **not** in the repo (`.gitignore`d) — they live in the
-  user's Downloads.
+  `questions-og.json` (OG) are NOT cross-checks for each other.
+- The source books (PDF/EPUB) are **not** in the repo — they live in the user's Downloads.
+- **`gmat_theme` is local-only** — dark/light preference is NOT synced to Supabase
+  (intentional; it's a device preference).
+- **Supabase anon key is public by design** — RLS protects each user's row. Don't treat
+  it as a secret.
 
 ## Key files
 | File | Role |
@@ -91,5 +99,6 @@ python parser.py --og "<path-to>/gmat-official-guide-2024-2025...pdf"
 | `index-classic.html` | The original simple single-question app (kept). |
 | `ui-{focus,momentum,console,exam}.html` | Four early UI design explorations (kept for reference). |
 | `questions-og.json` / `questions.json` | The two question banks (shared schema). |
+| `APP_GUIDE.md` | Architecture + business-case doc for the app. |
 | `CLAUDE.md` | Canonical deep reference (parser internals, schema, app architecture). |
 | `COVERAGE.md` | Extraction coverage + validation report for both books. |
