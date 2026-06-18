@@ -606,6 +606,78 @@ const Sync=(()=>{
 })();
 window.Sync=Sync;
 
+/* ===== ATTEMPTS (per-question rows in Supabase; anonymous-auth device identity) =====
+   Uses a SEPARATE Supabase client instance from Sync so the two auth sessions never
+   interfere. Anonymous sign-in gives a real JWT so RLS (auth.uid() = user_id) works
+   without any Google login. deviceId = the anonymous user's UUID, cached in localStorage. */
+const Attempts=(()=>{
+  const DEVICE_KEY="gmat_device_id";
+  let sb=null, deviceId=null, ready=false;
+
+  function client(){
+    if(sb) return sb;
+    if(!window.SUPABASE_URL||!window.SUPABASE_ANON_KEY||!window.supabase) return null;
+    sb=window.supabase.createClient(window.SUPABASE_URL,window.SUPABASE_ANON_KEY,{
+      auth:{persistSession:true,autoRefreshToken:true,
+            storageKey:"gmat_attempts_auth",  // separate storage from Sync's Google session
+            detectSessionInUrl:false}});       // don't grab the Google OAuth redirect
+    return sb;
+  }
+
+  async function init(){
+    const c=client(); if(!c) return;
+    try{
+      const {data:{session}}=await c.auth.getSession();
+      if(session?.user){ deviceId=session.user.id; ready=true; }
+      else{
+        /* Create an anonymous Supabase user — gives a real JWT so RLS policies work.
+           Requires Anonymous provider enabled: Supabase → Auth → Providers → Anonymous. */
+        const {data,error}=await c.auth.signInAnonymously();
+        if(!error&&data?.user){ deviceId=data.user.id; ready=true; }
+        else{ console.warn("[Attempts] anon sign-in failed. Enable Anonymous provider in Supabase → Auth → Providers.",error?.message); }
+      }
+      if(ready) localStorage.setItem(DEVICE_KEY,deviceId);
+    }catch(e){ console.warn("[Attempts] init error:",e); }
+  }
+
+  function optIdx(q,label){
+    if(!q?.options||label==null) return null;
+    const i=q.options.findIndex(o=>o.label===label);
+    return i>=0?i:null;
+  }
+
+  async function saveAttempt(q,chosenLabel,timeMs){
+    const c=client(); if(!c||!ready||!deviceId) return;
+    const ki=optIdx(q,q.correct_answer); if(ki===null) return;
+    const row={
+      user_id:    deviceId,
+      question_id:q.id,
+      source:     App.source,                               // 'og' | 'manhattan'
+      q_type:     q.type,                                   // 'CR' | 'RC'
+      chosen_index:optIdx(q,chosenLabel),                   // null only for exam skips
+      correct_index:ki,
+      is_correct: chosenLabel===q.correct_answer,
+      time_ms:    (typeof timeMs==="number"&&timeMs>=0)?Math.round(timeMs):null,
+    };
+    try{
+      const {error}=await c.from("attempts").insert(row);
+      if(error) console.warn("[Attempts] insert failed:",error.message);
+    }catch(e){}
+  }
+
+  async function getAttempts(){
+    const c=client(); if(!c||!ready||!deviceId) return [];
+    try{
+      const {data,error}=await c.from("attempts").select("*")
+        .eq("user_id",deviceId).order("created_at",{ascending:false});
+      if(error) throw error;
+      return data||[];
+    }catch(e){ return []; }
+  }
+
+  return {init,saveAttempt,getAttempts,get deviceId(){return deviceId;}};
+})();
+
 /* ===== APP STATE ===== */
 const App={ source:"og", all:[], _loaded:{}, mode:null, cfg:null,
   qs:[], idx:0, answers:{}, flags:new Set(), checked:new Set(),
@@ -838,8 +910,10 @@ function updateAct(){ const q=App.qs[App.idx], last=App.idx===App.qs.length-1, b
   else { b.disabled=false; b.textContent=last?(isExam()?"End section ✓":"Finish ✓"):"Next ▶"; b.className="btn primary"+(last?" end":""); } }
 $("#actBtn").addEventListener("click",()=>{ const q=App.qs[App.idx], last=App.idx===App.qs.length-1;
   if(!isExam()&&!App.checked.has(App.idx)){
-    if(!App._qTimedSet.has(App.idx)){ App.qTimes[App.idx]=Math.round((Date.now()-App._qStart)/1000); App._qTimedSet.add(App.idx); }
-    App.checked.add(App.idx); Store.record(q,App.answers[q.id],App.answers[q.id]===q.correct_answer); renderQ(); return; }
+    const _tMs=Date.now()-App._qStart;
+    if(!App._qTimedSet.has(App.idx)){ App.qTimes[App.idx]=Math.round(_tMs/1000); App._qTimedSet.add(App.idx); }
+    App.checked.add(App.idx); Store.record(q,App.answers[q.id],App.answers[q.id]===q.correct_answer);
+    Attempts.saveAttempt(q,App.answers[q.id],_tMs); renderQ(); return; }
   if(last){ if(isExam()) App.qTimes[App.idx]=(App.qTimes[App.idx]||0)+Math.round((Date.now()-App._qStart)/1000); finish(); return; }
   if(isExam()) App.qTimes[App.idx]=(App.qTimes[App.idx]||0)+Math.round((Date.now()-App._qStart)/1000);
   App.idx++; renderQ(); });
@@ -851,7 +925,7 @@ $("#flagBtn").addEventListener("click",()=>{ App.flags.has(App.idx)?App.flags.de
 /* ===== FINISH + REPORT ===== */
 function finish(){
   clearInterval(App.timer);
-  if(isExam()) App.qs.forEach(q=>{ if(App.answers[q.id]!=null) Store.record(q,App.answers[q.id],App.answers[q.id]===q.correct_answer); });
+  if(isExam()) App.qs.forEach((q,i)=>{ if(App.answers[q.id]!=null){ Store.record(q,App.answers[q.id],App.answers[q.id]===q.correct_answer); Attempts.saveAttempt(q,App.answers[q.id],App.qTimes[i]!=null?App.qTimes[i]*1000:null); } });
   if(isAdaptive()){ finishAdaptive(); return; }
   let correct=0,ans=0; const bd={RC:{c:0,t:0},CR:{c:0,t:0}};
   App.qs.forEach(q=>{ const a=App.answers[q.id]; if(a!=null){ans++; const g=bd[q.type]; g.t++; if(a===q.correct_answer){correct++;g.c++;}} });
@@ -949,7 +1023,7 @@ document.querySelectorAll("[data-themebtn]").forEach(b=>b.addEventListener("clic
 applyTheme(document.documentElement.getAttribute("data-theme")==="dark"?"dark":"light");
 
 /* boot — render local-first immediately, then let Sync hydrate from the cloud (if configured) */
-(async()=>{ buildSrc(); await loadBank(); renderLanding(); Sync.init(); })();
+(async()=>{ buildSrc(); await loadBank(); renderLanding(); Sync.init(); Attempts.init(); })();
 </script>
 </body>
 </html>
