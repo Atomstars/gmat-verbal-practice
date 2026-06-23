@@ -1137,6 +1137,9 @@ def run_og(pdf_path):
     print(f"  CR classified: {classified}/{sum(cr_sub.values())}"
           f"  ({len(rep['cr_unclassified'])} left Unclassified)")
 
+    # Add embeddings
+    records = embed_questions(records)
+
     with open("questions-og.json", "w", encoding="utf-8") as f:
         json.dump(records, f, ensure_ascii=False, indent=2)
     print(f"\nWrote questions-og.json ({len(records)} RC+CR problems).")
@@ -1239,6 +1242,49 @@ def discover_og():
     return None
 
 
+def embed_questions(questions):
+    """
+    Embed all questions using all-MiniLM-L6-v2 model.
+    Adds an 'embedding' field to each question record.
+    Returns the modified questions list.
+    """
+    try:
+        from sentence_transformers import SentenceTransformer
+    except ImportError:
+        print("WARNING: sentence-transformers not installed. Skipping embeddings.")
+        print("Install with: pip install sentence-transformers")
+        return questions
+
+    print("\nEmbedding questions with all-MiniLM-L6-v2...")
+    model = SentenceTransformer('all-MiniLM-L6-v2')
+
+    texts_to_embed = []
+    for q in questions:
+        parts = []
+        if q.get("title"):
+            parts.append(q["title"])
+        if q.get("question"):
+            parts.append(q["question"])
+        if q.get("passage"):
+            parts.append(q["passage"][:500])
+        options_text = " ".join(
+            opt.get("text", "") for opt in q.get("options", [])
+        )
+        if options_text:
+            parts.append(options_text[:300])
+
+        text = " ".join(parts)
+        texts_to_embed.append(text[:1000])
+
+    embeddings = model.encode(texts_to_embed, show_progress_bar=True)
+
+    for q, emb in zip(questions, embeddings):
+        q["embedding"] = emb.tolist()
+
+    print(f"Embedded {len(questions)} questions.")
+    return questions
+
+
 def main():
     args = [a for a in sys.argv[1:]]
     pdf_path = epub_path = og_path = None
@@ -1326,6 +1372,9 @@ def main():
     print(f"\nExcluding {dropped_sc} Sentence Correction items from questions.json:")
     print("  SC is not on the current GMAT (Focus Edition) and the book's SC")
     print("  drills have no reliable answer key. CR + RC are the current types.")
+
+    # Add embeddings
+    shipped = embed_questions(shipped)
 
     with open("questions.json", "w", encoding="utf-8") as f:
         json.dump(shipped, f, ensure_ascii=False, indent=2)
