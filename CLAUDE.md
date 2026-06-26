@@ -8,59 +8,61 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-A **personal** GMAT Verbal practice app (fair-use, not for distribution). A Python
-parser extracts real questions from a GMAT prep book into `questions.json`, and a
-single-file web app (`index.html`) is a practice UI over that data. The hard
-requirement throughout: **never invent or alter a question/answer** — extract only
-what's in the source, and leave anything unconfirmable as `null` rather than guess.
+A **personal** GMAT practice app (fair-use, not for distribution) covering **Verbal**
+(RC + CR) and **Quantitative** (PS + DS). Python parsers extract real questions from
+GMAT prep books into JSON; a single-file web app (`index.html`) is the study UI.
+The hard requirement throughout: **never invent or alter a question/answer** — extract
+only what's in the source, and leave anything unconfirmable as `null` rather than guess.
 Correctness beats volume.
 
 ## Pipeline
 
 ```
-Manhattan "All the Verbal" (PDF and/or EPUB)  ->  parser.py  ->  questions.json  --\
-                                                                                     >  index.html
-GMAT Official Guide 2024-2025 (PDF, --og)     ->  parser.py  ->  questions-og.json --/
-                                                      |
-                                               embed_questions()
-                                               (all-MiniLM-L6-v2)
-                                                      |
-                                         questions_embedded.json  ->  api.py  ->  index.html
-                                                                   (Qdrant + FastAPI)
+Manhattan "All the Verbal" (PDF/EPUB)  ->  parser.py       ->  questions.json     --\
+GMAT Official Guide 2024-2025 (--og)   ->  parser.py       ->  questions-og.json  ---|->  index.html
+Manhattan Review Quant QB 6th Ed (PDF) ->  parse_quant.py  ->  questions-quant.json -/
+                                               |                       |
+                                        embed_questions()       embed_questions()
+                                        (all-MiniLM-L6-v2)     (all-MiniLM-L6-v2)
+                                               |
+                                  questions_embedded.json  ->  api.py  ->  index.html
+                                                            (Qdrant + FastAPI)
 ```
 
-Two **separate** source books feed two **separate** output files; the app's source
-selector switches between them. The source books live **outside this repo** (the
-user's Downloads / OneDrive Desktop), not in version control. Pass their paths to
-`parser.py`.
+Three **separate** source books feed three **separate** output files; the app's source
+selector switches between them. Source books live **outside this repo** (user's
+Downloads / OneDrive Desktop). Pass their paths to the parser.
 
 ## Commands
 
 ```bash
-# one-time deps  (pymupdf is only needed for the Official Guide backend)
+# one-time deps — Verbal parsers
 pip install pdfplumber beautifulsoup4 lxml pymupdf
 
-# one-time deps for vector search (optional — app works without it)
+# one-time deps — Quant parser
+pip install pymupdf pillow sentence-transformers
+
+# one-time deps — vector search (optional, app works without it)
 pip install sentence-transformers qdrant-client fastapi uvicorn
 
 # --- Manhattan "All the Verbal" -> questions.json ---
-# (PDF is the source of record; --epub enables PDF-vs-EPUB cross-validation)
 python parser.py "<book>.pdf" --epub "<book>.epub"
 python parser.py "<book>.epub"          # EPUB-only also works
-# auto-discovers a "*verbal*manhattan*" file in ./, ~/Downloads, ~/Desktop, etc.
-# if no path is given. Writes questions.json + prints a coverage + cross-check report.
 
 # --- GMAT Official Guide 2024-2025 (Focus Edition) -> questions-og.json ---
 python parser.py --og "<official-guide>.pdf"
-# A bare .pdf whose filename contains "official"+"guide" also routes here, as does
-# auto-discovery when no other file is passed. Writes questions-og.json + prints a
-# coverage + intra-file cross-validation report. Does NOT touch questions.json.
 
-# run the app (a server is REQUIRED — the page fetch()es questions.json; file:// fails)
+# --- Manhattan Review Quant QB 6th Ed -> questions-quant.json ---
+python parse_quant.py "<quant-book>.pdf"
+# PDF path (on user's machine): C:\Users\Akash\OneDrive\Desktop\New folder\MR-GMAT-Quantitative-Question-Bank-BTG-D27-M8_07.11.2016.pdf
+# Writes questions-quant.json + diagrams/*.png  (~60s including embeddings)
+# Test a single topic batch first (faster):
+python parse_quant.py "<pdf>" --ps-topics "Number properties" --ds-topics "Numbers"
+
+# run the app (server REQUIRED — app fetch()es JSON; file:// fails)
 python -m http.server 8000      # then open http://localhost:8000
 
-# --- Vector search API (optional — enables similar-question panel + search bar) ---
-# Requires questions_embedded.json. Generate it once, then keep api.py running alongside the app.
+# --- Vector search API (optional — similar-question panel + search bar) ---
 python test_embeddings.py       # reads questions-og.json, writes questions_embedded.json (~16s)
 python api.py                   # FastAPI on http://127.0.0.1:8000; docs at /docs
 ```
@@ -226,13 +228,83 @@ The app (`index.html`) ignores this field; only `api.py` / `questions_embedded.j
 - `category` — the book's printed label verbatim (RC: same as subtype; CR: the 3
   broad buckets Argument Construction / Argument Evaluation / Evaluation of a Plan).
 
+## parse_quant.py architecture — Manhattan Review Quant Question Bank
+
+Standalone parser (do not touch `parser.py`). Uses **PyMuPDF (`fitz`)** throughout —
+`get_text('dict')` gives per-span `size`, `origin(x,y)`, `text`, required for LaTeX
+reconstruction. Do not switch to pdfplumber (drops ligatures; no span metadata).
+
+### PDF structure (550 pages, 1-indexed)
+| Pages | Content |
+|---|---|
+| 15–90 | PS Questions, sections 2.1–2.24 (Number properties → Co-ordinate geometry) |
+| 91–142 | DS Questions, sections 3.1–3.24 |
+| 143–150 | Answer Key — `(NNN) X` lines, PRIMARY truth signal |
+| 151–342 | PS Solutions |
+| 343–550 | DS Solutions |
+
+### Answer cross-validation (anti-hallucination guarantee)
+Two independent signals, compared per question:
+1. **Answer Key** (`(NNN) X` lines) — authoritative, complete (PRIMARY)
+2. **Solution marker** — `"The correct answer is option X."` in solution text
+
+Rules: AGREE → confirm; KEY only → keep key answer; DISAGREE → `correct_answer=null` +
+`needs_review=true`. **Never guess.** Current run: 496/500 confirmed, 4 genuine book
+conflicts.
+
+### LaTeX reconstruction — structural, not visual
+`page.get_text('dict')` provides per-span font metrics. Rules:
+
+- **Superscripts**: `span.size < SUP_SIZE_MAX (8.0)` AND `dom_y - span.y > 2.0 pt`
+  → collect consecutive sup spans, pull back the preceding base word, emit `$base^{exp}$`.
+  The y-check is essential — without it, small-font page numbers adjacent to text
+  become false superscripts (e.g. `If^{20}the sequence^{19}`).
+- **Fractions**: `\x12`/`\x13` control chars are TeX fraction delimiters in this PDF.
+  `_spans_to_latex` is called only when these markers are present in a stem.
+- **Square roots**: literal `√` char (Unicode) → `\sqrt{arg}`. If arg span is empty,
+  consume the next span as the argument.
+- **Prose text**: emitted verbatim, not wrapped in `$...$`. Only true math tokens get
+  `$...$` wrapping — wrapping entire stems makes KaTeX italicise all words.
+
+### DS standard answer choices
+DS options are never printed in the PDF. They're hardcoded in `DS_CHOICES` (same for
+all 250 DS questions, standard GMAT wording). Do not try to extract them from the PDF.
+
+### `_SOL_QNUM_RE = r'^(\d+)\.(?!\d)'`
+Negative lookahead prevents "5.1" section headings matching as Q5. Required because
+solution blocks often have no space: `'1.Here given expression...'`.
+
+### `load_solutions(doc, sol_range, min_q=1)` — DS uses `min_q=251`
+DS solution pages contain sub-point labels like `'2. – Sufficient'`. Without `min_q`,
+these overwrite PS Q2 in the shared dict. Always call DS load with `min_q=251`.
+
+### Diagram detection
+`page.get_drawings()` detects vector figures. When drawings exist in a question's
+y-zone: rasterize page at 200 DPI (`fitz.Matrix(200/72, 200/72)`), crop union bbox
+with 10px padding via Pillow, save to `diagrams/{id}.png`. Currently 29 geometry
+questions carry diagrams.
+
+### Schema additions (quant-specific)
+Same base schema as Verbal. Extra fields: `type` (PS/DS), `chapter` (topic label from
+section header), `number` (book Q#), `source`, `needs_review` (bool), `source_page`,
+`diagram` (path or null). No `subtype` / `category` (add later using `chapter`).
+
 ## index.html (the app) — "GMAT Verbal Trainer"
 
 One self-contained file: plain HTML/CSS/JS, no build, no backend. Mobile-first,
 responsive, auto light/dark. A **source selector** (`SOURCES` map) switches between
-`questions-og.json` (default) and `questions.json`. The app is a dashboard + several
-modes; the original simple single-question app is preserved as `index-classic.html`,
-and `ui-{focus,momentum,console,exam}.html` are earlier design explorations.
+three banks: `questions-og.json` (default), `questions.json`, `questions-quant.json`.
+The original simple app is preserved as `index-classic.html`; `ui-{focus,momentum,
+console,exam}.html` are earlier design explorations.
+
+**Quant-specific additions (2026-06-26):**
+- **KaTeX** CDN (`katex@0.16.9`, auto-render). After each `renderQ()`, calls
+  `renderMathInElement(col, {delimiters:[{left:'$',right:'$',display:false}]})`.
+  Inline `$...$` only — display math is not used.
+- **PS/DS type badges**: `<span class="pill t-PS">` (blue `#dbeafe`) and
+  `<span class="pill t-DS">` (purple `#ede9fe`) shown in question header.
+- **Diagram rendering**: `q.diagram` → `<img class="q-diagram">` above the stem.
+  CSS: `.q-diagram{display:block;max-width:100%;margin:0.75rem 0 1rem;border-radius:6px}`
 
 - **Persistence:** uses **localStorage** (key `gmat_verbal_v1`) via the `Store`
   abstraction — per-question history, daily streak/level, column level. This

@@ -5,100 +5,114 @@ deep parser/app reference, [TECH_STACK.md](TECH_STACK.md) for the stack, and
 [PROJECT_LOG.md](PROJECT_LOG.md) for how we got here.
 
 ## What this project is
-A **personal, fair-use** GMAT **Verbal** (Reading Comprehension + Critical Reasoning)
-trainer. A Python parser extracts real, answer-verified questions from GMAT prep books
-into JSON; a single-file web app (`index.html`) is the study UI over that data.
+A **personal, fair-use** GMAT trainer. A Python parser extracts real, answer-verified
+questions from GMAT prep books into JSON; a single-file web app (`index.html`) is the
+study UI over that data. Now covers **Verbal** (RC + CR) **and Quantitative** (PS + DS).
 **Non-negotiable rule: never invent or alter a question/answer — leave anything
 unconfirmable as `null`.** Correctness beats volume.
 
 ## Current state (works today)
 - **Data shipped:**
   - `questions-og.json` — **346** questions from the *GMAT Official Guide 2024-2025*
-    (Focus Edition). Every answer verified (key + explanation agree, 346/346, 0 conflicts).
-    Each carries `subtype`, `category`, `difficulty`, `number`.
+    (Focus Edition). Every answer verified (346/346, 0 conflicts). Carries `subtype`,
+    `category`, `difficulty`, `number`.
   - `questions.json` — 64 from Manhattan *All the Verbal* (CR+RC).
-  - **Formatting (added 2026-06-11):** RC passages and explanations now keep their
-    **paragraph breaks** (`\n\n`). No answer changed — pure formatting.
-- **App:** `index.html` — "GMAT Verbal Trainer", a multi-screen SPA (landing →
-  dashboard → setup → runner → report). Modes: Daily RC (adaptive + streak), GMAT RC
-  column (adaptive), Practice (type/concept/difficulty filters), Exam sim (timed),
-  Redo-my-misses, Target-weak-spots. Weakness analytics by sub-type/difficulty.
-  Progress saved in **localStorage** (`gmat_verbal_v1`).
-  - **Report screen:** per-question **time pill**, **Avg/question** card, total session
-    time, collapsible **Reading passage** toggle for RC items.
-  - **Dark/light theme toggle** with persistence (`gmat_theme` in localStorage).
-- **Supabase cross-device sync (added 2026-06-18):** local-first architecture — the
-  existing synchronous `Store` API is untouched. When configured, adds Google OAuth
-  sign-in + cloud progress merge via a `progress` table in Supabase. **Optional:**
-  app runs as a local-only guest if keys are blank or Supabase is down.
-  - **Supabase project:** `bfaaczlxfafsxjnqqvoc` (Seoul), table `progress` with RLS.
-  - **Google OAuth:** configured in Google Cloud project `GMAT`, consent screen set to
-    External/Testing. Test user: `govada.akash@gmail.com`.
-  - **Status:** code deployed, Supabase table + RLS + Google provider configured.
-    **Google login not yet verified end-to-end** — was returning "provider not enabled"
-    error initially; provider was re-enabled in Supabase but not re-tested before
-    session ended. **First priority for next session: test the sign-in flow.**
+  - `questions-quant.json` — **500** from *Manhattan Review Quantitative Question Bank
+    6th Ed* (PS Q1–250 + DS Q251–500). 496/500 confirmed; 4 genuine book conflicts
+    flagged `needs_review: true`. Each has `type` (PS/DS), `chapter` (topic), `question`
+    (with inline `$math$` for KaTeX), `options`, `explanation`, optional `diagram` path.
+    DS options are the 5 standard hardcoded choices (never printed in the PDF).
+  - **29 diagram PNGs** in `diagrams/` — cropped geometry figures (200 DPI).
+- **App:** `index.html` — "GMAT Verbal Trainer", a multi-screen SPA. Three question
+  banks selectable from the top-right dropdown:
+  - "Official Guide 2024–25" (default)
+  - "Manhattan: All the Verbal"
+  - "MR Quant Question Bank" ← added 2026-06-26
+  - Quant math renders via **KaTeX** (CDN auto-render, `$...$` inline delimiters).
+  - PS badge (blue) and DS badge (purple) in question header.
+  - Geometry questions show a diagram `<img>` above the stem.
+  - Modes: Daily RC, GMAT RC column, Practice (filters), Exam sim, Redo-my-misses,
+    Target-weak-spots, Analytics dashboard. Progress in **localStorage** (`gmat_verbal_v1`).
+- **Supabase cross-device sync:** local-first, optional. Google OAuth + `progress` table.
+  Project `bfaaczlxfafsxjnqqvoc` (Seoul). **Google sign-in not yet end-to-end verified.**
+- **Vector search (optional):** `api.py` (FastAPI + in-memory Qdrant). Run alongside app.
 - **Repo:** `github.com/Atomstars/gmat-verbal-practice` (**private**).
-- **Deploy:** Vercel project **gmat-prep** → **https://gmat-prep-ivory.vercel.app**
-  (GitHub-connected). **Vercel deploy may be stalled** — see "Open items" below.
+- **Deploy:** Vercel **gmat-prep** → **https://gmat-prep-ivory.vercel.app**. May need
+  manual unblock — see Open items.
 
 ## How to run locally
 ```bash
-python -m http.server 8754      # a server is REQUIRED (app fetch()es the JSON)
+python -m http.server 8754      # REQUIRED — app fetch()es JSON, file:// fails
 # open http://localhost:8754
 ```
-Re-generate OG data (needs the source PDF, which lives outside the repo):
+
+Re-generate quant data (PDF lives outside the repo on OneDrive Desktop):
+```bash
+pip install pymupdf pillow sentence-transformers
+python parse_quant.py "C:\Users\Akash\OneDrive\Desktop\New folder\MR-GMAT-Quantitative-Question-Bank-BTG-D27-M8_07.11.2016.pdf"
+# writes questions-quant.json + diagrams/  (~60s for embeddings)
+
+# test a single topic batch first (faster, ~15s):
+python parse_quant.py "<pdf>" --ps-topics "Number properties" --ds-topics "Numbers"
+```
+
+Re-generate Verbal data (PDF outside the repo):
 ```bash
 pip install pdfplumber beautifulsoup4 lxml pymupdf
-python parser.py --og "<path-to>/gmat-official-guide-2024-2025...pdf"
+python parser.py --og "<path>/gmat-official-guide-2024-2025.pdf"
 ```
 
 ## Open items / next steps
-1. **Verify Google sign-in end-to-end.** Click "Sign in" on the landing page →
-   should redirect to Google → back to app with avatar + email in the header bar.
-   If "provider not enabled" error persists, check Supabase → Authentication →
-   Providers → Google is toggled ON with the correct Client ID/Secret. The Google
-   Cloud OAuth consent screen is in "Testing" mode — only test users
-   (`govada.akash@gmail.com`) can sign in until it's published.
-2. **Test two-device sync.** Sign in on two browser profiles with the same Google
-   account. Answer questions in one, reload the other — progress should appear.
-3. **Vercel deploy (may need manual unblock).** Previous session saw every deploy
-   stall with status UNKNOWN / empty build logs. Check Vercel dashboard →
-   `gmat-prep` → Settings → look for banners about usage limits or billing.
-   After unblocking, run `vercel --prod`. The live URL is
-   https://gmat-prep-ivory.vercel.app.
-4. **CR sub-type precision (~88%).** 21/182 CR questions are `"Unclassified"`;
-   the `_OG_CR_RULES` classifier in `parser.py` can be tuned if desired.
+1. **Verify Google sign-in end-to-end.** Click "Sign in" → Google OAuth → back to app
+   with avatar. If "provider not enabled": Supabase → Auth → Providers → Google ON.
+   Consent screen is in Testing mode; only `govada.akash@gmail.com` works until published.
+2. **Test two-device sync.** Sign in on two browser profiles → answer in one → reload
+   other → progress should appear.
+3. **Vercel deploy (may need unblock).** Previous session: every deploy stalled (status
+   UNKNOWN, empty logs). Check Vercel dashboard → `gmat-prep` → Settings for billing
+   banners. After unblocking: `vercel --prod`. Live URL: https://gmat-prep-ivory.vercel.app.
+4. **Quant type filter chips** — Practice setup shows "All Verbal / Reading Comp /
+   Critical Reasoning" chips. These are Verbal-only; when quant bank is selected they
+   don't filter usefully. Add "All / PS / DS" chips that activate for the quant source.
+   Not breaking (all 500 questions accessible via "All Verbal"), just suboptimal UX.
+5. **Quant analytics** — `questions-quant.json` has `chapter` (topic) but no `subtype`,
+   so the analytics dashboard shows no quant breakdown. Could use `chapter` as subtype.
+6. **CR sub-type precision (~88%).** 21/182 CR questions are `"Unclassified"`;
+   `_OG_CR_RULES` in `parser.py` can be tuned.
 
 ## Gotchas / lessons (don't re-learn these the hard way)
-- **OG PDF must be parsed with PyMuPDF (`fitz`), not pdfplumber** — pdfplumber drops
-  this file's ligatures and smart quotes. See CLAUDE.md.
-- **The preview screenshot tool is flaky in this environment** (often times out / returns
-  a stale paint). Verify UI by scripting the live app with `preview_eval` (read `App`/DOM
-  state) — that's authoritative even when a screenshot looks wrong.
-- **The preview server serves from CWD** — if you edit in a worktree, either copy the
-  file to the main repo or restart the server with `-d <worktree-path>`.
-- **Browser caches the JSON.** The fetch uses `{cache:"no-cache"}`, but if you ever see
-  stale data do a hard refresh (Ctrl+Shift+R).
-- **CSS specificity bug we already hit:** an `#id { display:flex }` rule beats
-  `.screen { display:none }`, so the landing page wouldn't hide. Screen visibility is
-  driven by `.screen` / `.screen.on`; never set `display` on a screen via an ID selector.
-- **Two source books are independent.** `questions.json` (Manhattan) and
-  `questions-og.json` (OG) are NOT cross-checks for each other.
-- The source books (PDF/EPUB) are **not** in the repo — they live in the user's Downloads.
-- **`gmat_theme` is local-only** — dark/light preference is NOT synced to Supabase
-  (intentional; it's a device preference).
-- **Supabase anon key is public by design** — RLS protects each user's row. Don't treat
-  it as a secret.
+- **OG PDF needs PyMuPDF (`fitz`)**, not pdfplumber — pdfplumber drops ligatures/quotes.
+- **Quant PDF also needs PyMuPDF** — `get_text('dict')` gives per-span font-size needed
+  for superscript detection. Do not switch to pdfplumber.
+- **`_SOL_QNUM_RE = r'^(\d+)\.(?!\d)'`** — negative lookahead so "5.1" section headings
+  don't match as Q5. Blocks run number and text together: `'1.Here given expression...'`.
+- **DS solutions use `min_q=251`** — solution pages have sub-point labels like
+  `'2. – Sufficient'`. `min_q=251` stops them colliding with PS Q2 in the merged dict.
+- **Stem LaTeX**: emit inline `$token$` only around actual math, not the full stem. A
+  whole-stem `$...$` makes KaTeX italicise every prose word as a math variable.
+- **`y_range` fraction check removed** from `_build_stem` — multi-line questions trigger
+  it wrongly. Only use `_spans_to_latex` when `\x12`/`\x13` fraction markers are present.
+- **True superscripts need a y-position check**: `size < SUP_SIZE_MAX AND dom_y - span_y > 2`.
+  Without it, small-font page numbers adjacent to text become false superscripts.
+- **Preview screenshot times out** when KaTeX CDN is loading. Use `preview_snapshot`
+  (accessibility tree) instead — reliable even during CDN load.
+- **Browser caches JSON.** Fetch uses `{cache:"no-cache"}`. Hard-refresh (Ctrl+Shift+R)
+  if data looks stale.
+- Source books (PDF/EPUB) are **not** in the repo — they live on the user's machine.
+- **`gmat_theme`** (dark/light) is local-only, intentionally NOT synced to Supabase.
+- **Supabase anon key is public by design** — RLS protects each user's row.
 
 ## Key files
 | File | Role |
 |---|---|
-| `parser.py` | 3 backends: `parse_pdf`/`parse_epub` (Manhattan) + `parse_og` (Official Guide). Run with `--og`. |
-| `index.html` | The trainer app (SPA). Edit directly; never regenerate from the parser. |
-| `index-classic.html` | The original simple single-question app (kept). |
-| `ui-{focus,momentum,console,exam}.html` | Four early UI design explorations (kept for reference). |
-| `questions-og.json` / `questions.json` | The two question banks (shared schema). |
-| `APP_GUIDE.md` | Architecture + business-case doc for the app. |
-| `CLAUDE.md` | Canonical deep reference (parser internals, schema, app architecture). |
-| `COVERAGE.md` | Extraction coverage + validation report for both books. |
+| `parser.py` | 3 backends: `parse_pdf`/`parse_epub` (Manhattan Verbal) + `parse_og` (OG). |
+| `parse_quant.py` | Standalone quant parser: PS+DS → `questions-quant.json` + `diagrams/`. |
+| `api.py` | FastAPI vector search (Qdrant in-memory). Optional. |
+| `index.html` | The trainer SPA. Edit directly; never regenerate from parser. |
+| `index-classic.html` | Original simple single-question app (kept). |
+| `questions-og.json` | OG Verbal (346 q, embeddings). |
+| `questions.json` | Manhattan Verbal (64 q, embeddings). |
+| `questions-quant.json` | Manhattan Quant PS+DS (500 q, embeddings, diagram paths). |
+| `diagrams/` | Cropped geometry PNGs (200 DPI). Referenced by `diagram` field in JSON. |
+| `CLAUDE.md` | Deep reference: parser internals, schema, app architecture. |
+| `COVERAGE.md` | Extraction coverage + validation for the Verbal books. |
