@@ -6,12 +6,12 @@ Provides semantic search endpoints for questions.
 
 import json
 import os
-from typing import List, Optional
+
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from qdrant_client import QdrantClient
-from qdrant_client.models import Distance, VectorParams, PointStruct
+from qdrant_client.models import Distance, PointStruct, VectorParams
 from sentence_transformers import SentenceTransformer
 
 app = FastAPI(
@@ -30,8 +30,8 @@ app.add_middleware(
 )
 
 # Global instances
-client: Optional[QdrantClient] = None
-model: Optional[SentenceTransformer] = None
+client: QdrantClient | None = None
+model: SentenceTransformer | None = None
 questions_map: dict = {}
 COLLECTION_NAME = "gmat_questions"
 
@@ -42,7 +42,7 @@ def init_qdrant():
 
     # Initialize embedding model
     print("Loading all-MiniLM-L6-v2...")
-    model = SentenceTransformer('all-MiniLM-L6-v2')
+    model = SentenceTransformer("all-MiniLM-L6-v2")
 
     # Initialize Qdrant (in-memory for now)
     print("Initializing Qdrant...")
@@ -53,7 +53,7 @@ def init_qdrant():
         raise FileNotFoundError("questions_embedded.json not found. Run test_embeddings.py first.")
 
     print("Loading embedded questions...")
-    with open("questions_embedded.json", "r", encoding="utf-8") as f:
+    with open("questions_embedded.json", encoding="utf-8") as f:
         questions = json.load(f)
 
     # Create collection
@@ -104,26 +104,26 @@ class Question(BaseModel):
     id: str
     type: str
     question: str
-    passage: Optional[str] = None
-    chapter: Optional[str] = None
-    subtype: Optional[str] = None
-    difficulty: Optional[str] = None
-    correct_answer: Optional[str] = None
-    explanation: Optional[str] = None
+    passage: str | None = None
+    chapter: str | None = None
+    subtype: str | None = None
+    difficulty: str | None = None
+    correct_answer: str | None = None
+    explanation: str | None = None
 
 
 class SearchResult(BaseModel):
     question_id: str
     score: float
     type: str
-    difficulty: Optional[str] = None
-    subtype: Optional[str] = None
+    difficulty: str | None = None
+    subtype: str | None = None
 
 
 class SearchResponse(BaseModel):
-    query_id: Optional[str] = None
-    query_text: Optional[str] = None
-    results: List[SearchResult]
+    query_id: str | None = None
+    query_text: str | None = None
+    results: list[SearchResult]
 
 
 # Endpoints
@@ -246,4 +246,5 @@ async def get_question(question_id: str) -> Question:
 
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(app, host="127.0.0.1", port=8000)
