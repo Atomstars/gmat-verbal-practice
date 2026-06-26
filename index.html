@@ -211,6 +211,9 @@
   .pill.d-Medium{background:var(--amber-bg);color:var(--amber);border:0}
   .pill.d-Hard{background:var(--red-bg);color:var(--red);border:0}
   .pill.hide{visibility:hidden}
+  .pill.t-PS{background:#dbeafe;color:#1d4ed8;border:0}
+  .pill.t-DS{background:#ede9fe;color:#6d28d9;border:0}
+  .q-diagram{display:block;max-width:100%;margin:0.75rem 0 1rem;border-radius:6px}
   .runbar .sp{margin-left:auto}
   .runbar .prog{flex:0 0 90px;height:6px;border-radius:6px;background:var(--line2);overflow:hidden}
   .runbar .prog i{display:block;height:100%;background:var(--grad);width:0;transition:width .3s}
@@ -326,6 +329,10 @@ window.SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXB
    recommendations and semantic search. Leave blank to disable silently. */
 window.VECTOR_API = "http://127.0.0.1:8000";
 </script>
+<!-- KaTeX for rendering math in GMAT Quant questions -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
 </head>
 <body>
 
@@ -476,7 +483,8 @@ window.VECTOR_API = "http://127.0.0.1:8000";
 <script>
 /* =================================================================== */
 const SOURCES={ og:{file:"questions-og.json",label:"Official Guide 2024–25"},
-  manhattan:{file:"questions.json",label:"Manhattan: All the Verbal"} };
+  manhattan:{file:"questions.json",label:"Manhattan: All the Verbal"},
+  quant:{file:"questions-quant.json",label:"MR Quant Question Bank"} };
 const RC_TYPES=["Main Idea","Supporting Idea","Inference","Application","Evaluation","Logical Structure"];
 const CR_TASKS=["Weaken","Strengthen","Assumption","Inference / Conclusion","Flaw","Evaluate",
   "Boldface / Method","Explain a Discrepancy","Plan","Complete the Argument"];
@@ -908,7 +916,8 @@ function renderQ(){
   if(App._timingLastIdx!==App.idx){ App._qStart=Date.now(); App._timingLastIdx=App.idx; }
   $("#qof").textContent=`${App.idx+1} / ${n}`;
   $("#prog").style.width=`${(App.idx)/n*100}%`;
-  $("#tags").innerHTML=`<span class="pill">${q.type}</span>`+
+  const typeCls=(q.type==='PS'||q.type==='DS')?`t-${q.type}`:'';
+  $("#tags").innerHTML=`<span class="pill ${typeCls}">${q.type}</span>`+
     `<span class="pill ${showType?'':'hide'}">${esc(q.subtype||'—')}</span>`+
     `<span class="pill d-${q.difficulty||''} ${showType?'':'hide'}">${esc(q.difficulty||'')}</span>`;
   $("#flagBtn").classList.toggle("on",App.flags.has(App.idx));
@@ -919,6 +928,7 @@ function renderQ(){
   const parts=String(q.question).split("\n\n");
   const titled=parts.length>1&&parts[0].length<60&&!/[.?]$/.test(parts[0]);
   const qhtml=titled?`<b>${esc(parts[0])}</b><br>${esc(parts.slice(1).join("\n\n"))}`:esc(q.question);
+  const diagHtml=q.diagram?`<img class="q-diagram" src="${q.diagram}" alt="figure">`:``;
   const dir=q.type==="RC"?"The questions refer to the passage. Select the best answer.":"Select the best answer of the choices given.";
   const sel=App.answers[q.id], reveal=!isExam()&&answered;
   const choices=(q.options||[]).map(o=>{ let cls="choice",mk="";
@@ -931,13 +941,14 @@ function renderQ(){
       <span class="typetag"><span class="pill">${esc(q.subtype||q.type)}</span><span class="pill d-${q.difficulty||''}">${esc(q.difficulty||'')}</span></span></div>
       <div class="body"><h5>Explanation</h5>${esc(q.explanation||'No explanation available.')}</div></div>`; }
   const qpane=`<div class="pcard"><div class="directions">${esc(dir)}</div><div class="lbl">Question<span class="ln"></span></div>
-    <p class="qtext">${qhtml}</p><ul class="choices">${choices}</ul>${fb}</div><div id="simPanelSlot"></div>`;
+    ${diagHtml}<p class="qtext">${qhtml}</p><ul class="choices">${choices}</ul>${fb}</div><div id="simPanelSlot"></div>`;
   const col=$("#splitcols");
   if(q.passage){ col.className="splitcols has-psg";
     col.innerHTML=`<div class="pcard psg sticky"><div class="lbl">Reading passage<span class="ln"></span></div><div class="passage">${esc(q.passage)}</div></div>`+qpane; }
   else { col.className="splitcols"; col.innerHTML=qpane; }
   col.querySelectorAll(".choice").forEach(li=>li.addEventListener("click",()=>pick(li.dataset.label)));
   updateAct();
+  if(window.renderMathInElement) renderMathInElement(col,{delimiters:[{left:'$',right:'$',display:false}],throwOnError:false});
 }
 function pick(label){ const q=App.qs[App.idx]; if(!isExam()&&App.checked.has(App.idx))return;
   App.answers[q.id]=label; $("#splitcols").querySelectorAll(".choice").forEach(li=>li.classList.toggle("sel",li.dataset.label===label)); updateAct(); }
