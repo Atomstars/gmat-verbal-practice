@@ -50,16 +50,7 @@ except ImportError:
     HAS_PIL = False
     print("WARNING: Pillow not installed -- diagram cropping disabled. " "Run: pip install Pillow")
 
-# Bring in embed_questions from the existing parser (graceful if unavailable)
-try:
-    sys.path.insert(0, os.path.dirname(__file__))
-    from parser import embed_questions
-except Exception:
-
-    def embed_questions(questions):
-        print("WARNING: Could not import embed_questions from parser.py -- skipping embeddings.")
-        return questions
-
+from gmat_parsing_common import embed_questions
 
 # =========================================================================== #
 # Constants
@@ -98,50 +89,50 @@ FRAC_Y_MIN = 4.5  # y-offset (px) to classify as fraction rather than superscrip
 # =========================================================================== #
 
 
-def _slug(text):
+def _slug(text: str) -> str:
     """kebab-case slug for topic labels."""
     return re.sub(r"[^a-z0-9]+", "-", text.lower()).strip("-")
 
 
-def _clean(text):
+def _clean(text: str) -> str:
     """Collapse whitespace, strip. Keep math chars intact."""
     text = text.replace("\x12", "").replace("\x13", "")
     return re.sub(r"\s+", " ", text).strip()
 
 
-def _span_text(span):
+def _span_text(span: dict) -> str:
     return span["text"]
 
 
-def _span_y(span):
+def _span_y(span: dict) -> float:
     return span["origin"][1]
 
 
-def _span_x(span):
+def _span_x(span: dict) -> float:
     return span["origin"][0]
 
 
-def _span_size(span):
+def _span_size(span: dict) -> float:
     return span["size"]
 
 
-def _block_y_min(block):
+def _block_y_min(block: dict) -> float:
     return block["bbox"][1]
 
 
-def _block_y_max(block):
+def _block_y_max(block: dict) -> float:
     return block["bbox"][3]
 
 
-def _block_x_min(block):
+def _block_x_min(block: dict) -> float:
     return block["bbox"][0]
 
 
-def _block_x_max(block):
+def _block_x_max(block: dict) -> float:
     return block["bbox"][2]
 
 
-def _all_spans(block):
+def _all_spans(block: dict) -> list[dict]:
     """Flatten all spans from a text block, in order."""
     spans = []
     for line in block.get("lines", []):
@@ -149,7 +140,7 @@ def _all_spans(block):
     return spans
 
 
-def _collect_text(spans):
+def _collect_text(spans: list[dict]) -> str:
     """Concatenate span texts, ignoring control chars."""
     parts = []
     for s in spans:
@@ -642,7 +633,7 @@ def load_solutions(doc, sol_range, min_q=1):
     return solutions
 
 
-def _extract_sol_letter(text):
+def _extract_sol_letter(text: str) -> str | None:
     """Extract answer letter from solution text. Returns None if absent."""
     m = _SOL_ANSWER_RE.search(text)
     return m.group(1).upper() if m else None
@@ -677,7 +668,7 @@ def _block_text(block):
     return _clean(_collect_text(_all_spans(block)))
 
 
-def _is_page_header(text):
+def _is_page_header(text: str) -> bool:
     return any(
         kw in text
         for kw in (
@@ -689,25 +680,25 @@ def _is_page_header(text):
     )
 
 
-def _is_question_start(block):
+def _is_question_start(block: dict) -> bool:
     """True if block starts with 'N.' question number."""
     t = _first_text(block)
     return bool(_QNUM_RE.match(t))
 
 
-def _get_question_num(block):
+def _get_question_num(block: dict) -> int | None:
     t = _first_text(block)
     m = _QNUM_RE.match(t)
     return int(m.group(1)) if m else None
 
 
-def _is_option_start(block):
+def _is_option_start(block: dict) -> bool:
     """True if block contains an option label (A)-(E)."""
     t = _first_text(block)
     return bool(_OPT_RE.match(t)) or bool(re.match(r"^\(([A-E])\)", t))
 
 
-def _get_option_label(block):
+def _get_option_label(block: dict) -> str | None:
     t = _first_text(block)
     m = re.match(r"^\(([A-E])\)", t)
     return m.group(1) if m else None

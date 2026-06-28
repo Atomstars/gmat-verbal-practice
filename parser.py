@@ -45,6 +45,8 @@ import sys
 import zipfile
 from collections import Counter
 
+from gmat_parsing_common import clean, clean_paras, embed_questions, norm
+
 try:
     from gmat_schema import validate_records
 except ImportError:
@@ -123,48 +125,8 @@ def unit_for_chapter(ch):
     return "CR"
 
 
-SMART = {
-    "‘": "'",
-    "’": "'",
-    "‚": ",",
-    "‛": "'",
-    "“": '"',
-    "”": '"',
-    "„": '"',
-    "–": "-",
-    "—": "-",
-    "…": "...",
-    "−": "-",
-    " ": " ",
-    "​": "",
-    "﻿": "",
-    "": "->",
-    "ﬁ": "fi",
-    "ﬂ": "fl",
-    "­": "",
-}
-
-
-def clean(text):
-    if not text:
-        return ""
-    for k, v in SMART.items():
-        text = text.replace(k, v)
-    text = re.sub(r"-\s+(?=[a-z])", "", text) if False else text  # (kept simple)
-    text = re.sub(r"\s+", " ", text)
-    return text.strip()
-
-
-def norm(s):
-    return re.sub(r"\s+", " ", re.sub(r"[^\w ]", "", s or "")).strip().lower()
-
-
-def clean_paras(paras):
-    """clean() each paragraph and join them with a blank line, dropping empties.
-    Used for passages/explanations so paragraph structure survives (clean() alone
-    flattens every newline to a single space)."""
-    out = [clean(p) for p in paras]
-    return "\n\n".join(p for p in out if p)
+# clean(), norm(), clean_paras(), SMART, embed_questions() live in
+# gmat_parsing_common and are imported above.
 
 
 # --------------------------------------------------------------------------- #
@@ -174,7 +136,7 @@ def clean_paras(paras):
 CORRECT_IS_RE = re.compile(r"(?:correct|best)\s+answer\s+is\s*\(?\s*([A-E])\s*\)?", re.I)
 
 
-def cr_answer_from_text(text):
+def cr_answer_from_text(text: str) -> str | None:
     """Single agreed letter from 'The correct answer is (X)' in a block, else None."""
     letters = {m.upper() for m in CORRECT_IS_RE.findall(text)}
     if len(letters) == 1:
@@ -182,7 +144,7 @@ def cr_answer_from_text(text):
     return None
 
 
-def cr_answer_by_title(title, solutions_text):
+def cr_answer_by_title(title: str | None, solutions_text: str) -> str | None:
     """Find '<Title>: The correct answer is (X)' over the whole chapter solutions."""
     if not title:
         return None
@@ -199,7 +161,7 @@ def cr_answer_by_title(title, solutions_text):
 # --------------------------------------------------------------------------- #
 
 
-def discover(ext):
+def discover(ext: str) -> str | None:
     dirs = [
         ".",
         os.path.expanduser("~/Downloads"),
@@ -226,7 +188,7 @@ PASSAGE_RE = re.compile(r"^Passage\s+[A-Za-z0-9]+\s*:\s*(.*)")
 LINE_NO_RE = re.compile(r"\(\d{1,3}\)")  # RC passage line markers, e.g. "(5)"
 
 
-def pdf_extract_pages(path):
+def pdf_extract_pages(path: str) -> list[str]:
     import pdfplumber
 
     cache = "pdf_pages.json"
@@ -245,11 +207,11 @@ def pdf_extract_pages(path):
     return pages
 
 
-def _standalone(line, words):
+def _standalone(line: str, words: set[str]) -> bool:
     return line.strip() in words
 
 
-def pdf_regions(pages):
+def pdf_regions(pages: list[str]) -> list[tuple[int, int]]:
     """Ordered list of (problem_set_page, region_end_page), skipping the TOC."""
     ps = [
         i
@@ -1439,45 +1401,7 @@ def discover_og():
     return None
 
 
-def embed_questions(questions):
-    """
-    Embed all questions using all-MiniLM-L6-v2 model.
-    Adds an 'embedding' field to each question record.
-    Returns the modified questions list.
-    """
-    try:
-        from sentence_transformers import SentenceTransformer
-    except ImportError:
-        print("WARNING: sentence-transformers not installed. Skipping embeddings.")
-        print("Install with: pip install sentence-transformers")
-        return questions
-
-    print("\nEmbedding questions with all-MiniLM-L6-v2...")
-    model = SentenceTransformer("all-MiniLM-L6-v2")
-
-    texts_to_embed = []
-    for q in questions:
-        parts = []
-        if q.get("title"):
-            parts.append(q["title"])
-        if q.get("question"):
-            parts.append(q["question"])
-        if q.get("passage"):
-            parts.append(q["passage"][:500])
-        options_text = " ".join(opt.get("text", "") for opt in q.get("options", []))
-        if options_text:
-            parts.append(options_text[:300])
-
-        text = " ".join(parts)
-        texts_to_embed.append(text[:1000])
-
-    embeddings = model.encode(texts_to_embed, show_progress_bar=True)
-
-    for q, emb in zip(questions, embeddings):
-        q["embedding"] = emb.tolist()
-
-    print(f"Embedded {len(questions)} questions.")
-    return questions
+# embed_questions() lives in gmat_parsing_common and is imported above.
 
 
 def main():
