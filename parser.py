@@ -37,13 +37,24 @@ ANSWER INFERENCE  (conservative -- never guesses)
 Output: questions.json + a printed coverage summary.
 """
 
-import sys
+import glob
+import json
 import os
 import re
-import json
-import glob
+import sys
 import zipfile
 from collections import Counter
+
+from gmat_parsing_common import clean, clean_paras, embed_questions, norm
+
+try:
+    from gmat_schema import validate_records
+except ImportError:
+
+    def validate_records(records, source=""):  # type: ignore[misc]
+        print(f"WARNING: gmat_schema not available -- skipping schema validation ({source})")
+        return records
+
 
 try:
     from bs4 import BeautifulSoup
@@ -56,14 +67,14 @@ except ImportError:
 # --------------------------------------------------------------------------- #
 
 CHAPTER_TITLES = {
-    2:  "Chapter 2: Grammar and Meaning",
-    3:  "Chapter 3: Sentence Structure",
-    4:  "Chapter 4: Modifiers",
-    5:  "Chapter 5: Parallelism",
-    6:  "Chapter 6: Comparisons",
-    7:  "Chapter 7: Pronouns",
-    8:  "Chapter 8: Verbs",
-    9:  "Chapter 9: Idioms",
+    2: "Chapter 2: Grammar and Meaning",
+    3: "Chapter 3: Sentence Structure",
+    4: "Chapter 4: Modifiers",
+    5: "Chapter 5: Parallelism",
+    6: "Chapter 6: Comparisons",
+    7: "Chapter 7: Pronouns",
+    8: "Chapter 8: Verbs",
+    9: "Chapter 9: Idioms",
     11: "Chapter 11: Breaking Down the Passage",
     12: "Chapter 12: Mapping the Passage",
     13: "Chapter 13: General Questions",
@@ -80,11 +91,31 @@ CHAPTER_TITLES = {
 
 # The chapters that have a Problem Set, in book order. The PDF's problem-set
 # pages are matched to this sequence (the EPUB carries its own chapter numbers).
-PROBLEMSET_CHAPTERS = [2, 3, 4, 5, 6, 7, 8, 9,        # SC
-                       11, 12, 13, 14, 15,            # RC
-                       16, 17, 18, 19, 20, 21, 22]    # CR
+PROBLEMSET_CHAPTERS = [
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,  # SC
+    11,
+    12,
+    13,
+    14,
+    15,  # RC
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+]  # CR
 
 LETTERS = "ABCDEFGHIJ"
+
 
 def unit_for_chapter(ch):
     if ch <= 9:
@@ -93,55 +124,35 @@ def unit_for_chapter(ch):
         return "RC"
     return "CR"
 
-SMART = {
-    "‘": "'", "’": "'", "‚": ",", "‛": "'",
-    "“": '"', "”": '"', "„": '"',
-    "–": "-", "—": "-", "…": "...", "−": "-",
-    " ": " ", "​": "", "﻿": "", "": "->", "ﬁ": "fi",
-    "ﬂ": "fl", "­": "",
-}
 
-def clean(text):
-    if not text:
-        return ""
-    for k, v in SMART.items():
-        text = text.replace(k, v)
-    text = re.sub(r"-\s+(?=[a-z])", "", text) if False else text  # (kept simple)
-    text = re.sub(r"\s+", " ", text)
-    return text.strip()
-
-def norm(s):
-    return re.sub(r"\s+", " ", re.sub(r"[^\w ]", "", s or "")).strip().lower()
-
-def clean_paras(paras):
-    """clean() each paragraph and join them with a blank line, dropping empties.
-    Used for passages/explanations so paragraph structure survives (clean() alone
-    flattens every newline to a single space)."""
-    out = [clean(p) for p in paras]
-    return "\n\n".join(p for p in out if p)
+# clean(), norm(), clean_paras(), SMART, embed_questions() live in
+# gmat_parsing_common and are imported above.
 
 
 # --------------------------------------------------------------------------- #
 # Answer-inference (shared by both backends, operating on plain text)
 # --------------------------------------------------------------------------- #
 
-CORRECT_IS_RE = re.compile(
-    r"(?:correct|best)\s+answer\s+is\s*\(?\s*([A-E])\s*\)?", re.I)
+CORRECT_IS_RE = re.compile(r"(?:correct|best)\s+answer\s+is\s*\(?\s*([A-E])\s*\)?", re.I)
 
-def cr_answer_from_text(text):
+
+def cr_answer_from_text(text: str) -> str | None:
     """Single agreed letter from 'The correct answer is (X)' in a block, else None."""
     letters = {m.upper() for m in CORRECT_IS_RE.findall(text)}
     if len(letters) == 1:
         return letters.pop()
     return None
 
-def cr_answer_by_title(title, solutions_text):
+
+def cr_answer_by_title(title: str | None, solutions_text: str) -> str | None:
     """Find '<Title>: The correct answer is (X)' over the whole chapter solutions."""
     if not title:
         return None
-    m = re.search(re.escape(title) +
-                  r"\s*:?\s*The\s+(?:correct|best)\s+answer\s+is\s*\(?\s*([A-E])",
-                  solutions_text, re.I)
+    m = re.search(
+        re.escape(title) + r"\s*:?\s*The\s+(?:correct|best)\s+answer\s+is\s*\(?\s*([A-E])",
+        solutions_text,
+        re.I,
+    )
     return m.group(1).upper() if m else None
 
 
@@ -149,10 +160,15 @@ def cr_answer_by_title(title, solutions_text):
 # Input discovery
 # --------------------------------------------------------------------------- #
 
-def discover(ext):
-    dirs = [".", os.path.expanduser("~/Downloads"), os.path.expanduser("~/Desktop"),
-            os.path.expanduser("~/Documents"),
-            os.path.expanduser("~/OneDrive/Desktop")]
+
+def discover(ext: str) -> str | None:
+    dirs = [
+        ".",
+        os.path.expanduser("~/Downloads"),
+        os.path.expanduser("~/Desktop"),
+        os.path.expanduser("~/Documents"),
+        os.path.expanduser("~/OneDrive/Desktop"),
+    ]
     hits = []
     for d in dirs:
         for p in glob.glob(os.path.join(d, "**", "*." + ext), recursive=True):
@@ -169,10 +185,12 @@ def discover(ext):
 OPT_RE = re.compile(r"^\(([A-E])\)\s+(.*)")
 NUM_RE = re.compile(r"^(\d+)\.\s+(.*)")
 PASSAGE_RE = re.compile(r"^Passage\s+[A-Za-z0-9]+\s*:\s*(.*)")
-LINE_NO_RE = re.compile(r"\(\d{1,3}\)")          # RC passage line markers, e.g. "(5)"
+LINE_NO_RE = re.compile(r"\(\d{1,3}\)")  # RC passage line markers, e.g. "(5)"
 
-def pdf_extract_pages(path):
+
+def pdf_extract_pages(path: str) -> list[str]:
     import pdfplumber
+
     cache = "pdf_pages.json"
     # tiny convenience cache so re-runs are instant during development
     try:
@@ -188,18 +206,24 @@ def pdf_extract_pages(path):
         pass
     return pages
 
-def _standalone(line, words):
+
+def _standalone(line: str, words: set[str]) -> bool:
     return line.strip() in words
 
-def pdf_regions(pages):
+
+def pdf_regions(pages: list[str]) -> list[tuple[int, int]]:
     """Ordered list of (problem_set_page, region_end_page), skipping the TOC."""
-    ps = [i for i, t in enumerate(pages)
-          if i >= 20 and any(_standalone(l, {"Problem Set"}) for l in t.splitlines())]
+    ps = [
+        i
+        for i, t in enumerate(pages)
+        if i >= 20 and any(_standalone(l, {"Problem Set"}) for l in t.splitlines())
+    ]
     regions = []
     for k, p in enumerate(ps):
         end = ps[k + 1] if k + 1 < len(ps) else len(pages)
         regions.append((p, end))
     return regions
+
 
 def _split_problem_solution(region_pages_text):
     """Split a region into (problem_part, solution_part) at the 'Solutions' line."""
@@ -211,7 +235,8 @@ def _split_problem_solution(region_pages_text):
             break
     if cut is None:
         return "\n".join(lines), ""
-    return "\n".join(lines[:cut]), "\n".join(lines[cut + 1:])
+    return "\n".join(lines[:cut]), "\n".join(lines[cut + 1 :])
+
 
 def _after_heading(text, headings):
     out, started = [], False
@@ -223,21 +248,27 @@ def _after_heading(text, headings):
         out.append(l.rstrip())
     return out if started else [l.rstrip() for l in text.splitlines()]
 
+
 def pdf_split_problems(lines):
     """
     Split problem-set lines into problems. A numbered line "N." starts a problem
     only if an "(A)" option appears before the next numbered line -- this filters
     out the directions' own 1-4 numbered list (which has no answer options).
     """
-    nums = [(i, int(NUM_RE.match(l.strip()).group(1)))
-            for i, l in enumerate(lines) if NUM_RE.match(l.strip())]
+    nums = [
+        (i, int(NUM_RE.match(l.strip()).group(1)))
+        for i, l in enumerate(lines)
+        if NUM_RE.match(l.strip())
+    ]
     starts = []
     for k, (i, n) in enumerate(nums):
         nxt = nums[k + 1][0] if k + 1 < len(nums) else len(lines)
-        has_a = any((OPT_RE.match(lines[j].strip()) or [None]) and
-                    OPT_RE.match(lines[j].strip()) and
-                    OPT_RE.match(lines[j].strip()).group(1) == "A"
-                    for j in range(i, nxt))
+        has_a = any(
+            (OPT_RE.match(lines[j].strip()) or [None])
+            and OPT_RE.match(lines[j].strip())
+            and OPT_RE.match(lines[j].strip()).group(1) == "A"
+            for j in range(i, nxt)
+        )
         if has_a:
             starts.append(i)
     problems = []
@@ -245,6 +276,7 @@ def pdf_split_problems(lines):
         j = starts[k + 1] if k + 1 < len(starts) else len(lines)
         problems.append(lines[i:j])
     return problems
+
 
 def pdf_parse_problem(block, unit):
     """Return (title, question_text, options{label:text})."""
@@ -270,12 +302,18 @@ def pdf_parse_problem(block, unit):
     title = None
     # CR problems open with a short topic label (e.g. "MTC and Asthma"); RC/SC
     # questions are the stem itself, so only treat a label as a title for CR.
-    if unit == "CR" and body and len(body[0]) < 55 and not body[0].rstrip().endswith((".", "?", ":", ",")):
+    if (
+        unit == "CR"
+        and body
+        and len(body[0]) < 55
+        and not body[0].rstrip().endswith((".", "?", ":", ","))
+    ):
         title = clean(body[0])
         body = body[1:]
     question = clean(" ".join(body))
     options = {k: clean(" ".join(v)) for k, v in opts.items()}
     return title, question, options
+
 
 def pdf_parse_passages(lines):
     """
@@ -298,6 +336,7 @@ def pdf_parse_passages(lines):
         passages.append((i, title, text))
     return passages
 
+
 def pdf_ordered_correct_letters(solutions_text):
     """
     Every RC answer analysis marks the right choice '(X) ...text... CORRECT.'.
@@ -307,10 +346,11 @@ def pdf_ordered_correct_letters(solutions_text):
     """
     letters = []
     for cm in re.finditer(r"CORRECT", solutions_text):
-        prefix = solutions_text[:cm.start()]
+        prefix = solutions_text[: cm.start()]
         labels = re.findall(r"\(([A-E])\)", prefix)
         letters.append(labels[-1] if labels else None)
     return letters
+
 
 def pdf_rc_answer_by_stem(qstem, solutions_text):
     """
@@ -325,12 +365,13 @@ def pdf_rc_answer_by_stem(qstem, solutions_text):
     pos = flat.find(needle)
     if pos < 0:
         return None
-    window = flat[pos: pos + 3500]
+    window = flat[pos : pos + 3500]
     cpos = window.find("CORRECT")
     if cpos < 0:
         return None
     labels = re.findall(r"\(([A-E])\)", window[:cpos])
     return labels[-1] if labels else None
+
 
 def pdf_rc_explanation_anchor(correct_opt_text, solution_part):
     """
@@ -344,25 +385,28 @@ def pdf_rc_explanation_anchor(correct_opt_text, solution_part):
     flat = re.sub(r"\s+", " ", solution_part).strip()
     opt = re.sub(r"\s+", " ", correct_opt_text)
     pos = -1
-    for n in (60, 40, 25):           # tolerate line-wrap differences
+    for n in (60, 40, 25):  # tolerate line-wrap differences
         pos = flat.find(opt[:n])
         if pos >= 0:
             break
     if pos < 0:
         return ""
-    start = max(0, pos - 400)        # back up to include the question-type intro
+    start = max(0, pos - 400)  # back up to include the question-type intro
     # trim the leading partial sentence so the window starts cleanly
     cut = flat.rfind(". ", start, pos)
     if cut != -1:
         start = cut + 2
-    return clean(flat[start: pos + 1600])
+    return clean(flat[start : pos + 1600])
+
 
 def parse_pdf(path):
     pages = pdf_extract_pages(path)
     regions = pdf_regions(pages)
     if len(regions) != len(PROBLEMSET_CHAPTERS):
-        print(f"  [warn] found {len(regions)} problem-set regions, "
-              f"expected {len(PROBLEMSET_CHAPTERS)}; mapping by order anyway.")
+        print(
+            f"  [warn] found {len(regions)} problem-set regions, "
+            f"expected {len(PROBLEMSET_CHAPTERS)}; mapping by order anyway."
+        )
     results = []
     for (ps_page, end_page), ch in zip(regions, PROBLEMSET_CHAPTERS):
         unit = unit_for_chapter(ch)
@@ -377,8 +421,9 @@ def parse_pdf(path):
         rc_letters = None
         if unit == "RC":
             ordered = pdf_ordered_correct_letters(solution_part)
-            mc_count = sum(1 for b in problems
-                           if len([1 for l in b if OPT_RE.match(l.strip())]) >= 2)
+            mc_count = sum(
+                1 for b in problems if len([1 for l in b if OPT_RE.match(l.strip())]) >= 2
+            )
             if len(ordered) == mc_count and mc_count > 0:
                 rc_letters = ordered
 
@@ -406,8 +451,11 @@ def parse_pdf(path):
             passage = None
             if unit == "RC" and passages:
                 pos = starts[bi] if bi < len(starts) else 0
-                prev = [(pt, ttl) for (pi, ttl, pt) in
-                        [(p[0], p[1], p[2]) for p in passages] if pi <= pos]
+                prev = [
+                    (pt, ttl)
+                    for (pi, ttl, pt) in [(p[0], p[1], p[2]) for p in passages]
+                    if pi <= pos
+                ]
                 if prev:
                     passage = prev[-1][0]
                 else:
@@ -434,27 +482,31 @@ def parse_pdf(path):
             if not explanation:
                 explanation = _pdf_explanation(title, question, solution_part, unit)
 
-            full_q = (f"{title}\n\n{question}" if (title and question) else (title or question))
-            results.append({
-                "id": f"{unit.lower()}-ch{ch}-q{qnum}",
-                "type": unit if is_mc else "exercise",
-                "chapter": CHAPTER_TITLES.get(ch, f"Chapter {ch}"),
-                "title": title,
-                "question": full_q,
-                "passage": passage,
-                "options": [{"label": k, "text": options[k]} for k in sorted(options)],
-                "correct_answer": correct,
-                "explanation": explanation,
-                "format": "multiple_choice" if is_mc else "open_ended",
-            })
+            full_q = f"{title}\n\n{question}" if (title and question) else (title or question)
+            results.append(
+                {
+                    "id": f"{unit.lower()}-ch{ch}-q{qnum}",
+                    "type": unit if is_mc else "exercise",
+                    "chapter": CHAPTER_TITLES.get(ch, f"Chapter {ch}"),
+                    "title": title,
+                    "question": full_q,
+                    "passage": passage,
+                    "options": [{"label": k, "text": options[k]} for k in sorted(options)],
+                    "correct_answer": correct,
+                    "explanation": explanation,
+                    "format": "multiple_choice" if is_mc else "open_ended",
+                }
+            )
     return results
+
 
 def _pdf_explanation(title, question, solutions_text, unit):
     """Slice out this question's explanation from the chapter solution text."""
     anchor = None
     if unit == "CR" and title:
-        m = re.search(re.escape(title) + r"\s*:?\s*The\s+(?:correct|best)\s+answer\s+is",
-                      solutions_text, re.I)
+        m = re.search(
+            re.escape(title) + r"\s*:?\s*The\s+(?:correct|best)\s+answer\s+is", solutions_text, re.I
+        )
         anchor = m.start() if m else None
     flat = re.sub(r"\s+", " ", solutions_text)
     if anchor is None:
@@ -462,13 +514,14 @@ def _pdf_explanation(title, question, solutions_text, unit):
         if stem:
             p = flat.find(stem)
             anchor = p if p >= 0 else None
-        return clean(flat[anchor:anchor + 2600]) if anchor is not None else ""
-    return clean(solutions_text[anchor:anchor + 2600])
+        return clean(flat[anchor : anchor + 2600]) if anchor is not None else ""
+    return clean(solutions_text[anchor : anchor + 2600])
 
 
 # =========================================================================== #
 # EPUB BACKEND  (used as the cross-check oracle; also a full backend on its own)
 # =========================================================================== #
+
 
 def epub_load_chapters(path):
     chapters = {}
@@ -482,12 +535,14 @@ def epub_load_chapters(path):
             chapters[ch] = BeautifulSoup(html, "lxml")
     return chapters
 
+
 def _el_text(el):
     if el is None:
         return ""
     parts = [clean(p.get_text(" ", strip=True)) for p in el.find_all("p")]
     parts = [p for p in parts if p]
     return clean_paras(parts) if parts else clean(el.get_text(" ", strip=True))
+
 
 def _epub_passage_text(el):
     """RC passages in the EPUB are a run of <span class="ktp-numbered-line">, one
@@ -499,13 +554,15 @@ def _epub_passage_text(el):
         return _el_text(el)
     paras, cur = [], []
     for s in spans:
-        raw = s.get_text()                       # keep leading whitespace
+        raw = s.get_text()  # keep leading whitespace
         if re.match(r"^[ \t ]{2,}", raw) and cur:
-            paras.append(" ".join(cur)); cur = []
+            paras.append(" ".join(cur))
+            cur = []
         cur.append(raw.strip())
     if cur:
         paras.append(" ".join(cur))
     return clean_paras(paras)
+
 
 def _epub_rc_answer(sol_li, n):
     for ol in sol_li.find_all("ol"):
@@ -519,6 +576,7 @@ def _epub_rc_answer(sol_li, n):
                 return LETTERS[i] if i < len(LETTERS) else None
     return None
 
+
 def parse_epub(path):
     chapters = epub_load_chapters(path)
     results = []
@@ -529,17 +587,23 @@ def parse_epub(path):
         unit = unit_for_chapter(ch)
         order = {id(el): i for i, el in enumerate(soup.descendants)}
         expl = soup.find("section", class_="explanations")
-        end = order.get(id(expl), 10 ** 9) if expl else 10 ** 9
+        end = order.get(id(expl), 10**9) if expl else 10**9
         start = 0
         for h2 in soup.find_all("h2"):
             if h2.get_text(strip=True).lower() == "problem set":
                 start = order.get(id(h2), 0)
                 break
-        leaf = [li for li in soup.find_all("li", class_="ktp-question")
-                if not li.find("li", class_="ktp-question")]
+        leaf = [
+            li
+            for li in soup.find_all("li", class_="ktp-question")
+            if not li.find("li", class_="ktp-question")
+        ]
         questions = [li for li in leaf if start <= order.get(id(li), -1) < end]
-        solutions = [li for li in (expl.find_all("li", class_="ktp-question") if expl else [])
-                     if not li.find("li", class_="ktp-question")]
+        solutions = [
+            li
+            for li in (expl.find_all("li", class_="ktp-question") if expl else [])
+            if not li.find("li", class_="ktp-question")
+        ]
         sol_pairs = [(li, norm(li.get_text(" ", strip=True))) for li in solutions]
         expl_text = expl.get_text(" ", strip=True) if expl else ""
         passages = []
@@ -610,19 +674,21 @@ def parse_epub(path):
                 prev = [p for po, p in passages if po <= o]
                 passage = prev[-1] if prev else passages[0][1]
 
-            full_q = (f"{title}\n\n{prompt}" if (title and prompt) else (title or prompt))
-            results.append({
-                "id": f"{unit.lower()}-ch{ch}-q{qnum}",
-                "type": unit if is_mc else "exercise",
-                "chapter": CHAPTER_TITLES.get(ch, f"Chapter {ch}"),
-                "title": title,
-                "question": full_q,
-                "passage": passage,
-                "options": options,
-                "correct_answer": correct,
-                "explanation": _el_text(sol_li),
-                "format": "multiple_choice" if is_mc else "open_ended",
-            })
+            full_q = f"{title}\n\n{prompt}" if (title and prompt) else (title or prompt)
+            results.append(
+                {
+                    "id": f"{unit.lower()}-ch{ch}-q{qnum}",
+                    "type": unit if is_mc else "exercise",
+                    "chapter": CHAPTER_TITLES.get(ch, f"Chapter {ch}"),
+                    "title": title,
+                    "question": full_q,
+                    "passage": passage,
+                    "options": options,
+                    "correct_answer": correct,
+                    "explanation": _el_text(sol_li),
+                    "format": "multiple_choice" if is_mc else "open_ended",
+                }
+            )
     return results
 
 
@@ -651,16 +717,22 @@ def parse_epub(path):
 # drops this file's fi/fl ligatures ("scienti ic") and maps its smart quotes/dashes
 # to U+FFFD, whereas fitz returns clean Unicode that clean()/SMART normalize.
 
-OG_SECT = re.compile(r"8\.([4-9])\s+(Practice Questions|Answer Key|Answer Explanations)"
-                     r":\s+(Reading Comprehension|Critical Reasoning)")
-OG_NUM  = re.compile(r"^\s*(\d{3,4})\.\s+(.*)")
-OG_OPT  = re.compile(r"^\s*([A-E])\.\s+(.*)")
-OG_LINEMARK = re.compile(r"^\s*\(\d{1,3}\)\s*$")               # passage line markers (5),(10)
-_DASH = r"[–—-]"   # en-dash / em-dash / hyphen (raw text, pre-clean())
-OG_QREF = re.compile(r"^\s*Questions?\s+(\d+)(?:\s*" + _DASH + r"\s*(\d+))?\s+refers?\s+to the passage", re.I)
-OG_DIFF = re.compile(r"Questions\s+(\d+)\s*" + _DASH + r"\s*(\d+)\s*" + _DASH + r"\s*Difficulty:\s*(\w+)")
-OG_TS   = re.compile(r"^\s*\d\d/\d\d/\d{4},\s*\d\d:\d\d\s*$")   # "23/06/2024, 22:25"
-OG_PG   = re.compile(r"^\s*\d+/\d+\s*$")                        # "10/481" page counter
+OG_SECT = re.compile(
+    r"8\.([4-9])\s+(Practice Questions|Answer Key|Answer Explanations)"
+    r":\s+(Reading Comprehension|Critical Reasoning)"
+)
+OG_NUM = re.compile(r"^\s*(\d{3,4})\.\s+(.*)")
+OG_OPT = re.compile(r"^\s*([A-E])\.\s+(.*)")
+OG_LINEMARK = re.compile(r"^\s*\(\d{1,3}\)\s*$")  # passage line markers (5),(10)
+_DASH = r"[–—-]"  # en-dash / em-dash / hyphen (raw text, pre-clean())
+OG_QREF = re.compile(
+    r"^\s*Questions?\s+(\d+)(?:\s*" + _DASH + r"\s*(\d+))?\s+refers?\s+to the passage", re.I
+)
+OG_DIFF = re.compile(
+    r"Questions\s+(\d+)\s*" + _DASH + r"\s*(\d+)\s*" + _DASH + r"\s*Difficulty:\s*(\w+)"
+)
+OG_TS = re.compile(r"^\s*\d\d/\d\d/\d{4},\s*\d\d:\d\d\s*$")  # "23/06/2024, 22:25"
+OG_PG = re.compile(r"^\s*\d+/\d+\s*$")  # "10/481" page counter
 
 # RC = 456-619, CR = 620-801 (verified contiguous against the printed answer key).
 OG_RC_RANGE = (456, 619)
@@ -671,10 +743,20 @@ OG_CR_RANGE = (620, 801)
 # right after the restated options). For RC these ARE the GMAT's official question
 # types; we read them verbatim (source-faithful). For CR the book only prints 3
 # broad buckets, so we ALSO infer a finer task from the question stem wording.
-OG_RC_TYPES = {"Main Idea", "Supporting Idea", "Supporting Ideas", "Inference",
-               "Application", "Evaluation", "Logical Structure", "Style and Tone",
-               "Detail", "Purpose"}
+OG_RC_TYPES = {
+    "Main Idea",
+    "Supporting Idea",
+    "Supporting Ideas",
+    "Inference",
+    "Application",
+    "Evaluation",
+    "Logical Structure",
+    "Style and Tone",
+    "Detail",
+    "Purpose",
+}
 OG_CR_CATS = {"Argument Construction", "Argument Evaluation", "Evaluation of a Plan"}
+
 
 def _og_category(blk, cats):
     """First explanation line that is exactly one of `cats` (the printed heading)."""
@@ -684,40 +766,65 @@ def _og_category(blk, cats):
             return "Supporting Idea" if t == "Supporting Ideas" else t
     return None
 
+
 # Ordered (priority) rules mapping a CR stem to a finer task type. Earlier rules win.
 # Each pattern is matched against the whitespace-normalized, lowercased stem. These
 # are INFERRED from the question wording (the OG does not print them); a stem that
 # matches no rule is left "Unclassified" rather than guessed.
 _OG_CR_RULES = [
     ("Boldface / Method", r"boldface"),
-    ("Flaw", r"vulnerab\w+ to (the |these )?(criticism|objection|grounds)|"
-             r"logical(ly)? flaw|flaw in (the|its|her|his) reasoning|"
-             r"reasoning is (most )?(flawed|questionable|vulnerable)|"
-             r"criticism on which|error in reasoning"),
-    ("Weaken", r"\bweaken|cast(s)? (the most |serious )?doubt|calls? into question|"
-               r"argues against|undermin\w+|points? to the most serious weakness|"
-               r"most seriously (weaken|undermin)|damage(s)? the argument"),
-    ("Assumption", r"depends on (the )?assum|assumes (which|that)|"
-                   r"assumption (on |upon )?which|presuppos|relies on the assum|"
-                   r"required? (by the argument|assuming)|the argument depends on"),
-    ("Explain a Discrepancy", r"resolve|discrepanc|paradox|reconcile|"
-                              r"helps? to explain|explain(s)? (the|why|the apparent|this)|"
-                              r"account(s)? for (the|this|why)"),
-    ("Evaluate", r"\bevaluat\w+|useful to (know|determine|establish)|"
-                 r"most relevant in (evaluating|determining|assessing)|"
-                 r"help(s|ful)? (to )?(determine|evaluate)|answer to which of"),
-    ("Inference / Conclusion", r"supports? which of the following|"
-                               r"most strongly supported by|if the (statements|information) "
-                               r"(above|given) (are|is) true|can be (properly )?(inferred|concluded)|"
-                               r"\bmust (also )?be true|properly (drawn|inferred)|"
-                               r"which of the following can be (inferred|concluded)"),
-    ("Complete the Argument", r"logically completes? the (argument|passage)|"
-                              r"most logically complete"),
-    ("Strengthen", r"\bstrengthen|most strongly supports|justif\w+|best reason|"
-                   r"strongest (support|evidence|reason)|most help(s)? to (support|justify)|"
-                   r"provides? (the )?(most |strongest )?support"),
+    (
+        "Flaw",
+        r"vulnerab\w+ to (the |these )?(criticism|objection|grounds)|"
+        r"logical(ly)? flaw|flaw in (the|its|her|his) reasoning|"
+        r"reasoning is (most )?(flawed|questionable|vulnerable)|"
+        r"criticism on which|error in reasoning",
+    ),
+    (
+        "Weaken",
+        r"\bweaken|cast(s)? (the most |serious )?doubt|calls? into question|"
+        r"argues against|undermin\w+|points? to the most serious weakness|"
+        r"most seriously (weaken|undermin)|damage(s)? the argument",
+    ),
+    (
+        "Assumption",
+        r"depends on (the )?assum|assumes (which|that)|"
+        r"assumption (on |upon )?which|presuppos|relies on the assum|"
+        r"required? (by the argument|assuming)|the argument depends on",
+    ),
+    (
+        "Explain a Discrepancy",
+        r"resolve|discrepanc|paradox|reconcile|"
+        r"helps? to explain|explain(s)? (the|why|the apparent|this)|"
+        r"account(s)? for (the|this|why)",
+    ),
+    (
+        "Evaluate",
+        r"\bevaluat\w+|useful to (know|determine|establish)|"
+        r"most relevant in (evaluating|determining|assessing)|"
+        r"help(s|ful)? (to )?(determine|evaluate)|answer to which of",
+    ),
+    (
+        "Inference / Conclusion",
+        r"supports? which of the following|"
+        r"most strongly supported by|if the (statements|information) "
+        r"(above|given) (are|is) true|can be (properly )?(inferred|concluded)|"
+        r"\bmust (also )?be true|properly (drawn|inferred)|"
+        r"which of the following can be (inferred|concluded)",
+    ),
+    (
+        "Complete the Argument",
+        r"logically completes? the (argument|passage)|" r"most logically complete",
+    ),
+    (
+        "Strengthen",
+        r"\bstrengthen|most strongly supports|justif\w+|best reason|"
+        r"strongest (support|evidence|reason)|most help(s)? to (support|justify)|"
+        r"provides? (the )?(most |strongest )?support",
+    ),
     ("Plan", r"\bplan\b|strateg\w+|objective|achieve its (goal|aim|objective)|predict"),
 ]
+
 
 def _og_cr_task(stem):
     s = re.sub(r"\s+", " ", stem or "").lower()
@@ -727,9 +834,10 @@ def _og_cr_task(stem):
     return "Unclassified"
 
 
-_OG_EXPL_HEADERS = {"Situation", "Reasoning"}   # CR explanation sub-headings
+_OG_EXPL_HEADERS = {"Situation", "Reasoning"}  # CR explanation sub-headings
 _OG_OPT_LINE = re.compile(r"^([A-E])\.\s")
 _OG_ANS_LINE = re.compile(r"^The correct answer is", re.I)
+
 
 def _og_format_explanation(blk, category):
     """
@@ -757,16 +865,18 @@ def _og_format_explanation(blk, category):
             start = i
             break
     paras, cur = [], []
+
     def flush():
         if cur:
             paras.append(" ".join(cur))
             cur.clear()
+
     for s in lines[start:]:
         is_header = s in cat_variants or s in _OG_EXPL_HEADERS
         if is_header or _OG_OPT_LINE.match(s) or _OG_ANS_LINE.match(s):
             flush()
             cur.append(s)
-            if is_header:                # a heading stands on its own line
+            if is_header:  # a heading stands on its own line
                 flush()
         else:
             cur.append(s)
@@ -864,11 +974,11 @@ def _og_parse_explanations(pages, lo, hi, rng, stop_re=None, cats=None):
     for n, blk in blocks.items():
         text = "\n".join(blk)
         ans = None
-        m = re.search(r"(?m)^\s*([A-E])\.\s+Correct\.", text)          # RC + CR
+        m = re.search(r"(?m)^\s*([A-E])\.\s+Correct\.", text)  # RC + CR
         if m:
             ans = m.group(1)
         else:
-            m2 = re.search(r"The correct answer is\s+([A-E])", text)    # CR phrasing
+            m2 = re.search(r"The correct answer is\s+([A-E])", text)  # CR phrasing
             if m2:
                 ans = m2.group(1)
         category = _og_category(blk, cats) if cats else None
@@ -904,19 +1014,25 @@ def _og_parse_rc_practice(pages, lo, hi):
         if cur_q is None:
             return
         num, stem, opts, _ = cur_q
-        questions.append({"num": num, "stem": clean(" ".join(stem)),
-                          "options": {k: clean(" ".join(v)) for k, v in opts.items()}})
+        questions.append(
+            {
+                "num": num,
+                "stem": clean(" ".join(stem)),
+                "options": {k: clean(" ".join(v)) for k, v in opts.items()},
+            }
+        )
         cur_q = None
 
     for l in lines:
-        if l.strip() == "Line":                 # a standalone "Line" begins a new passage
+        if l.strip() == "Line":  # a standalone "Line" begins a new passage
             flush()
             pbuf, mode = [], "passage"
             continue
         mq = OG_QREF.match(l)
         if mq:
             flush()
-            a = int(mq.group(1)); b = int(mq.group(2)) if mq.group(2) else a
+            a = int(mq.group(1))
+            b = int(mq.group(2)) if mq.group(2) else a
             ptext = clean_paras([" ".join(p) for p in pbuf])
             for n in range(a, b + 1):
                 passages[n] = ptext
@@ -925,7 +1041,7 @@ def _og_parse_rc_practice(pages, lo, hi):
         if mode == "passage":
             if not _og_is_junk(l):
                 if l.lstrip(" \t").startswith(EMSP) or not pbuf:
-                    pbuf.append([l.strip()])     # em-space -> start a new paragraph
+                    pbuf.append([l.strip()])  # em-space -> start a new paragraph
                 else:
                     pbuf[-1].append(l.strip())
             continue
@@ -969,8 +1085,13 @@ def _og_parse_cr_practice(pages, lo, hi):
         if cur_q is None:
             return
         num, stem, opts, _ = cur_q
-        questions.append({"num": num, "stem": clean(" ".join(stem)),
-                          "options": {k: clean(" ".join(v)) for k, v in opts.items()}})
+        questions.append(
+            {
+                "num": num,
+                "stem": clean(" ".join(stem)),
+                "options": {k: clean(" ".join(v)) for k, v in opts.items()},
+            }
+        )
         cur_q = None
 
     for l in lines:
@@ -1000,6 +1121,7 @@ def parse_og(pdf_path):
     an intra-file cross-validation report. Returns (records, report_dict).
     """
     import fitz  # PyMuPDF
+
     doc = fitz.open(pdf_path)
     pages = [doc[i].get_text() for i in range(len(doc))]
 
@@ -1016,19 +1138,24 @@ def parse_og(pdf_path):
 
     # CR explanations end at the last page that states an answer (bounds q801's block
     # so it doesn't swallow the rest of the book).
-    cr_expl_hi = max(i for i in range(H["8.9"], len(pages))
-                     if "The correct answer is" in pages[i])
-    rc_expl = _og_parse_explanations(pages, H["8.6"], H["8.7"], OG_RC_RANGE,
-                                     r"8\.7\s+Practice Questions", cats=OG_RC_TYPES)
-    cr_expl = _og_parse_explanations(pages, H["8.9"], cr_expl_hi, OG_CR_RANGE,
-                                     cats=OG_CR_CATS)
+    cr_expl_hi = max(i for i in range(H["8.9"], len(pages)) if "The correct answer is" in pages[i])
+    rc_expl = _og_parse_explanations(
+        pages, H["8.6"], H["8.7"], OG_RC_RANGE, r"8\.7\s+Practice Questions", cats=OG_RC_TYPES
+    )
+    cr_expl = _og_parse_explanations(pages, H["8.9"], cr_expl_hi, OG_CR_RANGE, cats=OG_CR_CATS)
 
     rc_q, rc_pass = _og_parse_rc_practice(pages, H["8.4"], H["8.5"])
     cr_q = _og_parse_cr_practice(pages, H["8.7"], H["8.8"])
 
-    records, report = [], {"agree": 0, "conflict": 0, "key_only": 0,
-                           "conflicts": [], "no_answer": [],
-                           "no_subtype": [], "cr_unclassified": []}
+    records, report = [], {
+        "agree": 0,
+        "conflict": 0,
+        "key_only": 0,
+        "conflicts": [],
+        "no_answer": [],
+        "no_subtype": [],
+        "cr_unclassified": [],
+    }
 
     def emit(qs, key, expl, bands, unit, passages=None):
         nice = "Reading Comprehension" if unit == "RC" else "Critical Reasoning"
@@ -1039,12 +1166,15 @@ def parse_og(pdf_path):
             # Reconcile the two independent signals.
             if key_ans and mark_ans:
                 if key_ans == mark_ans:
-                    correct = key_ans; report["agree"] += 1
+                    correct = key_ans
+                    report["agree"] += 1
                 else:
-                    correct = None; report["conflict"] += 1
+                    correct = None
+                    report["conflict"] += 1
                     report["conflicts"].append((n, key_ans, mark_ans))
             elif key_ans:
-                correct = key_ans; report["key_only"] += 1
+                correct = key_ans
+                report["key_only"] += 1
             else:
                 correct = mark_ans  # may be None
             if correct is None:
@@ -1052,7 +1182,7 @@ def parse_og(pdf_path):
             if correct is not None and correct not in q["options"]:
                 correct = None
             diff = _og_difficulty(n, bands)
-            category = expl.get(n, (None, "", None))[2]   # book's printed label
+            category = expl.get(n, (None, "", None))[2]  # book's printed label
             if unit == "RC":
                 # RC: the book's printed type IS the GMAT question type.
                 subtype = category
@@ -1064,29 +1194,36 @@ def parse_og(pdf_path):
                 subtype = _og_cr_task(q["stem"])
                 if subtype == "Unclassified":
                     report["cr_unclassified"].append(n)
-            records.append({
-                "id": f"og-{unit.lower()}-q{n}",
-                "type": unit,
-                "chapter": f"{nice}{(' — ' + diff) if diff else ''}",
-                "title": None,
-                "question": q["stem"],
-                "passage": (passages or {}).get(n),
-                "options": [{"label": k, "text": q["options"][k]}
-                            for k in sorted(q["options"])],
-                "correct_answer": correct,
-                "explanation": expl.get(n, (None, "", None))[1],
-                "format": "multiple_choice",
-                "difficulty": diff,
-                "subtype": subtype,            # RC: book type · CR: inferred task
-                "category": category,          # the book's printed label (verbatim)
-                "number": n,
-                "source": "GMAT Official Guide 2024-2025",
-            })
+            records.append(
+                {
+                    "id": f"og-{unit.lower()}-q{n}",
+                    "type": unit,
+                    "chapter": f"{nice}{(' — ' + diff) if diff else ''}",
+                    "title": None,
+                    "question": q["stem"],
+                    "passage": (passages or {}).get(n),
+                    "options": [
+                        {"label": k, "text": q["options"][k]} for k in sorted(q["options"])
+                    ],
+                    "correct_answer": correct,
+                    "explanation": expl.get(n, (None, "", None))[1],
+                    "format": "multiple_choice",
+                    "difficulty": diff,
+                    "subtype": subtype,  # RC: book type · CR: inferred task
+                    "category": category,  # the book's printed label (verbatim)
+                    "number": n,
+                    "source": "GMAT Official Guide 2024-2025",
+                }
+            )
 
     emit(rc_q, rc_key, rc_expl, rc_bands, "RC", rc_pass)
     emit(cr_q, cr_key, cr_expl, cr_bands, "CR")
-    report["counts"] = {"RC": len(rc_q), "CR": len(cr_q),
-                        "rc_key": len(rc_key), "cr_key": len(cr_key)}
+    report["counts"] = {
+        "RC": len(rc_q),
+        "CR": len(cr_q),
+        "rc_key": len(rc_key),
+        "cr_key": len(cr_key),
+    }
     return records, report
 
 
@@ -1121,6 +1258,7 @@ def run_og(pdf_path):
 
     # Sub-type coverage
     from collections import Counter
+
     print("\n" + "-" * 60)
     print("QUESTION SUB-TYPES")
     print("-" * 60)
@@ -1134,12 +1272,15 @@ def run_og(pdf_path):
     for k, v in cr_sub.most_common():
         print(f"    {v:>3}  {k}")
     classified = sum(v for k, v in cr_sub.items() if k != "Unclassified")
-    print(f"  CR classified: {classified}/{sum(cr_sub.values())}"
-          f"  ({len(rep['cr_unclassified'])} left Unclassified)")
+    print(
+        f"  CR classified: {classified}/{sum(cr_sub.values())}"
+        f"  ({len(rep['cr_unclassified'])} left Unclassified)"
+    )
 
     # Add embeddings
     records = embed_questions(records)
 
+    records = validate_records(records, source="questions-og.json")
     with open("questions-og.json", "w", encoding="utf-8") as f:
         json.dump(records, f, ensure_ascii=False, indent=2)
     print(f"\nWrote questions-og.json ({len(records)} RC+CR problems).")
@@ -1149,17 +1290,20 @@ def run_og(pdf_path):
 # Cross-validation + reporting
 # =========================================================================== #
 
+
 def cross_check(primary, oracle):
     """
     Compare confirmed answers between two extractions, matched by normalized
     question text. Returns (agree, disagree[list], only_primary, only_oracle).
     """
+
     def index(qs):
         d = {}
         for q in qs:
             if q["correct_answer"]:
                 d[norm(q["question"])[:80]] = q
         return d
+
     a, b = index(primary), index(oracle)
     agree = disagree = 0
     conflicts = []
@@ -1188,19 +1332,29 @@ def merge_format_from_oracle(primary, oracle):
     Returns (passages_updated, explanations_updated).
     """
     import difflib
+
     by_id = {q["id"]: q for q in oracle}
     npsg = nexp = 0
     for q in primary:
         e = by_id.get(q["id"])
         if not e:
             continue
-        if q.get("passage") and e.get("passage") and "\n\n" in e["passage"] \
-                and difflib.SequenceMatcher(None, norm(q["passage"]),
-                                            norm(e["passage"])).ratio() >= 0.95:
-            q["passage"] = e["passage"]; npsg += 1
-        if e.get("explanation") and q.get("correct_answer") \
-                and e.get("correct_answer") == q["correct_answer"]:
-            q["explanation"] = e["explanation"]; nexp += 1
+        if (
+            q.get("passage")
+            and e.get("passage")
+            and "\n\n" in e["passage"]
+            and difflib.SequenceMatcher(None, norm(q["passage"]), norm(e["passage"])).ratio()
+            >= 0.95
+        ):
+            q["passage"] = e["passage"]
+            npsg += 1
+        if (
+            e.get("explanation")
+            and q.get("correct_answer")
+            and e.get("correct_answer") == q["correct_answer"]
+        ):
+            q["explanation"] = e["explanation"]
+            nexp += 1
     return npsg, nexp
 
 
@@ -1232,8 +1386,13 @@ def summarize(all_q):
 
 def discover_og():
     """Auto-find the Official Guide PDF by filename ('official' + 'guide')."""
-    dirs = [".", os.path.expanduser("~/Downloads"), os.path.expanduser("~/Desktop"),
-            os.path.expanduser("~/Documents"), os.path.expanduser("~/OneDrive/Desktop")]
+    dirs = [
+        ".",
+        os.path.expanduser("~/Downloads"),
+        os.path.expanduser("~/Desktop"),
+        os.path.expanduser("~/Documents"),
+        os.path.expanduser("~/OneDrive/Desktop"),
+    ]
     for d in dirs:
         for p in glob.glob(os.path.join(d, "**", "*.pdf"), recursive=True):
             n = os.path.basename(p).lower()
@@ -1242,47 +1401,7 @@ def discover_og():
     return None
 
 
-def embed_questions(questions):
-    """
-    Embed all questions using all-MiniLM-L6-v2 model.
-    Adds an 'embedding' field to each question record.
-    Returns the modified questions list.
-    """
-    try:
-        from sentence_transformers import SentenceTransformer
-    except ImportError:
-        print("WARNING: sentence-transformers not installed. Skipping embeddings.")
-        print("Install with: pip install sentence-transformers")
-        return questions
-
-    print("\nEmbedding questions with all-MiniLM-L6-v2...")
-    model = SentenceTransformer('all-MiniLM-L6-v2')
-
-    texts_to_embed = []
-    for q in questions:
-        parts = []
-        if q.get("title"):
-            parts.append(q["title"])
-        if q.get("question"):
-            parts.append(q["question"])
-        if q.get("passage"):
-            parts.append(q["passage"][:500])
-        options_text = " ".join(
-            opt.get("text", "") for opt in q.get("options", [])
-        )
-        if options_text:
-            parts.append(options_text[:300])
-
-        text = " ".join(parts)
-        texts_to_embed.append(text[:1000])
-
-    embeddings = model.encode(texts_to_embed, show_progress_bar=True)
-
-    for q, emb in zip(questions, embeddings):
-        q["embedding"] = emb.tolist()
-
-    print(f"Embedded {len(questions)} questions.")
-    return questions
+# embed_questions() lives in gmat_parsing_common and is imported above.
 
 
 def main():
@@ -1292,11 +1411,17 @@ def main():
     while i < len(args):
         a = args[i]
         if a == "--pdf":
-            pdf_path = args[i + 1]; i += 2; continue
+            pdf_path = args[i + 1]
+            i += 2
+            continue
         if a == "--epub":
-            epub_path = args[i + 1]; i += 2; continue
+            epub_path = args[i + 1]
+            i += 2
+            continue
         if a == "--og":
-            og_path = args[i + 1]; i += 2; continue
+            og_path = args[i + 1]
+            i += 2
+            continue
         if a.lower().endswith(".pdf"):
             pdf_path = a
         elif a.lower().endswith(".epub"):
@@ -1307,8 +1432,11 @@ def main():
     # questions-og.json. Triggered by --og, or by a bare .pdf whose name looks
     # like the Official Guide, or by auto-discovery when nothing else is given.
     if not og_path:
-        if pdf_path and "official" in os.path.basename(pdf_path).lower() \
-                and "guide" in os.path.basename(pdf_path).lower():
+        if (
+            pdf_path
+            and "official" in os.path.basename(pdf_path).lower()
+            and "guide" in os.path.basename(pdf_path).lower()
+        ):
             og_path, pdf_path = pdf_path, None
     if not og_path and not pdf_path and not epub_path:
         og_path = discover_og()
@@ -1376,6 +1504,7 @@ def main():
     # Add embeddings
     shipped = embed_questions(shipped)
 
+    shipped = validate_records(shipped, source="questions.json")
     with open("questions.json", "w", encoding="utf-8") as f:
         json.dump(shipped, f, ensure_ascii=False, indent=2)
     print(f"\nWrote questions.json ({len(shipped)} CR+RC problems) from {primary_src}.")
