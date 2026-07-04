@@ -54,6 +54,10 @@ class QuestionRecord(BaseModel):
     needs_review: bool | None = None
     source_page: int | None = None
     diagram: str | None = None
+    # Machine-derived description of the diagram (for embeddings/search only;
+    # the cropped PNG remains the source of record shown to the user).
+    diagram_description: str | None = None
+    diagram_description_source: str | None = None
 
     # --- Embedding (may or may not be present; not validated for values) ---
     embedding: list[float] | None = None

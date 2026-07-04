@@ -112,12 +112,14 @@ class Question(BaseModel):
     id: str
     type: str
     question: str
+    bank: str | None = None
     passage: str | None = None
     chapter: str | None = None
     subtype: str | None = None
     difficulty: str | None = None
     correct_answer: str | None = None
     explanation: str | None = None
+    diagram: str | None = None
 
 
 class SearchResult(BaseModel):
@@ -126,6 +128,7 @@ class SearchResult(BaseModel):
     type: str
     bank: str | None = None
     chapter: str | None = None
+    stem: str | None = None
     difficulty: str | None = None
     subtype: str | None = None
 
@@ -173,6 +176,7 @@ def _to_result(point) -> SearchResult:
         type=point.payload.get("type"),
         bank=point.payload.get("bank"),
         chapter=point.payload.get("chapter"),
+        stem=(point.payload.get("question") or "")[:140],
         difficulty=point.payload.get("difficulty"),
         subtype=point.payload.get("subtype"),
     )
@@ -184,13 +188,15 @@ async def search_similar(
     limit: int = 5,
     same_bank: bool = True,
     same_type: bool = True,
+    bank: str | None = None,
     chapter: str | None = None,
     difficulty: str | None = None,
     min_score: float = 0.25,
 ) -> SearchResponse:
     """
     Find questions semantically similar to a given question ID.
-    Defaults to the same bank and same type so neighbors are usable practice.
+    Defaults to the same bank and same type so neighbors are usable practice;
+    ?bank=og|manhattan|quant overrides the bank explicitly.
     """
     if question_id not in questions_map:
         raise HTTPException(status_code=404, detail=f"Question {question_id} not found")
@@ -201,7 +207,7 @@ async def search_similar(
         raise HTTPException(status_code=400, detail=f"Question {question_id} has no embedding")
 
     query_filter = build_filter(
-        bank=question.get("bank") if same_bank else None,
+        bank=bank or (question.get("bank") if same_bank else None),
         qtype=question.get("type") if same_type else None,
         chapter=chapter,
         difficulty=difficulty,
@@ -212,7 +218,7 @@ async def search_similar(
         collection_name=COLLECTION_NAME,
         query=embedding,
         query_filter=query_filter,
-        limit=limit + 1,
+        limit=limit + 1,  # +1 to exclude the query itself
         with_payload=True,
     )
 
@@ -289,12 +295,14 @@ async def get_question(question_id: str) -> Question:
         id=q["id"],
         type=q.get("type"),
         question=q.get("question"),
+        bank=q.get("bank"),
         passage=q.get("passage"),
         chapter=q.get("chapter"),
         subtype=q.get("subtype"),
         difficulty=q.get("difficulty"),
         correct_answer=q.get("correct_answer"),
         explanation=q.get("explanation"),
+        diagram=q.get("diagram"),
     )
 
 

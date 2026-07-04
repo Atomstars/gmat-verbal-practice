@@ -1052,7 +1052,8 @@ const VAPI=()=>(window.VECTOR_API||"").replace(/\/$/,"");
 async function fetchSimilar(qid){
   const base=VAPI(); if(!base) return null;
   try{
-    const r=await fetch(`${base}/search-similar/${encodeURIComponent(qid)}?limit=3`);
+    /* bank filter keeps results openable in the currently loaded bank */
+    const r=await fetch(`${base}/search-similar/${encodeURIComponent(qid)}?limit=3&bank=${encodeURIComponent(App.source)}`);
     if(!r.ok) return null;
     return (await r.json()).results||[];
   }catch(e){ return null; }
@@ -1062,7 +1063,7 @@ function renderSimilarPanel(results){
   if(!results||!results.length) return "";
   const items=results.map(r=>{
     const q=App.all.find(x=>x.id===r.question_id);
-    const stem=(q?q.question.split("\n\n").pop():"").slice(0,120);
+    const stem=(q?q.question.split("\n\n").pop():(r.stem||"")).slice(0,120);
     return `<div class="sim-item" data-id="${esc(r.question_id)}">
       <div style="flex:1;min-width:0">
         <div class="si-meta"><span class="pill">${esc(r.type||"")}</span>${r.difficulty?`<span class="pill d-${r.difficulty}">${esc(r.difficulty)}</span>`:""}${r.subtype?`<span class="pill" style="opacity:.7">${esc(r.subtype)}</span>`:(r.chapter?`<span class="pill" style="opacity:.7">${esc(r.chapter)}</span>`:"")}</div>
@@ -1101,16 +1102,17 @@ async function doSearch(query){
   }
   st.textContent="Searching…"; st.classList.remove("hidden");
   try{
-    const r=await fetch(`${base}/search?q=${encodeURIComponent(query)}&limit=8&bank=${encodeURIComponent(App.source)}`);
+    const r=await fetch(`${base}/search?q=${encodeURIComponent(query)}&limit=8`);
     if(!r.ok) throw 0;
     const res=(await r.json()).results||[];
     el.innerHTML=!res.length
       ?`<div class="sr-empty">No matches for “${esc(query)}”</div>`
       :res.map(r=>{
           const q=App.all.find(x=>x.id===r.question_id);
-          const stem=(q?q.question.split("\n\n").pop():"").slice(0,120);
-          return `<div class="sr-item" data-id="${esc(r.question_id)}">
-            <div class="sr-meta"><span class="pill">${esc(r.type||"")}</span>${r.difficulty?`<span class="pill d-${r.difficulty}">${esc(r.difficulty)}</span>`:""}${r.subtype?`<span class="pill" style="opacity:.7">${esc(r.subtype)}</span>`:(r.chapter?`<span class="pill" style="opacity:.7">${esc(r.chapter)}</span>`:"")}
+          const stem=(q?q.question.split("\n\n").pop():(r.stem||"")).slice(0,120);
+          const bankLbl=r.bank&&r.bank!==App.source&&SOURCES[r.bank]?`<span class="pill" style="opacity:.7">${esc(SOURCES[r.bank].label)}</span>`:"";
+          return `<div class="sr-item" data-id="${esc(r.question_id)}" data-bank="${esc(r.bank||"")}">
+            <div class="sr-meta"><span class="pill">${esc(r.type||"")}</span>${r.difficulty?`<span class="pill d-${r.difficulty}">${esc(r.difficulty)}</span>`:""}${r.subtype?`<span class="pill" style="opacity:.7">${esc(r.subtype)}</span>`:(r.chapter?`<span class="pill" style="opacity:.7">${esc(r.chapter)}</span>`:"")}${bankLbl}
               <span style="color:var(--faint);font-size:11px">${Math.round((r.score||0)*100)}% match</span></div>
             <div class="sr-text">${esc(stem)}${stem.length>=120?"&hellip;":""}</div></div>`;
         }).join("");
@@ -1123,9 +1125,15 @@ $("#srchInput").addEventListener("input",e=>{
   clearTimeout(_srchTimer);
   _srchTimer=setTimeout(()=>doSearch(e.target.value.trim()),400);
 });
-$("#srchResults").addEventListener("click",e=>{
+$("#srchResults").addEventListener("click",async e=>{
   const item=e.target.closest(".sr-item");
   if(!item) return;
+  /* cross-bank result: switch the source first, then open the question */
+  const b=item.dataset.bank;
+  if(b&&b!==App.source&&SOURCES[b]){
+    App.source=b; $("#srcSel").value=b;
+    if(!await loadBank()) return;
+  }
   const q=App.all.find(x=>x.id===item.dataset.id);
   if(!q) return;
   App.mode="practice"; App.qs=[q]; resetRun(); startRun();
