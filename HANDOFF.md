@@ -93,12 +93,13 @@ python parser.py --og "<path>/gmat-official-guide-2024-2025.pdf"
 3. **Vercel deploy (may need unblock).** Previous session: every deploy stalled (status
    UNKNOWN, empty logs). Check Vercel dashboard → `gmat-prep` → Settings for billing
    banners. After unblocking: `vercel --prod`. Live URL: https://gmat-prep-ivory.vercel.app.
-4. **Quant type filter chips** — Practice setup shows "All Verbal / Reading Comp /
-   Critical Reasoning" chips. These are Verbal-only; when quant bank is selected they
-   don't filter usefully. Add "All / PS / DS" chips that activate for the quant source.
-   Not breaking (all 500 questions accessible via "All Verbal"), just suboptimal UX.
-5. **Quant analytics** — `questions-quant.json` has `chapter` (topic) but no `subtype`,
-   so the analytics dashboard shows no quant breakdown. Could use `chapter` as subtype.
+4. ~~Quant type filter chips~~ **DONE 2026-07-04**: bank-aware setup — quant shows
+   All Quant / Problem Solving / Data Sufficiency chips + a Topic picker built from
+   the bank's chapters (with counts); difficulty row hidden for banks without it.
+5. ~~Quant analytics~~ **DONE 2026-07-04**: dashboard shows per-topic accuracy bars
+   for PS and DS separately (weakest first), weakest-topic callout + Target-weak-spots
+   works on quant topics; Manhattan falls back to chapter analytics. Landing/syllabus/
+   exam pacing (21q/45min quant) are bank-aware too.
 6. **CR sub-type precision (~88%).** 21/182 CR questions are `"Unclassified"`;
    `_OG_CR_RULES` in `parser.py` can be tuned.
 7. **Quant fraction options (~21 PS questions).** Option extraction loses hanging

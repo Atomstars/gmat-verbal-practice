@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <meta name="theme-color" content="#4f46e5" />
-<title>GMAT Verbal Trainer</title>
+<title>GMAT Trainer</title>
 <style>
   :root{
     --bg:#f5f6fb; --bg2:#eef0f8; --surface:#ffffff; --surface2:#f7f8fc;
@@ -190,7 +190,7 @@
   .setup-card{max-width:600px;margin:0 auto}
   .field{margin-bottom:18px}
   .field>label{display:block;font:800 11px var(--sans);letter-spacing:.6px;text-transform:uppercase;color:var(--faint);margin-bottom:9px}
-  .opts-wrap{display:flex;gap:8px;flex-wrap:wrap}
+  .opts-wrap{display:flex;gap:8px;flex-wrap:wrap;max-height:180px;overflow-y:auto;padding:2px}
   .chip{border:1.5px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:9px 15px;font:700 13px var(--sans);box-shadow:var(--sh-sm);transition:.12s}
   .chip:hover{border-color:color-mix(in srgb,var(--brand) 40%,var(--line))}
   .chip.on{background:var(--pick);border-color:var(--brand);color:var(--brand-ink)}
@@ -337,7 +337,7 @@ window.VECTOR_API = "http://127.0.0.1:8000";
 <body>
 
 <header class="appbar hidden" id="appbar">
-  <div class="brand"><span class="mk">GV</span> Verbal Trainer</div>
+  <div class="brand"><span class="mk">G</span> GMAT Trainer</div>
   <button class="back hidden" id="backBtn">← Dashboard</button>
   <span class="sp"></span>
   <span class="chipstreak hidden" id="streakChip">🔥 <span id="streakChipN">0</span></span>
@@ -349,20 +349,20 @@ window.VECTOR_API = "http://127.0.0.1:8000";
 <!-- ============ LANDING ============ -->
 <section id="landing" class="screen">
   <div class="lp">
-    <div class="top"><span class="mk">GV</span><b>GMAT Verbal Trainer</b>
+    <div class="top"><span class="mk">G</span><b>GMAT Trainer</b>
       <button class="themebtn" data-themebtn type="button" title="Toggle dark mode" aria-label="Toggle dark mode"><span class="sun">☀</span><span class="moon">☾</span></button></div>
     <div class="hero">
-      <span class="eyebrow"><span class="d"></span> Official Guide 2024–25 · Focus Edition</span>
-      <h1>Master GMAT <span class="g">Verbal</span><br>the smart way.</h1>
-      <p class="sub">Reading Comprehension &amp; Critical Reasoning with real, answer-verified official
-        questions — that <b>adapt to you</b>, reveal each question's type, and pinpoint exactly where you're losing points.</p>
+      <span class="eyebrow"><span class="d"></span> Verbal + Quant · GMAT Focus Edition</span>
+      <h1>Master the <span class="g">GMAT</span><br>the smart way.</h1>
+      <p class="sub">Verbal (RC &amp; CR) and Quant (Problem Solving &amp; Data Sufficiency) with real, answer-verified
+        questions — that <b>adapt to you</b>, reveal each question's type &amp; topic, and pinpoint exactly where you're losing points.</p>
       <div class="cta-row">
         <button class="cta" id="startBtn">Start training →</button>
         <button class="cta ghost" id="examQuick">Try an exam sim</button>
       </div>
       <div class="trust">
-        <span><span class="ok">346</span> official questions</span>
-        <span><span class="ok">✓</span> answers verified vs the book key</span>
+        <span><span class="ok">910</span> questions · 3 books</span>
+        <span><span class="ok">✓</span> answers verified vs the book keys</span>
         <span><span class="ok">↻</span> adaptive difficulty</span>
       </div>
       <button class="synchint hidden" id="landingSync" type="button">☁ Sign in to sync your progress across devices →</button>
@@ -372,7 +372,7 @@ window.VECTOR_API = "http://127.0.0.1:8000";
       </div>
     </div>
     <div class="feats">
-      <div class="feat"><div class="fi">🎯</div><b>Know your weak spots</b><p>Accuracy tracked by question type — Inference, Weaken, Assumption and more — so you drill what matters.</p></div>
+      <div class="feat"><div class="fi">🎯</div><b>Know your weak spots</b><p>Accuracy tracked by question type &amp; topic — Inference, Weaken, Percents, Geometry and more — so you drill what matters.</p></div>
       <div class="feat"><div class="fi">📈</div><b>Adaptive practice</b><p>Daily passages and a continuous column that get harder as you improve, easier when you slip.</p></div>
       <div class="feat"><div class="fi">⏱️</div><b>Real exam feel</b><p>Timed, split-screen sections that mirror the GMAT Focus interface, with a full score report.</p></div>
     </div>
@@ -414,13 +414,13 @@ window.VECTOR_API = "http://127.0.0.1:8000";
 
   <h3 class="sec">Where you're losing points</h3>
   <div class="anly">
-    <div class="card"><h4>Reading Comprehension</h4><p class="hint">Accuracy by question type (the book's own labels).</p><div id="rcBars"></div></div>
-    <div class="card"><h4>Critical Reasoning</h4><p class="hint">Accuracy by task (inferred from question wording).</p><div id="crBars"></div></div>
+    <div class="card"><h4 id="anlyT1">Reading Comprehension</h4><p class="hint" id="anlyH1">Accuracy by question type (the book's own labels).</p><div id="rcBars"></div></div>
+    <div class="card"><h4 id="anlyT2">Critical Reasoning</h4><p class="hint" id="anlyH2">Accuracy by task (inferred from question wording).</p><div id="crBars"></div></div>
   </div>
-  <div class="card" style="margin-top:14px"><h4>By difficulty</h4><p class="hint">Across everything you've answered.</p>
+  <div class="card" style="margin-top:14px"><h4 id="diffTitle">By difficulty</h4><p class="hint" id="diffHint">Across everything you've answered.</p>
     <div id="diffBars"></div><div class="callout" id="recoBox"></div></div>
 
-  <h3 class="sec">GMAT Focus — Verbal syllabus</h3>
+  <h3 class="sec" id="sylHead">GMAT Focus — Verbal syllabus</h3>
   <div class="card"><div class="syl" id="sylGrid"></div></div>
 
   <h3 class="sec">Your data</h3>
@@ -485,6 +485,17 @@ window.VECTOR_API = "http://127.0.0.1:8000";
 const SOURCES={ og:{file:"questions-og.json",label:"Official Guide 2024–25"},
   manhattan:{file:"questions.json",label:"Manhattan: All the Verbal"},
   quant:{file:"questions-quant.json",label:"MR Quant Question Bank"} };
+const isQuant=()=>App.source==="quant";
+/* concept key: quant banks classify by chapter (topic); verbal by subtype,
+   falling back to chapter for banks with no subtype labels (Manhattan) */
+const conceptOf=q=>isQuant()?q.chapter:(q.subtype||q.chapter);
+const hasSubtypes=()=>App.all.some(q=>q.subtype);
+const hasDifficulty=()=>App.all.some(q=>q.difficulty);
+function topicsFor(type){ /* topic labels present in the loaded bank, biggest first */
+  const counts={};
+  for(const q of App.all){ if(type&&type!=="ALL"&&q.type!==type)continue; const c=conceptOf(q); if(!c)continue; counts[c]=(counts[c]||0)+1; }
+  return Object.entries(counts).sort((a,b)=>b[1]-a[1]).map(([c,n])=>({v:c,label:`${c} (${n})`}));
+}
 const RC_TYPES=["Main Idea","Supporting Idea","Inference","Application","Evaluation","Logical Structure"];
 const CR_TASKS=["Weaken","Strengthen","Assumption","Inference / Conclusion","Flaw","Evaluate",
   "Boldface / Method","Explain a Discrepancy","Plan","Complete the Argument"];
@@ -513,9 +524,9 @@ const Store=(()=>{
   const yesterdayStr=()=>{ const d=new Date(); d.setDate(d.getDate()-1); return dstr(d); };
   function adaptLevel(level,pct){ let i=LADDER.indexOf(level); if(pct>=75)i++; else if(pct<50)i--; return LADDER[Math.max(0,Math.min(2,i))]; }
   function record(q,picked,correct){
-    const h=data.history[q.id]||(data.history[q.id]={n:q.number,type:q.type,subtype:q.subtype||null,difficulty:q.difficulty||null,attempts:0,correct:0,lastResult:null,lastSeen:0});
+    const h=data.history[q.id]||(data.history[q.id]={n:q.number,type:q.type,subtype:q.subtype||null,chapter:q.chapter||null,difficulty:q.difficulty||null,attempts:0,correct:0,lastResult:null,lastSeen:0});
     h.attempts++; if(correct)h.correct++; h.lastResult=correct?"correct":"wrong"; h.lastSeen=Date.now();
-    h.subtype=q.subtype||h.subtype; h.difficulty=q.difficulty||h.difficulty; h.type=q.type; save();
+    h.subtype=q.subtype||h.subtype; h.chapter=q.chapter||h.chapter; h.difficulty=q.difficulty||h.difficulty; h.type=q.type; save();
   }
   function overall(){ let seen=0,corr=0; for(const h of Object.values(data.history)){ seen++; if(h.lastResult==="correct")corr++; } return {seen,corr,pct:seen?Math.round(100*corr/seen):null}; }
   function byField(field,type){ const a={}; for(const h of Object.values(data.history)){ if(type&&h.type!==type)continue; const k=h[field]; if(!k)continue; const x=a[k]||(a[k]={c:0,t:0}); x.t++; if(h.lastResult==="correct")x.c++; } return a; }
@@ -778,7 +789,7 @@ const MODES=[
   {id:"practice",ic:ICON.practice,t:"Practice",d:"Filter by type, concept & difficulty. Instant feedback + the question type after each answer."},
   {id:"exam",ic:ICON.exam,t:"Exam simulation",d:"Timed section like the real GMAT Focus — no feedback, full score report at the end."},
   {id:"redo",ic:ICON.redo,t:"Redo my misses",d:"Re-attempt only the questions you got wrong before.",needWrong:true},
-  {id:"weak",ic:ICON.weak,t:"Target weak spots",d:"Auto-builds a set from your lowest-accuracy question types.",needData:true},
+  {id:"weak",ic:ICON.weak,t:"Target weak spots",d:"Auto-builds a set from your lowest-accuracy types & topics.",needData:true},
 ];
 function renderModes(){
   const wrong=Store.wrongIds().length, seen=Store.overall().seen;
@@ -806,9 +817,21 @@ function bar(name,a,weak){ const pct=a&&a.t?Math.round(100*a.c/a.t):null;
   return `<div class="barrow${weak?' weak':''}"><div class="nm">${esc(name)}</div>
     <div class="tr"><i style="width:${pct==null?0:pct}%;background:${col}"></i></div>
     <div class="vv">${a&&a.t?`${a.c}/${a.t}`:'—'}</div></div>`; }
-function findWeakest(rc,cr){ let best=null;
-  for(const [grp,agg] of [["RC",rc],["CR",cr]]) for(const [name,a] of Object.entries(agg)){
-    if(a.t<MIN_ATTEMPTS)continue; const p=a.c/a.t; if(!best||p<best.p)best={grp,name,a,p}; } return best; }
+/* weakest concept in the CURRENT bank: quant -> PS/DS topics, OG -> RC/CR subtypes,
+   Manhattan -> RC/CR chapters. Only concepts present in the loaded bank count, so a
+   weak OG subtype can't hijack targeting while you're drilling quant. */
+function weakestForBank(){
+  const present=new Set(App.all.map(conceptOf));
+  const pairs=isQuant()
+    ?[["PS",Store.byField("chapter","PS")],["DS",Store.byField("chapter","DS")]]
+    :hasSubtypes()
+      ?[["RC",Store.byField("subtype","RC")],["CR",Store.byField("subtype","CR")]]
+      :[["RC",Store.byField("chapter","RC")],["CR",Store.byField("chapter","CR")]];
+  let best=null;
+  for(const [grp,agg] of pairs) for(const [name,a] of Object.entries(agg)){
+    if(!present.has(name)||a.t<MIN_ATTEMPTS)continue;
+    const p=a.c/a.t; if(!best||p<best.p)best={grp,name,a,p}; }
+  return best; }
 function renderAnalytics(){
   const ov=Store.overall();
   $("#heroPct").textContent=ov.pct==null?"—":ov.pct+"%";
@@ -817,34 +840,79 @@ function renderAnalytics(){
   $("#qSeen").textContent=ov.seen; $("#qWrong").textContent=Store.wrongIds().length;
   const streak=Store.daily().streak||0; $("#qStreak").textContent=streak;
   $("#streakChip").classList.toggle("hidden",!streak); $("#streakChipN").textContent=streak;
-  const rc=Store.byField("subtype","RC"), cr=Store.byField("subtype","CR"), df=Store.byField("difficulty");
-  const weak=findWeakest(rc,cr);
-  $("#rcBars").innerHTML=Object.keys(rc).length?RC_TYPES.map(t=>bar(t,rc[t],weak&&weak.grp==="RC"&&weak.name===t)).join(""):`<div class="nodata">No RC attempts yet.</div>`;
-  $("#crBars").innerHTML=Object.keys(cr).length?CR_TASKS.filter(t=>cr[t]).map(t=>bar(t,cr[t],weak&&weak.grp==="CR"&&weak.name===t)).join(""):`<div class="nodata">No CR attempts yet.</div>`;
-  $("#diffBars").innerHTML=DIFFS.map(d=>bar(d,df[d])).join("");
-  $("#recoBox").innerHTML=weak?`💡 <b>Focus area:</b> your weakest type is <b>${esc(weak.name)}</b>
+  const weak=weakestForBank();
+  const present=new Set(App.all.map(conceptOf));
+  /* rows for one type: topics you attempted IN THIS BANK, weakest accuracy first */
+  const topicRows=(agg,grp)=>{
+    const ks=Object.keys(agg).filter(k=>present.has(k)).sort((a,b)=>(agg[a].c/agg[a].t)-(agg[b].c/agg[b].t));
+    return ks.map(k=>bar(k,agg[k],weak&&weak.grp===grp&&weak.name===k)).join("");
+  };
+  if(isQuant()){
+    $("#anlyT1").textContent="Problem Solving"; $("#anlyH1").textContent="Accuracy by topic — weakest first.";
+    $("#anlyT2").textContent="Data Sufficiency"; $("#anlyH2").textContent="Accuracy by topic — weakest first.";
+    const ps=Store.byField("chapter","PS"), ds=Store.byField("chapter","DS");
+    $("#rcBars").innerHTML=Object.keys(ps).some(k=>present.has(k))?topicRows(ps,"PS"):`<div class="nodata">No Problem Solving attempts yet.</div>`;
+    $("#crBars").innerHTML=Object.keys(ds).some(k=>present.has(k))?topicRows(ds,"DS"):`<div class="nodata">No Data Sufficiency attempts yet.</div>`;
+  }else if(hasSubtypes()){
+    $("#anlyT1").textContent="Reading Comprehension"; $("#anlyH1").textContent="Accuracy by question type (the book's own labels).";
+    $("#anlyT2").textContent="Critical Reasoning"; $("#anlyH2").textContent="Accuracy by task (inferred from question wording).";
+    const rc=Store.byField("subtype","RC"), cr=Store.byField("subtype","CR");
+    $("#rcBars").innerHTML=Object.keys(rc).length?RC_TYPES.map(t=>bar(t,rc[t],weak&&weak.grp==="RC"&&weak.name===t)).join(""):`<div class="nodata">No RC attempts yet.</div>`;
+    $("#crBars").innerHTML=Object.keys(cr).length?CR_TASKS.filter(t=>cr[t]).map(t=>bar(t,cr[t],weak&&weak.grp==="CR"&&weak.name===t)).join(""):`<div class="nodata">No CR attempts yet.</div>`;
+  }else{
+    $("#anlyT1").textContent="Reading Comprehension"; $("#anlyH1").textContent="Accuracy by chapter — weakest first.";
+    $("#anlyT2").textContent="Critical Reasoning"; $("#anlyH2").textContent="Accuracy by chapter — weakest first.";
+    const rc=Store.byField("chapter","RC"), cr=Store.byField("chapter","CR");
+    $("#rcBars").innerHTML=Object.keys(rc).some(k=>present.has(k))?topicRows(rc,"RC"):`<div class="nodata">No RC attempts yet.</div>`;
+    $("#crBars").innerHTML=Object.keys(cr).some(k=>present.has(k))?topicRows(cr,"CR"):`<div class="nodata">No CR attempts yet.</div>`;
+  }
+  const showDiff=hasDifficulty(), df=Store.byField("difficulty");
+  $("#diffTitle").textContent=showDiff?"By difficulty":"Focus recommendation";
+  $("#diffHint").textContent=showDiff?"Across everything you've answered.":"Based on your attempts in this bank.";
+  $("#diffBars").innerHTML=showDiff?DIFFS.map(d=>bar(d,df[d])).join(""):"";
+  $("#recoBox").innerHTML=weak?`💡 <b>Focus area:</b> your weakest ${isQuant()?"topic":"type"} is <b>${esc(weak.name)}</b>
     (${weak.a.c}/${weak.a.t}, ${Math.round(100*weak.a.c/weak.a.t)}%). Use <b>Target weak spots</b> or filter Practice to it.`
-    :`Answer a few questions and this highlights the types to drill.`;
+    :`Answer a few questions and this highlights the ${isQuant()?"topics":"types"} to drill.`;
   // recommended CTA
   const d2=Store.getDaily();
   let rec;
-  if(!ov.seen) rec={ic:"📅",t:"Start with today's passage",s:"One RC a day builds the habit — difficulty adapts to you.",act:()=>startDaily(false)};
-  else if(!d2.doneToday && !buildPassages().length===false) rec={ic:"📅",t:"Do today's RC",s:`Keep your 🔥 ${d2.streak}-day streak alive · level ${d2.level}.`,act:()=>startDaily(false)};
-  else if(weak) rec={ic:"🎯",t:`Drill ${weak.name}`,s:`Your weakest type at ${Math.round(100*weak.a.c/weak.a.t)}%. Build a focused set.`,act:()=>openSetup("weak")};
-  else rec={ic:"📈",t:"Continue the adaptive column",s:`Resume at ${Store.adaptive().level}.`,act:()=>startColumn()};
+  const hasPsg=buildPassages().length>0; /* RC-passage modes exist only in banks with passages */
+  if(!ov.seen) rec=hasPsg?{ic:"📅",t:"Start with today's passage",s:"One RC a day builds the habit — difficulty adapts to you.",act:()=>startDaily(false)}
+    :{ic:"🧮",t:"Start a practice set",s:"Filter by type & topic, instant feedback after each answer.",act:()=>openSetup("practice")};
+  else if(!d2.doneToday && hasPsg) rec={ic:"📅",t:"Do today's RC",s:`Keep your 🔥 ${d2.streak}-day streak alive · level ${d2.level}.`,act:()=>startDaily(false)};
+  else if(weak) rec={ic:"🎯",t:`Drill ${weak.name}`,s:`Your weakest ${isQuant()?"topic":"type"} at ${Math.round(100*weak.a.c/weak.a.t)}%. Build a focused set.`,act:()=>openSetup("weak")};
+  else rec=hasPsg?{ic:"📈",t:"Continue the adaptive column",s:`Resume at ${Store.adaptive().level}.`,act:()=>startColumn()}
+    :{ic:"🧮",t:"Start a practice set",s:"Filter by type & topic, instant feedback after each answer.",act:()=>openSetup("practice")};
   $("#recoCta").innerHTML=`<span class="ic">${rec.ic}</span><span class="tx"><b>${esc(rec.t)}</b><small>${esc(rec.s)}</small></span><button class="go" id="recoGo">Go →</button>`;
   $("#recoGo").onclick=rec.act;
 }
 function renderSyllabus(){
-  $("#sylGrid").innerHTML=`
-    <div class="c"><div class="big">23</div><b>questions</b><ul><li>in 45 minutes</li><li>≈1 min 57 s each</li></ul></div>
-    <div class="c"><div class="big">2</div><b>types</b><ul><li>Reading Comprehension</li><li>Critical Reasoning</li><li>no Sentence Correction</li></ul></div>
-    <div class="c"><b>RC types</b><ul>${RC_TYPES.map(t=>`<li>${t}</li>`).join("")}</ul></div>
-    <div class="c"><b>CR tasks</b><ul>${["Weaken","Strengthen","Assumption","Inference","Flaw","Evaluate","Boldface","Explain","Plan"].map(t=>`<li>${t}</li>`).join("")}</ul></div>
-    <div class="c"><b>Format</b><ul><li>Computer-adaptive</li><li>Review &amp; edit up to 3</li><li>Score 60–90 / section</li></ul></div>`;
+  if(isQuant()){
+    const topPs=topicsFor("PS").slice(0,6).map(t=>`<li>${esc(t.v)}</li>`).join("");
+    const topDs=topicsFor("DS").slice(0,6).map(t=>`<li>${esc(t.v)}</li>`).join("");
+    $("#sylHead").textContent="GMAT Focus — Quantitative syllabus";
+    $("#sylGrid").innerHTML=`
+      <div class="c"><div class="big">21</div><b>questions</b><ul><li>in 45 minutes</li><li>≈2 min 8 s each</li></ul></div>
+      <div class="c"><div class="big">2</div><b>types</b><ul><li>Problem Solving</li><li>Data Sufficiency</li><li>no calculator</li></ul></div>
+      <div class="c"><b>Top PS topics here</b><ul>${topPs}</ul></div>
+      <div class="c"><b>Top DS topics here</b><ul>${topDs}</ul></div>
+      <div class="c"><b>Format</b><ul><li>Computer-adaptive</li><li>Review &amp; edit up to 3</li><li>Score 60–90 / section</li></ul></div>`;
+    $("#dashFoot").innerHTML=`Questions from <i>Manhattan Review Quantitative Question Bank 6th Ed</i>, answers verified against the book's key. `+
+      `Topics are the book's own section labels. Nothing leaves your device.`;
+  }else{
+    $("#sylHead").textContent="GMAT Focus — Verbal syllabus";
+    $("#sylGrid").innerHTML=`
+      <div class="c"><div class="big">23</div><b>questions</b><ul><li>in 45 minutes</li><li>≈1 min 57 s each</li></ul></div>
+      <div class="c"><div class="big">2</div><b>types</b><ul><li>Reading Comprehension</li><li>Critical Reasoning</li><li>no Sentence Correction</li></ul></div>
+      <div class="c"><b>RC types</b><ul>${RC_TYPES.map(t=>`<li>${t}</li>`).join("")}</ul></div>
+      <div class="c"><b>CR tasks</b><ul>${["Weaken","Strengthen","Assumption","Inference","Flaw","Evaluate","Boldface","Explain","Plan"].map(t=>`<li>${t}</li>`).join("")}</ul></div>
+      <div class="c"><b>Format</b><ul><li>Computer-adaptive</li><li>Review &amp; edit up to 3</li><li>Score 60–90 / section</li></ul></div>`;
+    $("#dashFoot").innerHTML=(App.source==="manhattan"
+      ?`Questions from <i>Manhattan Prep — All the Verbal</i>, answers verified against the book's key. `
+      :`Questions from <i>GMAT Official Guide 2024–2025</i>, answers verified against the book's key. RC types are the book's own labels; CR tasks are inferred from question wording. `)+
+      `Nothing leaves your device.`;
+  }
   $("#storeNote").textContent=`Saved on this device (localStorage) · ${Store.overall().seen} questions tracked.`;
-  $("#dashFoot").innerHTML=`Questions from <i>GMAT Official Guide 2024–2025</i>, answers verified against the book's key. `+
-    `RC types are the book's own labels; CR tasks are inferred from question wording. Nothing leaves your device.`;
 }
 function renderDash(){ clearInterval(App.timer); renderModes(); renderAnalytics(); renderSyllabus(); show("dash"); }
 
@@ -864,31 +932,40 @@ function openSetup(mode){
     redo:["Review","Redo your misses","Re-attempt the questions you previously got wrong."],
     weak:["Targeted","Target your weak spots","Auto-built from your lowest-accuracy question type."]}[mode];
   $("#setupKick").textContent=meta[0]; $("#setupTitle").textContent=meta[1]; $("#setupDesc").textContent=meta[2];
-  chipRow($("#typeChips"),[{v:"ALL",label:"All Verbal"},{v:"RC",label:"Reading Comp"},{v:"CR",label:"Critical Reasoning"}],false,cfg.type,()=>{updateConcept();updatePool();});
+  const typeItems=isQuant()
+    ?[{v:"ALL",label:"All Quant"},{v:"PS",label:"Problem Solving"},{v:"DS",label:"Data Sufficiency"}]
+    :[{v:"ALL",label:"All Verbal"},{v:"RC",label:"Reading Comp"},{v:"CR",label:"Critical Reasoning"}];
+  chipRow($("#typeChips"),typeItems,false,cfg.type,()=>{updateConcept();updatePool();});
   chipRow($("#diffChips"),[{v:"ALL",label:"All levels"},...DIFFS.map(d=>({v:d,label:d}))],true,cfg.diff,updatePool);
   $("#countSel").innerHTML=[5,10,15,21,"All"].map(c=>`<option value="${c}"${c===10?" selected":""}>${c==="All"?"All matching":c+" questions"}</option>`).join("");
   $("#countSel").onchange=e=>{cfg.count=e.target.value==="All"?"All":+e.target.value;updatePool();};
   chipRow($("#orderChips"),[{v:"shuffle",label:"Shuffle"},{v:"order",label:"In book order"}],false,[cfg.order],()=>{cfg.order=$("#orderChips .on").dataset.v;});
   $("#fCount").classList.toggle("hidden",mode==="weak");
   $("#fConcept").classList.toggle("hidden",mode==="redo"||mode==="weak");
-  $("#fDiff").classList.toggle("hidden",mode==="weak");
+  $("#fDiff").classList.toggle("hidden",mode==="weak"||!hasDifficulty());
   if(mode==="exam")cfg.count=21;
   updateConcept(); updatePool();
   $("#goBtn").textContent=mode==="exam"?"Start timed section →":"Start →";
   show("setup");
 }
 function updateConcept(){ const t=App.cfg.type[0];
+  App.cfg.concept=["ALL"];
+  if(isQuant()||!hasSubtypes()){
+    /* quant + Manhattan: pick by topic/chapter (with question counts) */
+    $("#conceptLbl").textContent="Topic";
+    chipRow($("#conceptChips"),[{v:"ALL",label:"All topics"},...topicsFor(t)],true,App.cfg.concept,updatePool);
+    return;
+  }
   $("#conceptLbl").textContent=t==="CR"?"CR task":t==="RC"?"RC type":"Concept";
   let items=t==="RC"?RC_TYPES:t==="CR"?CR_TASKS:[...RC_TYPES,...CR_TASKS];
   const present=new Set(App.all.map(q=>q.subtype));
-  App.cfg.concept=["ALL"];
   chipRow($("#conceptChips"),[{v:"ALL",label:"All concepts"},...items.filter(x=>present.has(x)).map(x=>({v:x,label:x}))],true,App.cfg.concept,updatePool);
 }
 function poolFor(cfg,mode){ let p=App.all.filter(q=>q.format!=="open_ended");
   if(mode==="redo"){ const w=new Set(Store.wrongIds()); p=p.filter(q=>w.has(q.id)); }
-  if(mode==="weak"){ const wk=findWeakest(Store.byField("subtype","RC"),Store.byField("subtype","CR")); if(wk)p=p.filter(q=>q.subtype===wk.name); }
+  if(mode==="weak"){ const wk=weakestForBank(); if(wk)p=p.filter(q=>conceptOf(q)===wk.name); }
   if(!cfg.type.includes("ALL"))p=p.filter(q=>cfg.type.includes(q.type));
-  if(!cfg.concept.includes("ALL"))p=p.filter(q=>cfg.concept.includes(q.subtype));
+  if(!cfg.concept.includes("ALL"))p=p.filter(q=>cfg.concept.includes(conceptOf(q)));
   if(!cfg.diff.includes("ALL"))p=p.filter(q=>cfg.diff.includes(q.difficulty));
   return p; }
 function updatePool(){ const p=poolFor(App.cfg,App.mode);
@@ -904,7 +981,7 @@ $("#goBtn").addEventListener("click",()=>{ let p=poolFor(App.cfg,App.mode);
 function isExam(){ return App.mode==="exam"; }
 function startRun(){
   clearInterval(App.timer); App.elapsed=0;
-  if(isExam()){ App.timeLeft=Math.round(App.qs.length*(45*60/23)); App.showTimer=true; $("#timer").classList.remove("hidden"); }
+  if(isExam()){ App.timeLeft=Math.round(App.qs.length*(45*60/(isQuant()?21:23))); App.showTimer=true; $("#timer").classList.remove("hidden"); }
   else { App.showTimer=false; $("#timer").classList.add("hidden"); }
   tick();
   App.timer=setInterval(()=>{ App.elapsed++; if(isExam()){ App.timeLeft--; if(App.timeLeft<=0){tick();finish();return;} } tick(); },1000);
@@ -918,7 +995,7 @@ function renderQ(){
   $("#prog").style.width=`${(App.idx)/n*100}%`;
   const typeCls=(q.type==='PS'||q.type==='DS')?`t-${q.type}`:'';
   $("#tags").innerHTML=`<span class="pill ${typeCls}">${q.type}</span>`+
-    `<span class="pill ${showType?'':'hide'}">${esc(q.subtype||'—')}</span>`+
+    `<span class="pill ${showType?'':'hide'}">${esc(conceptOf(q)||'—')}</span>`+
     `<span class="pill d-${q.difficulty||''} ${showType?'':'hide'}">${esc(q.difficulty||'')}</span>`;
   $("#flagBtn").classList.toggle("on",App.flags.has(App.idx));
   $("#runMeta").textContent=isExam()?"Exam mode — no feedback until you finish":
@@ -938,7 +1015,7 @@ function renderQ(){
   let fb="";
   if(reveal){ const ok=sel===q.correct_answer;
     fb=`<div class="fb ${ok?'ok':'no'}"><div class="fh">${ok?'✓ Correct':(sel?'✗ Incorrect — answer is '+q.correct_answer:'Answer is '+q.correct_answer)}
-      <span class="typetag"><span class="pill">${esc(q.subtype||q.type)}</span><span class="pill d-${q.difficulty||''}">${esc(q.difficulty||'')}</span></span></div>
+      <span class="typetag"><span class="pill">${esc(conceptOf(q)||q.type)}</span><span class="pill d-${q.difficulty||''}">${esc(q.difficulty||'')}</span></span></div>
       <div class="body"><h5>Explanation</h5>${esc(q.explanation||'No explanation available.')}</div></div>`; }
   const qpane=`<div class="pcard"><div class="directions">${esc(dir)}</div><div class="lbl">Question<span class="ln"></span></div>
     ${diagHtml}<p class="qtext">${qhtml}</p><ul class="choices">${choices}</ul>${fb}</div><div id="simPanelSlot"></div>`;
@@ -1018,7 +1095,7 @@ function buildRepList(){
     const psg=q.passage?`<details class="rpsg"><summary>📖 Reading passage</summary><div class="psg">${esc(q.passage)}</div></details>`:"";
     const expl=App._repExpl?`<div class="expl">${esc(q.explanation||'')}</div>`:`<details><summary>Explanation</summary><div class="expl">${esc(q.explanation||'')}</div></details>`;
     return `<div class="ri ${cls}"><div class="h"><span class="dotr">${sym}</span><b>Q${i+1}</b>
-      <span class="meta"><span class="pill">${esc(q.subtype||q.type)}</span><span class="pill d-${q.difficulty||''}">${esc(q.difficulty||'')}</span><span class="qtime">⏱ ${tStr}</span></span></div>
+      <span class="meta"><span class="pill">${esc(conceptOf(q)||q.type)}</span><span class="pill d-${q.difficulty||''}">${esc(q.difficulty||'')}</span><span class="qtime">⏱ ${tStr}</span></span></div>
       <p class="stem">${esc(stem)}</p><div class="ans">Your answer: <b>${skip?'—':esc(a)}</b> · Correct: <b>${esc(q.correct_answer)}</b></div>${psg}${expl}</div>`; }).join("");
 }
 $("#repExpl").addEventListener("click",()=>{ App._repExpl=!App._repExpl; buildRepList(); $("#repExpl").textContent=App._repExpl?"Hide explanations":"Show all explanations"; });
@@ -1140,7 +1217,7 @@ $("#srchResults").addEventListener("click",async e=>{
 });
 
 function renderLanding(){
-  $("#landingLegal").textContent="Personal, fair-use study tool · 346 official Verbal questions · progress saved on this device.";
+  $("#landingLegal").textContent="Personal, fair-use study tool · 910 questions across 3 books (Verbal + Quant) · progress saved on this device.";
   const ov=Store.overall(), d=Store.getDaily();
   if(ov.seen){ $("#resumeCard").classList.remove("hidden");
     $("#resumeSub").textContent=`${ov.pct}% accuracy · ${ov.seen} done${d.streak?` · 🔥 ${d.streak}-day streak`:""}`; }

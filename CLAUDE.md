@@ -356,10 +356,15 @@ section header), `number` (book Q#), `source`, `needs_review` (bool), `source_pa
 (machine-derived caption, embedding/search only). No `subtype` / `category`
 (add later using `chapter`).
 
-## index.html (the app) — "GMAT Verbal Trainer"
+## index.html (the app) — "GMAT Trainer"
 
 One self-contained file: plain HTML/CSS/JS, no build, no backend. Mobile-first,
-responsive, auto light/dark. A **source selector** (`SOURCES` map) switches between
+responsive, auto light/dark. The whole UI is **bank-aware** (2026-07-04): `isQuant()`/`conceptOf(q)`/`hasSubtypes()`/
+`hasDifficulty()` helpers drive setup chips (quant: All Quant/PS/DS + Topic picker with
+counts), per-topic PS/DS analytics (weakest first), weakest-concept targeting
+(`weakestForBank`, bank-scoped), syllabus card, landing copy, and exam pacing
+(quant 21q/45min vs verbal 23q/45min). `Store.record` persists `chapter` per attempt.
+A **source selector** (`SOURCES` map) switches between
 three banks: `questions-og.json` (default), `questions.json`, `questions-quant.json`.
 The original simple app is preserved as `index-classic.html`; `ui-{focus,momentum,
 console,exam}.html` are earlier design explorations.
