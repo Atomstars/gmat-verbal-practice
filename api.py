@@ -11,7 +11,14 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from qdrant_client import QdrantClient
-from qdrant_client.models import Distance, PointStruct, VectorParams
+from qdrant_client.models import (
+    Distance,
+    FieldCondition,
+    Filter,
+    MatchValue,
+    PointStruct,
+    VectorParams,
+)
 from sentence_transformers import SentenceTransformer
 
 app = FastAPI(
@@ -73,6 +80,7 @@ def init_qdrant():
 
         payload = {
             "id": q["id"],
+            "bank": q.get("bank"),
             "type": q.get("type"),
             "question": q.get("question", "")[:500],
             "chapter": q.get("chapter"),
@@ -104,18 +112,22 @@ class Question(BaseModel):
     id: str
     type: str
     question: str
+    bank: str | None = None
     passage: str | None = None
     chapter: str | None = None
     subtype: str | None = None
     difficulty: str | None = None
     correct_answer: str | None = None
     explanation: str | None = None
+    diagram: str | None = None
 
 
 class SearchResult(BaseModel):
     question_id: str
     score: float
     type: str
+    bank: str | None = None
+    stem: str | None = None
     difficulty: str | None = None
     subtype: str | None = None
 
@@ -137,13 +149,35 @@ async def health():
     }
 
 
+def _bank_filter(bank: str | None) -> Filter | None:
+    """Optional Qdrant payload filter restricting results to one bank."""
+    if not bank:
+        return None
+    return Filter(must=[FieldCondition(key="bank", match=MatchValue(value=bank))])
+
+
+def _to_result(point) -> SearchResult:
+    return SearchResult(
+        question_id=point.payload.get("id"),
+        score=point.score,
+        type=point.payload.get("type"),
+        bank=point.payload.get("bank"),
+        stem=(point.payload.get("question") or "")[:140],
+        difficulty=point.payload.get("difficulty"),
+        subtype=point.payload.get("subtype"),
+    )
+
+
 @app.get("/search-similar/{question_id}")
 async def search_similar(
     question_id: str,
     limit: int = 5,
+    bank: str | None = None,
 ) -> SearchResponse:
     """
     Find questions semantically similar to a given question ID.
+    Pass ?bank=og|manhattan|quant to restrict results to one bank
+    (the app uses this so similar questions are openable in the current bank).
     """
     if question_id not in questions_map:
         raise HTTPException(status_code=404, detail=f"Question {question_id} not found")
@@ -157,25 +191,16 @@ async def search_similar(
     response = client.query_points(
         collection_name=COLLECTION_NAME,
         query=embedding,
+        query_filter=_bank_filter(bank),
         limit=limit + 1,  # +1 to exclude the query itself
         with_payload=True,
     )
-    points = response.points
 
     results = []
-    for point in points:
+    for point in response.points:
         if point.payload.get("id") == question_id:
             continue
-        q_id = point.payload.get("id")
-        results.append(
-            SearchResult(
-                question_id=q_id,
-                score=point.score,
-                type=point.payload.get("type"),
-                difficulty=point.payload.get("difficulty"),
-                subtype=point.payload.get("subtype"),
-            )
-        )
+        results.append(_to_result(point))
         if len(results) >= limit:
             break
 
@@ -190,9 +215,11 @@ async def search_similar(
 async def semantic_search(
     q: str,
     limit: int = 10,
+    bank: str | None = None,
 ) -> SearchResponse:
     """
     Semantic search: find questions matching a query string.
+    Searches all banks by default; ?bank=... restricts to one.
     """
     if not q or len(q) < 3:
         raise HTTPException(status_code=400, detail="Query must be at least 3 characters")
@@ -202,25 +229,14 @@ async def semantic_search(
     response = client.query_points(
         collection_name=COLLECTION_NAME,
         query=query_embedding,
+        query_filter=_bank_filter(bank),
         limit=limit,
         with_payload=True,
     )
-    points = response.points
-
-    results = [
-        SearchResult(
-            question_id=point.payload.get("id"),
-            score=point.score,
-            type=point.payload.get("type"),
-            difficulty=point.payload.get("difficulty"),
-            subtype=point.payload.get("subtype"),
-        )
-        for point in points
-    ]
 
     return SearchResponse(
         query_text=q,
-        results=results,
+        results=[_to_result(p) for p in response.points],
     )
 
 
@@ -235,12 +251,14 @@ async def get_question(question_id: str) -> Question:
         id=q["id"],
         type=q.get("type"),
         question=q.get("question"),
+        bank=q.get("bank"),
         passage=q.get("passage"),
         chapter=q.get("chapter"),
         subtype=q.get("subtype"),
         difficulty=q.get("difficulty"),
         correct_answer=q.get("correct_answer"),
         explanation=q.get("explanation"),
+        diagram=q.get("diagram"),
     )
 
 

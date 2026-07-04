@@ -74,8 +74,13 @@ def embed_questions(questions: list[dict]) -> list[dict]:
     Gracefully skips with a warning if sentence-transformers is not installed
     so the parser's core JSON output is unaffected.
 
-    Input text per question: title + question + passage[:500] + options[:300],
+    Input text per question:
+    title + question + diagram_description[:300] + passage[:500] + options[:300],
     capped at 1000 chars.  The model's internal truncation handles overflow.
+    The diagram description sits right after the question so it lands inside
+    MiniLM's ~256-token window — without it, geometry questions with figures
+    are invisible to retrieval ("what is the area of the shaded region?"
+    carries no signal about what is actually drawn).
     """
     try:
         from sentence_transformers import SentenceTransformer
@@ -94,6 +99,8 @@ def embed_questions(questions: list[dict]) -> list[dict]:
             parts.append(q["title"])
         if q.get("question"):
             parts.append(q["question"])
+        if q.get("diagram_description"):
+            parts.append(q["diagram_description"][:300])
         if q.get("passage"):
             parts.append(q["passage"][:500])
         options_text = " ".join(opt.get("text", "") for opt in q.get("options", []))

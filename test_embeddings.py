@@ -1,64 +1,54 @@
 #!/usr/bin/env python3
-"""Test script to embed questions-og.json with all-MiniLM-L6-v2."""
+"""Build questions_embedded.json — the vector-search index over ALL THREE banks.
+
+Reads questions-og.json + questions.json + questions-quant.json, tags each
+record with its `bank` key (matching the SOURCES map in index.html so the app
+can resolve results to the right file), re-embeds every question with the
+shared recipe in gmat_parsing_common.embed_questions (which includes quant
+diagram_description text), and writes the merged questions_embedded.json that
+api.py loads at startup.
+
+Run this after re-generating any of the three bank files.
+"""
 
 import json
-import time
-from sentence_transformers import SentenceTransformer
+import os
 
-print("Loading questions-og.json...")
-with open("questions-og.json", "r", encoding="utf-8") as f:
-    questions = json.load(f)
+from gmat_parsing_common import embed_questions
 
-print(f"Loaded {len(questions)} questions.")
+# bank key -> file; keys MUST match the SOURCES map in index.html
+BANKS = {
+    "og": "questions-og.json",
+    "manhattan": "questions.json",
+    "quant": "questions-quant.json",
+}
 
-print("\nInitializing all-MiniLM-L6-v2 model...")
-model = SentenceTransformer('all-MiniLM-L6-v2')
+all_q = []
+for bank, path in BANKS.items():
+    if not os.path.exists(path):
+        print(f"WARNING: {path} not found — skipping bank '{bank}'")
+        continue
+    with open(path, encoding="utf-8") as f:
+        qs = json.load(f)
+    for q in qs:
+        q["bank"] = bank
+    print(f"{path}: {len(qs)} questions (bank='{bank}')")
+    all_q.extend(qs)
 
-print("\nPreparing text for embedding...")
-texts_to_embed = []
-for q in questions:
-    parts = []
-    if q.get("title"):
-        parts.append(q["title"])
-    if q.get("question"):
-        parts.append(q["question"])
-    if q.get("passage"):
-        parts.append(q["passage"][:500])
-    options_text = " ".join(
-        opt.get("text", "") for opt in q.get("options", [])
-    )
-    if options_text:
-        parts.append(options_text[:300])
+ids = [q["id"] for q in all_q]
+assert len(ids) == len(set(ids)), "duplicate question ids across banks"
 
-    text = " ".join(parts)
-    texts_to_embed.append(text[:1000])
+# Re-embed everything so all banks share one uniform text recipe (title +
+# question + diagram_description + passage + options) regardless of which
+# parser version produced the bank file.
+for q in all_q:
+    q.pop("embedding", None)
+all_q = embed_questions(all_q)
 
-print(f"Prepared {len(texts_to_embed)} texts.")
-print(f"Sample text length: {len(texts_to_embed[0])} chars")
+out = "questions_embedded.json"
+with open(out, "w", encoding="utf-8") as f:
+    json.dump(all_q, f, ensure_ascii=False)
 
-print("\nEmbedding questions...")
-start = time.time()
-embeddings = model.encode(texts_to_embed, show_progress_bar=True)
-elapsed = time.time() - start
-print(f"Completed in {elapsed:.2f}s ({len(questions)/elapsed:.1f} q/s)")
-
-print("\nAdding embeddings to questions...")
-for q, emb in zip(questions, embeddings):
-    q["embedding"] = emb.tolist()
-
-print(f"Sample embedding shape: {len(questions[0]['embedding'])} dimensions")
-print(f"First 5 embedding values: {questions[0]['embedding'][:5]}")
-
-print("\nSaving to questions_embedded.json...")
-with open("questions_embedded.json", "w", encoding="utf-8") as f:
-    json.dump(questions, f, ensure_ascii=False, indent=2)
-
-print(f"\nSuccess! Saved {len(questions)} questions with embeddings.")
-print(f"File size: {(len(open('questions_embedded.json', 'rb').read()) / 1024 / 1024):.1f} MB")
-
-# Verify by loading back
-print("\nVerifying by loading back...")
-with open("questions_embedded.json", "r", encoding="utf-8") as f:
-    verify = json.load(f)
-print(f"Loaded {len(verify)} questions with embeddings.")
-print(f"First question has embedding: {'embedding' in verify[0]}")
+embedded = sum(1 for q in all_q if q.get("embedding"))
+size_mb = os.path.getsize(out) / 1024 / 1024
+print(f"Saved {len(all_q)} questions ({embedded} embedded) to {out} ({size_mb:.1f} MB)")

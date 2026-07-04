@@ -20,9 +20,18 @@ unconfirmable as `null`.** Correctness beats volume.
   - `questions-quant.json` — **500** from *Manhattan Review Quantitative Question Bank
     6th Ed* (PS Q1–250 + DS Q251–500). 496/500 confirmed; 4 genuine book conflicts
     flagged `needs_review: true`. Each has `type` (PS/DS), `chapter` (topic), `question`
-    (with inline `$math$` for KaTeX), `options`, `explanation`, optional `diagram` path.
+    (with inline `$math$` for KaTeX), `options`, `explanation`, optional `diagram` path
+    + `diagram_description` (machine caption, used only for embeddings/search).
     DS options are the 5 standard hardcoded choices (never printed in the PDF).
-  - **29 diagram PNGs** in `diagrams/` — cropped geometry figures (200 DPI).
+    **Regenerated 2026-07-04**: diagram extraction rewritten (interval ownership —
+    all 32 crops now verified correct; the old run had 10 duplicate/misassigned of 29),
+    section-heading bleed removed from stems/options, ligatures normalized
+    (ids `ps-pro-t-loss-*` → `ps-profit-loss-*`; old saved quant history is orphaned),
+    and a fake-question bug fixed (Q24's wrapped "40." split it in two).
+  - **32 diagram PNGs** in `diagrams/` — figures AND data-tables (200 DPI), each with a
+    caption in `diagram_captions.json` (sidecar, merged by the parser at parse time).
+  - `questions_embedded.json` — merged **all-banks** vector index (910 q) for `api.py`;
+    rebuild with `python test_embeddings.py` after any parser re-run.
 - **App:** `index.html` — "GMAT Verbal Trainer", a multi-screen SPA. Three question
   banks selectable from the top-right dropdown:
   - "Official Guide 2024–25" (default)
@@ -35,7 +44,11 @@ unconfirmable as `null`.** Correctness beats volume.
     Target-weak-spots, Analytics dashboard. Progress in **localStorage** (`gmat_verbal_v1`).
 - **Supabase cross-device sync:** local-first, optional. Google OAuth + `progress` table.
   Project `bfaaczlxfafsxjnqqvoc` (Seoul). **Google sign-in not yet end-to-end verified.**
-- **Vector search (optional):** `api.py` (FastAPI + in-memory Qdrant). Run alongside app.
+- **Vector search (optional):** `api.py` (FastAPI + in-memory Qdrant), serves **all 910
+  questions across the three banks** with `?bank=` filtering. Similar-questions panel
+  filters to the current bank; the search bar searches everything and auto-switches
+  banks when you click a cross-bank result. Quant retrieval is diagram-aware via the
+  caption text (e.g. "shaded ring between two circles" finds the unlabeled annulus figure).
 - **Repo:** `github.com/Atomstars/gmat-verbal-practice` (**private**).
 - **Deploy:** Vercel **gmat-prep** → **https://gmat-prep-ivory.vercel.app**. May need
   manual unblock — see Open items.
@@ -79,6 +92,11 @@ python parser.py --og "<path>/gmat-official-guide-2024-2025.pdf"
    so the analytics dashboard shows no quant breakdown. Could use `chapter` as subtype.
 6. **CR sub-type precision (~88%).** 21/182 CR questions are `"Unclassified"`;
    `_OG_CR_RULES` in `parser.py` can be tuned.
+7. **Quant fraction options (~21 PS questions).** Option extraction loses hanging
+   fraction denominators (e.g. q231's five options all read `$1$`; q219's option C is
+   `$\frac{2}{\sqrt{}}$` missing the 3). Fix `_is_denominator_block`/`_spans_to_latex`
+   fraction reconstruction, re-parse, re-run `test_embeddings.py`. Answer letters are
+   unaffected — display-only issue.
 
 ## Gotchas / lessons (don't re-learn these the hard way)
 - **OG PDF needs PyMuPDF (`fitz`)**, not pdfplumber — pdfplumber drops ligatures/quotes.
@@ -112,7 +130,9 @@ python parser.py --og "<path>/gmat-official-guide-2024-2025.pdf"
 | `index-classic.html` | Original simple single-question app (kept). |
 | `questions-og.json` | OG Verbal (346 q, embeddings). |
 | `questions.json` | Manhattan Verbal (64 q, embeddings). |
-| `questions-quant.json` | Manhattan Quant PS+DS (500 q, embeddings, diagram paths). |
-| `diagrams/` | Cropped geometry PNGs (200 DPI). Referenced by `diagram` field in JSON. |
+| `questions-quant.json` | Manhattan Quant PS+DS (500 q, embeddings, diagram paths + captions). |
+| `diagrams/` | Cropped figure/table PNGs (200 DPI). Referenced by `diagram` field in JSON. |
+| `diagram_captions.json` | Sidecar: machine captions per diagram id; parser merges at parse time. |
+| `test_embeddings.py` | Builds the merged all-banks `questions_embedded.json` for `api.py`. |
 | `CLAUDE.md` | Deep reference: parser internals, schema, app architecture. |
 | `COVERAGE.md` | Extraction coverage + validation for the Verbal books. |

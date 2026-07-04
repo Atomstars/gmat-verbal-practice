@@ -1,0 +1,134 @@
+{
+  "_README": {
+    "description": "Machine-derived captions for the cropped figures in diagrams/*.png. Used ONLY as embedding/search text (diagram_description field) so retrieval can see figure content. Never displayed as book content — the PNG remains the source of record. Keyed by question id; parse_quant.py merges these at parse time.",
+    "source": "claude-fable-5 vision reading of each diagrams/{id}.png against its question stem, 2026-07-04"
+  },
+  "ps-geometry-lines-triangles-q208": {
+    "description": "Number line figure: a horizontal line with arrowheads on both ends passing through four marked points labeled A, B, C, D in order from left to right.",
+    "source": "claude-fable-5-vision-2026-07-04"
+  },
+  "ps-geometry-lines-triangles-q213": {
+    "description": "Triangle ABC with an interior point D joined to all three vertices. The angle at vertex C is split by segment CD into 30 degrees (between CA and CD) and 50 degrees (between CD and CB); angle x degrees is marked at vertex A beside segment AD.",
+    "source": "claude-fable-5-vision-2026-07-04"
+  },
+  "ps-geometry-lines-triangles-q214": {
+    "description": "Square ABCD (B top-left, C top-right, D bottom-right, A bottom-left) with an external point E to the upper right; segments BE, CE and DE join the square's corners to E, forming triangle BCE outside the square.",
+    "source": "claude-fable-5-vision-2026-07-04"
+  },
+  "ps-geometry-lines-triangles-q215": {
+    "description": "Composite triangle figure: apex A at top, E far right, D at left, C and B at bottom. AD = 4 and DC = 3 with a 90-degree angle at D; AE = 13 and BE = 12 with a 90-degree angle at B; 55 degrees at C; angle x degrees marked at A between AC and AB.",
+    "source": "claude-fable-5-vision-2026-07-04"
+  },
+  "ps-geometry-lines-triangles-q216": {
+    "description": "Figure with C at top, B at middle-left, A at bottom-left, D at bottom-right. BC = 4 with a 90-degree angle at B; AB = 4 vertical with a 90-degree angle at A; AD = 4*sqrt(2) along the bottom; diagonal BD drawn, forming triangle BCD.",
+    "source": "claude-fable-5-vision-2026-07-04"
+  },
+  "ps-geometry-circles-q217": {
+    "description": "Circle with center O; points R, S, T on the circle with S at the top between R and T; horizontal chord RT passes through point U below S; radii OR and OT form a 60-degree central angle at O. Region RSTU lies between chord RT and arc RST.",
+    "source": "claude-fable-5-vision-2026-07-04"
+  },
+  "ps-geometry-circles-q218": {
+    "description": "Circle with center O and two radii of length 4 (one horizontal to the right, one slanting up-right) forming a sector with central angle x degrees at O.",
+    "source": "claude-fable-5-vision-2026-07-04"
+  },
+  "ps-geometry-circles-q219": {
+    "description": "A smaller white circle inside a larger circle; the ring-shaped region between the two circles (annulus) is shaded gray. No labels.",
+    "source": "claude-fable-5-vision-2026-07-04"
+  },
+  "ps-geometry-circles-q220": {
+    "description": "Circle with center O and two perpendicular diameters: QS horizontal (Q left, S right) and RT vertical (R top, T bottom), with a right-angle mark at O.",
+    "source": "claude-fable-5-vision-2026-07-04"
+  },
+  "ps-geometry-circles-q221": {
+    "description": "Semicircle with horizontal diameter AC (A left, C right) and point B on the arc; chords AB and BC form triangle ABC inscribed in the semicircle.",
+    "source": "claude-fable-5-vision-2026-07-04"
+  },
+  "ps-geometry-polygon-q226": {
+    "description": "A rectangle inside a larger rectangle (a picture surrounded by a border); double-headed arrows mark the border width 2 on all four sides.",
+    "source": "claude-fable-5-vision-2026-07-04"
+  },
+  "ps-geometry-polygon-q230": {
+    "description": "Parallelogram PQRS (P bottom-left, Q top-left, R top-right, S bottom-right) with a 30-degree angle at P and height QT drawn perpendicular to PS at T (right-angle mark at T).",
+    "source": "claude-fable-5-vision-2026-07-04"
+  },
+  "ps-geometry-polygon-q231": {
+    "description": "Square ABCD (A top-left, B top-right, C bottom-right, D bottom-left) with diagonal DB; E is on the diagonal, F is on side DC; the triangle with vertices E, F, C is shaded gray.",
+    "source": "claude-fable-5-vision-2026-07-04"
+  },
+  "ps-geometry-polygon-q232": {
+    "description": "Square with corners R (top-left), T (top-right), V (bottom-right), P (bottom-left). A vertical line from S on the top edge to W on the bottom edge and a horizontal line from Q on the left edge to U on the right edge cross at interior point X, dividing the square into four rectangular regions.",
+    "source": "claude-fable-5-vision-2026-07-04"
+  },
+  "ps-geometry-polygon-q233": {
+    "description": "A rectangle containing two identical squares inscribed at 45 degrees (drawn as two overlapping diamonds whose vertices touch the rectangle's top and bottom sides).",
+    "source": "claude-fable-5-vision-2026-07-04"
+  },
+  "ps-geometry-polygon-q238": {
+    "description": "A rectangular solid (box) drawn in perspective showing three visible faces: front, top and right side.",
+    "source": "claude-fable-5-vision-2026-07-04"
+  },
+  "ps-geometry-polygon-q241": {
+    "description": "A cube with three marked vertices: P (front top-left), R (back top-right), Q (front bottom-right); segments PQ, QR and PR drawn on/through the cube form triangle PQR.",
+    "source": "claude-fable-5-vision-2026-07-04"
+  },
+  "ps-statistics-data-interpretation-q189": {
+    "description": "Data table with columns Time and Amount of bacteria: 1:00 pm = 10.0 grams; 4:00 pm = x grams; 7:00 pm = 14.4 grams.",
+    "source": "claude-fable-5-vision-2026-07-04"
+  },
+  "ps-statistics-data-interpretation-q190": {
+    "description": "Data table titled 'Membership of an Organization X, 2008': Honorary members 78; Fellows 9209; Members 35509; Associate members 27909; Affiliates 2372.",
+    "source": "claude-fable-5-vision-2026-07-04"
+  },
+  "ps-statistics-data-interpretation-q191": {
+    "description": "Data table titled 'Electricity usage in a certain household on May 1' with columns Appliance, Number of hours in use, Number of watts used per hour: TV 4 hours 145 watts; Computer 3 hours 155 watts; VCR 2 hours 45 watts; Stereo 2 hours 109 watts.",
+    "source": "claude-fable-5-vision-2026-07-04"
+  },
+  "ds-ratio-proportion-q371": {
+    "description": "A horizontal line segment with tick marks at four points labeled A, B, C, D from left to right; the spacing between consecutive points is unequal.",
+    "source": "claude-fable-5-vision-2026-07-04"
+  },
+  "ds-computational-q393": {
+    "description": "A 3-by-3 table/grid of variables: top row r, s, t; middle row u, v, w; bottom row x, y, z.",
+    "source": "claude-fable-5-vision-2026-07-04"
+  },
+  "ds-geometry-lines-q474": {
+    "description": "Two slanted transversal lines l1 and l2 crossing five horizontal lines labeled p, q, r, s, t (top to bottom). Angle y degrees is marked where l2 meets line p; angle x degrees is marked where l1 meets line s.",
+    "source": "claude-fable-5-vision-2026-07-04"
+  },
+  "ds-geometry-triangles-q475": {
+    "description": "Triangle with side a on the right (near-vertical), side b on the bottom, and side c the long slanted side; interior angle x degrees marked with an arc at the bottom-right vertex between sides a and b.",
+    "source": "claude-fable-5-vision-2026-07-04"
+  },
+  "ds-geometry-triangles-q478": {
+    "description": "Triangle PQR with apex P at top, Q at bottom-left, R at bottom-right; angle y degrees at P, and angles x degrees marked at both Q and R (the two base angles are equal).",
+    "source": "claude-fable-5-vision-2026-07-04"
+  },
+  "ds-geometry-circles-q479": {
+    "description": "Circle with inscribed triangle ABC: A at the lower-left of the circle, B at the upper-right, C at the lower-right; side BC is vertical on the right.",
+    "source": "claude-fable-5-vision-2026-07-04"
+  },
+  "ds-geometry-circles-q480": {
+    "description": "Rectangle ABCD (B top-left, C top-right, A bottom-left, D bottom-right) with diagonal BD drawn; a semicircle sits on top of side BC with its center O marked at the midpoint of BC.",
+    "source": "claude-fable-5-vision-2026-07-04"
+  },
+  "ds-geometry-circles-q481": {
+    "description": "Two internally tangent circles touching at point A on the left; a horizontal line through A passes through B, C, D, E in order. B is the center of the smaller circle, C the center of the larger circle, D lies on the smaller circle, E lies on the larger circle.",
+    "source": "claude-fable-5-vision-2026-07-04"
+  },
+  "ds-geometry-polygon-q484": {
+    "description": "Quadrilateral with B top-left, C top-right, D bottom-right, A bottom-left; AD is parallel to BC; diagonal AC drawn from A to C. Angle x degrees marked at C between the diagonal AC and BC; angle z degrees marked at D between CD and AD.",
+    "source": "claude-fable-5-vision-2026-07-04"
+  },
+  "ds-geometry-polygon-q485": {
+    "description": "Parallelogram with angle x degrees marked at the bottom-left vertex, angle y degrees at the top-left vertex, and angle z degrees at the top-right vertex.",
+    "source": "claude-fable-5-vision-2026-07-04"
+  },
+  "ds-co-ordinate-geometry-q488": {
+    "description": "Coordinate plane with X and Y axes. Triangle STU: horizontal segment ST parallel to the X-axis (S left of the Y-axis, T right of it), vertical segment TU parallel to the Y-axis going down from T, and slanted segment SU crossing the Y-axis. The triangle sits above the X-axis.",
+    "source": "claude-fable-5-vision-2026-07-04"
+  },
+  "ds-co-ordinate-geometry-q489": {
+    "description": "Coordinate plane with X and Y axes and a circle centered at the origin O; point P marked where the circle meets the positive X-axis.",
+    "source": "claude-fable-5-vision-2026-07-04"
+  }
+}

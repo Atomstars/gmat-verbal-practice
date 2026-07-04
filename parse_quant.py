@@ -48,8 +48,9 @@ try:
     HAS_PIL = True
 except ImportError:
     HAS_PIL = False
-    print("WARNING: Pillow not installed -- diagram cropping disabled. " "Run: pip install Pillow")
+    print("NOTE: Pillow not installed (no longer required -- diagrams crop via fitz).")
 
+from gmat_parsing_common import clean as smart_clean
 from gmat_parsing_common import embed_questions
 
 # =========================================================================== #
@@ -521,7 +522,9 @@ def build_topic_map(doc, ps_range, ds_range):
             block_text = block_text.strip()
             m = _SECTION_RE.search(block_text)
             if m:
-                current_topic = m.group(2).strip()
+                # SMART-normalize so ligatures/dashes never reach chapter
+                # labels or ids ('Proﬁt & Loss' -> slug 'pro-t-loss' otherwise)
+                current_topic = smart_clean(m.group(2).strip())
                 found_heading = True
                 break
         if current_topic:
@@ -680,6 +683,23 @@ def _is_page_header(text: str) -> bool:
     )
 
 
+def _is_section_heading_block(block: dict) -> bool:
+    """True if the block is a section heading like '2.18 Geometry-Circles'.
+
+    Headings use a ~13.2pt font (body text is 9.5pt) and sit between problem
+    sets.  Without this check they get absorbed into the preceding question's
+    stem or last answer option (e.g. option E becoming '16 sqrt2 2.18 Geometry').
+    A block is a heading when every span is heading-sized, or when it starts
+    with the 'N.M' section number in a heading-sized span.
+    """
+    spans = [s for s in _all_spans(block) if s["text"].strip()]
+    if not spans:
+        return False
+    if all(s.get("size", 0) > 11.0 for s in spans):
+        return True
+    return spans[0].get("size", 0) > 11.0 and bool(re.match(r"^\d+\.\d+", _block_text(block)))
+
+
 def _is_question_start(block: dict) -> bool:
     """True if block starts with 'N.' question number."""
     t = _first_text(block)
@@ -781,13 +801,25 @@ def parse_questions_in_range(
         bt = _block_text(block)
         if _is_page_header(bt):
             continue
+        if _is_section_heading_block(block):
+            continue
 
         if _is_question_start(block):
-            if current_q_num is not None:
-                question_groups.append((current_q_num, current_q_page, current_blocks))
-            current_q_num = _get_question_num(block)
-            current_q_page = pi
-            current_blocks = [(pi, block)]
+            n = _get_question_num(block)
+            # The book numbers questions strictly sequentially (PS 1-250,
+            # DS 251-500). A numbered block that ISN'T the next number is a
+            # stem line that happens to start with a wrapped number — e.g.
+            # Q24's "...hours worked in excess of / 40. What was the total
+            # payroll..." once parsed as a fake Q40, stealing Q40's answer
+            # and shipping half a stem. Treat it as question content instead.
+            if current_q_num is None or n == current_q_num + 1:
+                if current_q_num is not None:
+                    question_groups.append((current_q_num, current_q_page, current_blocks))
+                current_q_num = n
+                current_q_page = pi
+                current_blocks = [(pi, block)]
+            elif current_q_num is not None:
+                current_blocks.append((pi, block))
         elif current_q_num is not None:
             current_blocks.append((pi, block))
 
@@ -881,6 +913,8 @@ def _parse_question_blocks(q_num, q_type, topic, page_idx, tagged_blocks):
         "id": qid,
         "type": q_type,
         "chapter": topic,
+        "title": None,  # quant questions have no CR-style topic label
+        "passage": None,  # no RC passages in quant
         "question": stem_latex or stem_plain,
         "question_plain": stem_plain,
         "options": options,
@@ -893,6 +927,10 @@ def _parse_question_blocks(q_num, q_type, topic, page_idx, tagged_blocks):
         "number": q_num,
         "source": SOURCE_LABEL,
         "format": "multiple_choice",
+        # internal: y of the question-number block on its start page; used by
+        # _extract_diagrams to bound each question's figure interval. Popped
+        # before writing JSON.
+        "_start_y": tagged_blocks[0][1]["bbox"][1],
     }
 
 
@@ -1107,115 +1145,186 @@ def _build_options(opt_blocks, opt_den_blocks):
 # =========================================================================== #
 
 
+def _cluster_rects(rects, gap=12.0):
+    """Merge rectangles whose bboxes (inflated by `gap` pts) touch.
+
+    Returns a list of clusters, each a list of member rects — one cluster per
+    visually distinct figure. Iterates until stable so chained overlaps fully
+    merge. Members are kept (not just the union bbox) so callers can inspect
+    cluster composition (e.g. all-thin-bar clusters are fraction bars, not
+    figures).
+    """
+    clusters = [[fitz.Rect(r)] for r in rects]
+    merged = True
+    while merged:
+        merged = False
+        out = []
+        while clusters:
+            cur = clusters.pop()
+            cb = _union_bbox(cur)
+            i = 0
+            while i < len(out):
+                ab = _union_bbox(out[i])
+                if (
+                    cb.x0 - gap < ab.x1
+                    and ab.x0 - gap < cb.x1
+                    and cb.y0 - gap < ab.y1
+                    and ab.y0 - gap < cb.y1
+                ):
+                    cur.extend(out.pop(i))
+                    cb = _union_bbox(cur)
+                    merged = True
+                else:
+                    i += 1
+            out.append(cur)
+        clusters = out
+    return clusters
+
+
+def _union_bbox(rects):
+    u = fitz.Rect(rects[0])
+    for r in rects[1:]:
+        u |= r
+    return u
+
+
 def _extract_diagrams(doc, records):
     """
-    For each record that may have a diagram, detect vector drawings on its source page
-    and crop them.
-    Modifies records in-place, setting 'diagram' path.
+    Detect each question's figure and crop it to diagrams/{id}.png.
+
+    Structural assignment (no keyword guessing):
+      1. Questions are ordered by (page, y of the question-number block).
+         Each question owns the document interval from its own start to the
+         next question's start, capped at the end of the page after its start
+         page (figures never trail further than that in this book).
+      2. Every page in the question span is scanned once; its vector drawings
+         are clustered into distinct figures by proximity (12 pt gap).
+      3. Clusters that are page-wide rules or too small to be figures
+         (fraction bars, sqrt vinculums, stray marks) are dropped; survivors
+         are assigned to the question whose interval contains their y-midpoint.
+      4. A question's clusters (on its best page) are union-cropped at 200 DPI.
+
+    The old implementation union-cropped ALL drawings on a page and handed the
+    same image to every question mentioning a shape word — producing duplicate
+    and misassigned diagrams. Do not regress to page-level unions.
+
+    Note: with --ps-topics/--ds-topics filters, kept questions' intervals can
+    extend over skipped ones; the full-book run is authoritative for diagrams.
     """
-    if not HAS_PIL:
+    recs = [r for r in records if "_start_y" in r]
+    if not recs:
         return
 
     os.makedirs("diagrams", exist_ok=True)
 
-    # Group records by source page
-    by_page = defaultdict(list)
-    for rec in records:
-        by_page[rec["source_page"] - 1].append(rec)  # 0-indexed
+    order = sorted(recs, key=lambda r: (r["source_page"] - 1, r["_start_y"]))
+    starts = [(r["source_page"] - 1, r["_start_y"]) for r in order]
 
-    for page_idx, page_records in by_page.items():
-        page = doc[page_idx]
-        drawings = page.get_drawings()
-        if not drawings:
-            continue
+    intervals = []  # (start, end, record) with (page, y) tuple bounds
+    for i, rec in enumerate(order):
+        start = starts[i]
+        nxt = starts[i + 1] if i + 1 < len(order) else (start[0] + 2, 0.0)
+        hard_cap = (start[0] + 1, float("inf"))  # end of the page after start
+        intervals.append((start, min(nxt, hard_cap), rec))
 
-        # Get the bounding rects of all drawings on the page
-        # Filter out horizontal lines (likely page rules or separators)
-        # A "diagram" cluster has width and height > 20px
-        diagram_rects = []
-        for d in drawings:
+    page_lo = starts[0][0]
+    page_hi = min(len(doc) - 1, max(s[0] for s in starts) + 1)
+
+    clusters_by_rec = defaultdict(lambda: defaultdict(list))  # id -> page -> [rect]
+    rec_by_id = {r["id"]: r for r in order}
+
+    for pno in range(page_lo, page_hi + 1):
+        page = doc[pno]
+        page_w = page.rect.width
+        rects = []
+        for d in page.get_drawings():
             r = d.get("rect")
-            if r and r.width > 20 and r.height > 20:
-                diagram_rects.append(r)
-
-        if not diagram_rects:
+            # NOTE: don't use r.is_empty — a pure horizontal/vertical line
+            # stroke has a degenerate (zero-area) rect and is_empty is True,
+            # which silently discards line-only figures (number lines, ticks).
+            if not r or (r.width < 1 and r.height < 1):
+                continue
+            if r.width > 0.7 * page_w and r.height < 3:
+                continue  # page-wide horizontal rule
+            # Invisible white background paint behind figures extends well past
+            # the visible strokes (into stem/option text) — skip pure fills that
+            # are (near-)white. Gray region shading (e.g. shaded annulus) stays.
+            fill = d.get("fill")
+            if d.get("color") is None and fill and all(c >= 0.95 for c in fill):
+                continue
+            # Pad zero-area line rects to a minimal thickness: fitz.Rect union
+            # treats degenerate rects as empty and silently drops them, which
+            # breaks clustering for line-only figures.
+            rects.append(
+                fitz.Rect(r.x0, r.y0, max(r.x1, r.x0 + 0.6), max(r.y1, r.y0 + 0.6))
+            )
+        if not rects:
             continue
 
-        # Rasterize page at 200 DPI
-        mat = fitz.Matrix(200 / 72, 200 / 72)
-        pix = page.get_pixmap(matrix=mat)
-        img_data = pix.tobytes("png")
-        img = Image.open(io.BytesIO(img_data))
-        img_w, img_h = img.size
-        page_rect = page.rect  # in pts
-
-        scale_x = img_w / page_rect.width
-        scale_y = img_h / page_rect.height
-
-        # For each record on this page, find if any diagram rect is "near" it
-        # We use a heuristic: if the diagram's y-midpoint is within 200pts of
-        # the question's approximate y position on the page
-        for rec in page_records:
-            # Estimate where the question appears on the page
-            # (we don't have exact y, but source_page gives us the page)
-            # For now, assign the largest diagram cluster on the page to the record
-            # if the page has only one record with diagrams
-            # Better: check if the diagram y-range is within the question's text y-range
-
-            # Collect drawings that overlap with this question's text range
-            # We'll use a generous assignment: all diagrams on a page go to all records
-            # that reference figures in their stem ("figure", "shown", "below", "above")
-            stem_lower = (rec.get("question_plain") or "").lower()
-            has_figure_ref = any(
-                w in stem_lower
-                for w in (
-                    "figure",
-                    "shown",
-                    "below",
-                    "above",
-                    "diagram",
-                    "inscribed",
-                    "rectangle",
-                    "circle",
-                    "triangle",
-                    "parallelogram",
-                    "polygon",
-                )
-            )
-
-            if not has_figure_ref and len(page_records) > 1:
-                # Multiple questions on page, no figure reference -- skip
+        for members in _cluster_rects(rects):
+            c = _union_bbox(members)
+            # Real figures are at least this big; fraction bars and vinculums
+            # are thin and stay isolated after clustering. The second clause
+            # keeps long-thin line figures (number lines with tick marks, ~4pt
+            # tall) that the first would drop.
+            if not ((c.width >= 25 and c.height >= 5) or (c.width >= 60 and c.height >= 3)):
                 continue
-
-            # Union bbox of diagram rects (in page pts)
-            all_r = diagram_rects
-            if not all_r:
+            # A cluster made ONLY of thin horizontal bars is stacked fraction
+            # bars from option math, not a figure. Real figures always have at
+            # least one tall element (tick, curve, vertical edge, slanted line).
+            if all(m.height <= 3.5 for m in members):
                 continue
+            pos = (pno, (c.y0 + c.y1) / 2)
+            for start, end, rec in intervals:
+                if start <= pos < end:
+                    clusters_by_rec[rec["id"]][pno].append(c)
+                    break
 
-            x0 = min(r.x0 for r in all_r) - 5
-            y0 = min(r.y0 for r in all_r) - 5
-            x1 = max(r.x1 for r in all_r) + 5
-            y1 = max(r.y1 for r in all_r) + 5
+    for rid, pages in clusters_by_rec.items():
+        rec = rec_by_id[rid]
+        # A question's figure lives on one page: take the page holding the
+        # largest drawn area (guards against stray marks on the other page).
+        pno, cs = max(pages.items(), key=lambda kv: sum(c.width * c.height for c in kv[1]))
+        page = doc[pno]
+        clip = fitz.Rect(
+            min(c.x0 for c in cs) - 6,
+            min(c.y0 for c in cs) - 6,
+            max(c.x1 for c in cs) + 6,
+            max(c.y1 for c in cs) + 6,
+        )
 
-            # Clip to page bounds
-            x0 = max(0, x0)
-            y0 = max(0, y0)
-            x1 = min(page_rect.width, x1)
-            y1 = min(page_rect.height, y1)
-
-            # Scale to raster coords
-            cx0 = int(x0 * scale_x)
-            cy0 = int(y0 * scale_y)
-            cx1 = int(x1 * scale_x)
-            cy1 = int(y1 * scale_y)
-
-            if cx1 <= cx0 or cy1 <= cy0:
+        # Vertex/length labels ('A', '30⁰', '4√2') are TEXT, not drawings, and
+        # often sit just outside the drawn bbox. Grow the clip to include short
+        # words near the figure — length cap keeps stem/statement lines out.
+        # Absorb label TEXT LINES near the drawn bbox. Granularity matters:
+        # a label line is sparse ('A', '4√2', 'A  13  E'), while stem/option
+        # lines are long or start with '(A)'/'(1)' markers — so line length
+        # and a leading-paren check separate them where word length cannot.
+        probe = fitz.Rect(clip.x0 - 14, clip.y0 - 14, clip.x1 + 14, clip.y1 + 14)
+        for b in page.get_text("dict")["blocks"]:
+            if b["type"] != 0:
                 continue
+            for ln in b.get("lines", []):
+                t = "".join(s["text"] for s in ln.get("spans", [])).strip()
+                if not t or len(t.replace(" ", "")) > 8 or t.startswith("("):
+                    continue
+                if re.match(r"^\d+\.$", t):
+                    continue  # question number ('189.') beside the figure
+                lb = fitz.Rect(ln["bbox"])
+                if lb.y1 < 60:
+                    continue  # page-number / header zone
+                if lb.y0 > clip.y1 + 8:
+                    continue  # option values sit further below than any label
+                if probe.intersects(lb):
+                    clip |= lb
 
-            cropped = img.crop((cx0, cy0, cx1, cy1))
-            out_path = os.path.join("diagrams", f'{rec["id"]}.png')
-            cropped.save(out_path)
-            rec["diagram"] = out_path.replace("\\", "/")
+        clip &= page.rect
+        if clip.width < 25 or clip.height < 12:
+            continue
+        pix = page.get_pixmap(matrix=fitz.Matrix(200 / 72, 200 / 72), clip=clip)
+        out_path = os.path.join("diagrams", f"{rid}.png")
+        pix.save(out_path)
+        rec["diagram"] = out_path.replace("\\", "/")
 
 
 # =========================================================================== #
@@ -1393,12 +1502,35 @@ def parse_quant(pdf_path, ps_topics_filter=None, ds_topics_filter=None):
     print("Detecting and cropping diagrams...")
     _extract_diagrams(doc, all_records)
 
+    # Merge diagram captions (sidecar file, survives re-parses). Captions are
+    # machine-derived descriptions of the cropped figures used ONLY to make
+    # embeddings/search see the diagram content — never shown as book content.
+    if os.path.exists("diagram_captions.json"):
+        with open("diagram_captions.json", encoding="utf-8") as f:
+            captions = json.load(f)
+        n_cap = 0
+        for r in all_records:
+            cap = captions.get(r["id"])
+            if cap and r.get("diagram"):
+                r["diagram_description"] = cap["description"]
+                r["diagram_description_source"] = cap.get("source", "machine-derived")
+                n_cap += 1
+        print(f"Merged {n_cap} diagram captions from diagram_captions.json")
+
     print("Embedding questions...")
     all_records = embed_questions(all_records)
 
-    # Strip internal-only field before writing
+    # Strip internal-only fields before writing; SMART-normalize shipped text
+    # (ligatures 'ﬁ'->'fi', smart dashes/quotes -> ASCII). Formatting only —
+    # no words changed; ids/labels were normalized at topic extraction.
     for r in all_records:
         r.pop("question_plain", None)
+        r.pop("_start_y", None)
+        r["question"] = smart_clean(r["question"])
+        if r.get("explanation"):
+            r["explanation"] = smart_clean(r["explanation"])
+        for opt in r["options"]:
+            opt["text"] = smart_clean(opt["text"])
 
     all_records = validate_records(all_records, source="questions-quant.json")
     out_path = "questions-quant.json"
@@ -1411,6 +1543,12 @@ def parse_quant(pdf_path, ps_topics_filter=None, ds_topics_filter=None):
 
 
 def main():
+    # Never let a console encoding (Windows CP1252) kill a completed parse
+    # while printing the summary.
+    try:
+        sys.stdout.reconfigure(errors="replace")
+    except AttributeError:
+        pass
     args = sys.argv[1:]
     if not args:
         print(__doc__)
