@@ -35,9 +35,9 @@ class QuestionRecord(BaseModel):
     id: str
     type: Literal["CR", "RC", "PS", "DS"]
     chapter: str | None
-    title: str | None
+    title: str | None = None
     question: str
-    passage: str | None
+    passage: str | None = None
     options: list[OptionRecord]
     correct_answer: Literal["A", "B", "C", "D", "E"] | None
     explanation: str | None

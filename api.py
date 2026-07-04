@@ -11,7 +11,14 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from qdrant_client import QdrantClient
-from qdrant_client.models import Distance, PointStruct, VectorParams
+from qdrant_client.models import (
+    Distance,
+    FieldCondition,
+    Filter,
+    MatchValue,
+    PointStruct,
+    VectorParams,
+)
 from sentence_transformers import SentenceTransformer
 
 app = FastAPI(
@@ -73,6 +80,7 @@ def init_qdrant():
 
         payload = {
             "id": q["id"],
+            "bank": q.get("bank"),
             "type": q.get("type"),
             "question": q.get("question", "")[:500],
             "chapter": q.get("chapter"),
@@ -116,8 +124,29 @@ class SearchResult(BaseModel):
     question_id: str
     score: float
     type: str
+    bank: str | None = None
+    chapter: str | None = None
     difficulty: str | None = None
     subtype: str | None = None
+
+
+def build_filter(
+    bank: str | None = None,
+    qtype: str | None = None,
+    chapter: str | None = None,
+    difficulty: str | None = None,
+) -> Filter | None:
+    """Build a Qdrant payload filter from optional metadata constraints."""
+    conditions = []
+    if bank:
+        conditions.append(FieldCondition(key="bank", match=MatchValue(value=bank)))
+    if qtype:
+        conditions.append(FieldCondition(key="type", match=MatchValue(value=qtype)))
+    if chapter:
+        conditions.append(FieldCondition(key="chapter", match=MatchValue(value=chapter)))
+    if difficulty:
+        conditions.append(FieldCondition(key="difficulty", match=MatchValue(value=difficulty)))
+    return Filter(must=conditions) if conditions else None
 
 
 class SearchResponse(BaseModel):
@@ -137,13 +166,31 @@ async def health():
     }
 
 
+def _to_result(point) -> SearchResult:
+    return SearchResult(
+        question_id=point.payload.get("id"),
+        score=point.score,
+        type=point.payload.get("type"),
+        bank=point.payload.get("bank"),
+        chapter=point.payload.get("chapter"),
+        difficulty=point.payload.get("difficulty"),
+        subtype=point.payload.get("subtype"),
+    )
+
+
 @app.get("/search-similar/{question_id}")
 async def search_similar(
     question_id: str,
     limit: int = 5,
+    same_bank: bool = True,
+    same_type: bool = True,
+    chapter: str | None = None,
+    difficulty: str | None = None,
+    min_score: float = 0.25,
 ) -> SearchResponse:
     """
     Find questions semantically similar to a given question ID.
+    Defaults to the same bank and same type so neighbors are usable practice.
     """
     if question_id not in questions_map:
         raise HTTPException(status_code=404, detail=f"Question {question_id} not found")
@@ -153,29 +200,29 @@ async def search_similar(
     if not embedding:
         raise HTTPException(status_code=400, detail=f"Question {question_id} has no embedding")
 
-    # Search in Qdrant using query_points (qdrant-client v1.7+)
+    query_filter = build_filter(
+        bank=question.get("bank") if same_bank else None,
+        qtype=question.get("type") if same_type else None,
+        chapter=chapter,
+        difficulty=difficulty,
+    )
+
+    # query_points (qdrant-client v1.7+); +1 to exclude the query itself
     response = client.query_points(
         collection_name=COLLECTION_NAME,
         query=embedding,
-        limit=limit + 1,  # +1 to exclude the query itself
+        query_filter=query_filter,
+        limit=limit + 1,
         with_payload=True,
     )
-    points = response.points
 
     results = []
-    for point in points:
+    for point in response.points:
         if point.payload.get("id") == question_id:
             continue
-        q_id = point.payload.get("id")
-        results.append(
-            SearchResult(
-                question_id=q_id,
-                score=point.score,
-                type=point.payload.get("type"),
-                difficulty=point.payload.get("difficulty"),
-                subtype=point.payload.get("subtype"),
-            )
-        )
+        if point.score < min_score:
+            continue
+        results.append(_to_result(point))
         if len(results) >= limit:
             break
 
@@ -190,38 +237,45 @@ async def search_similar(
 async def semantic_search(
     q: str,
     limit: int = 10,
+    bank: str | None = None,
+    type: str | None = None,
+    chapter: str | None = None,
+    difficulty: str | None = None,
 ) -> SearchResponse:
     """
-    Semantic search: find questions matching a query string.
+    Semantic search: find questions matching a query string,
+    optionally constrained by bank / type / chapter / difficulty.
     """
     if not q or len(q) < 3:
         raise HTTPException(status_code=400, detail="Query must be at least 3 characters")
 
-    # Embed the query and search using query_points (qdrant-client v1.7+)
     query_embedding = model.encode(q).tolist()
     response = client.query_points(
         collection_name=COLLECTION_NAME,
         query=query_embedding,
+        query_filter=build_filter(bank=bank, qtype=type, chapter=chapter, difficulty=difficulty),
         limit=limit,
         with_payload=True,
     )
-    points = response.points
-
-    results = [
-        SearchResult(
-            question_id=point.payload.get("id"),
-            score=point.score,
-            type=point.payload.get("type"),
-            difficulty=point.payload.get("difficulty"),
-            subtype=point.payload.get("subtype"),
-        )
-        for point in points
-    ]
 
     return SearchResponse(
         query_text=q,
-        results=results,
+        results=[_to_result(p) for p in response.points],
     )
+
+
+@app.get("/chapters")
+async def list_chapters(bank: str | None = None) -> dict:
+    """Chapters (topics) with question counts, optionally for one bank."""
+    counts: dict[str, dict[str, int]] = {}
+    for q in questions_map.values():
+        if bank and q.get("bank") != bank:
+            continue
+        b = q.get("bank") or "unknown"
+        ch = q.get("chapter") or "Uncategorized"
+        counts.setdefault(b, {})
+        counts[b][ch] = counts[b].get(ch, 0) + 1
+    return {"banks": counts}
 
 
 @app.get("/questions/{question_id}")

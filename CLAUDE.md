@@ -63,8 +63,10 @@ python parse_quant.py "<pdf>" --ps-topics "Number properties" --ds-topics "Numbe
 python -m http.server 8000      # then open http://localhost:8000
 
 # --- Vector search API (optional — similar-question panel + search bar) ---
-python test_embeddings.py       # reads questions-og.json, writes questions_embedded.json (~16s)
+python test_embeddings.py       # UNIFIED index: merges ALL 3 banks (910 q), tags each with
+                                # bank (og|manhattan|quant), embeds missing, writes questions_embedded.json
 python api.py                   # FastAPI on http://127.0.0.1:8000; docs at /docs
+python eval_retrieval.py        # retrieval eval: type/chapter consistency@5, weak queries, near-dups
 ```
 
 There are no tests or build step. Validation is done by re-running the parser and
@@ -185,10 +187,17 @@ collection at startup and exposes four endpoints:
 
 | Endpoint | Purpose |
 |---|---|
-| `GET /health` | Liveness check; returns question count |
-| `GET /search-similar/{id}?limit=N` | N nearest questions by cosine similarity to a known question |
-| `GET /search?q=<text>&limit=N` | Embed a freeform query on-the-fly, return N matches |
+| `GET /health` | Liveness check; returns question count (910 across all 3 banks) |
+| `GET /search-similar/{id}?limit=N&same_bank=&same_type=&chapter=&difficulty=&min_score=` | Nearest neighbors; defaults `same_bank=true&same_type=true&min_score=0.25` so results are usable practice from the current bank |
+| `GET /search?q=<text>&limit=N&bank=&type=&chapter=&difficulty=` | Embed a freeform query, return filtered matches (UI passes `bank=<current source>`) |
+| `GET /chapters?bank=` | Chapter/topic labels with question counts per bank |
 | `GET /questions/{id}` | Full question record (used by the similar-panel click handler) |
+
+Filters are Qdrant payload filters (`Filter`/`FieldCondition`/`MatchValue`); the payload
+carries `bank` alongside type/chapter/subtype/difficulty. `eval_retrieval.py` is the
+retrieval eval harness (proxy metrics: type/chapter consistency@5, top-1 score stats,
+weak queries, near-duplicate pairs — it independently detects the book's reprinted
+questions, e.g. ps-percents-q041/q044).
 
 **Implementation notes:**
 - Uses `client.query_points()` (qdrant-client v1.7+ API). The older `client.search()` was
@@ -269,6 +278,15 @@ conflicts.
 ### DS standard answer choices
 DS options are never printed in the PDF. They're hardcoded in `DS_CHOICES` (same for
 all 250 DS questions, standard GMAT wording). Do not try to extract them from the PDF.
+
+### Question-start numbers must be sequential
+`parse_questions_in_range` accepts a line-initial `N.` as a new question ONLY when
+`N == previous + 1`. The book's numbering is strictly sequential; without this check a
+stem's own line-initial number becomes a phantom question (real case: Q24's
+"...hours worked in excess of\n40. What was the total payroll..." created a duplicate
+ps-percents-q040 carrying Q40's answer key entry on Q24's truncated stem). The book
+genuinely reprints some questions under two numbers (41/44, 42/45 in Percents; also
+detected by eval_retrieval.py) — those are source-faithful and kept.
 
 ### `_SOL_QNUM_RE = r'^(\d+)\.(?!\d)'`
 Negative lookahead prevents "5.1" section headings matching as Q5. Required because

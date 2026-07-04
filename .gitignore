@@ -15,3 +15,6 @@ _*.py
 .DS_Store
 
 .vercel
+
+# Generated vector index (rebuild with: python test_embeddings.py)
+questions_embedded.json

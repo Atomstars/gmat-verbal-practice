@@ -1065,7 +1065,7 @@ function renderSimilarPanel(results){
     const stem=(q?q.question.split("\n\n").pop():"").slice(0,120);
     return `<div class="sim-item" data-id="${esc(r.question_id)}">
       <div style="flex:1;min-width:0">
-        <div class="si-meta"><span class="pill">${esc(r.type||"")}</span>${r.difficulty?`<span class="pill d-${r.difficulty}">${esc(r.difficulty)}</span>`:""}${r.subtype?`<span class="pill" style="opacity:.7">${esc(r.subtype)}</span>`:""}</div>
+        <div class="si-meta"><span class="pill">${esc(r.type||"")}</span>${r.difficulty?`<span class="pill d-${r.difficulty}">${esc(r.difficulty)}</span>`:""}${r.subtype?`<span class="pill" style="opacity:.7">${esc(r.subtype)}</span>`:(r.chapter?`<span class="pill" style="opacity:.7">${esc(r.chapter)}</span>`:"")}</div>
         <div class="si-text">${esc(stem)}${stem.length>=120?"&hellip;":""}</div>
       </div><span class="si-arr">›</span></div>`;
   }).join("");
@@ -1101,7 +1101,7 @@ async function doSearch(query){
   }
   st.textContent="Searching…"; st.classList.remove("hidden");
   try{
-    const r=await fetch(`${base}/search?q=${encodeURIComponent(query)}&limit=8`);
+    const r=await fetch(`${base}/search?q=${encodeURIComponent(query)}&limit=8&bank=${encodeURIComponent(App.source)}`);
     if(!r.ok) throw 0;
     const res=(await r.json()).results||[];
     el.innerHTML=!res.length
@@ -1110,7 +1110,7 @@ async function doSearch(query){
           const q=App.all.find(x=>x.id===r.question_id);
           const stem=(q?q.question.split("\n\n").pop():"").slice(0,120);
           return `<div class="sr-item" data-id="${esc(r.question_id)}">
-            <div class="sr-meta"><span class="pill">${esc(r.type||"")}</span>${r.difficulty?`<span class="pill d-${r.difficulty}">${esc(r.difficulty)}</span>`:""}${r.subtype?`<span class="pill" style="opacity:.7">${esc(r.subtype)}</span>`:""}
+            <div class="sr-meta"><span class="pill">${esc(r.type||"")}</span>${r.difficulty?`<span class="pill d-${r.difficulty}">${esc(r.difficulty)}</span>`:""}${r.subtype?`<span class="pill" style="opacity:.7">${esc(r.subtype)}</span>`:(r.chapter?`<span class="pill" style="opacity:.7">${esc(r.chapter)}</span>`:"")}
               <span style="color:var(--faint);font-size:11px">${Math.round((r.score||0)*100)}% match</span></div>
             <div class="sr-text">${esc(stem)}${stem.length>=120?"&hellip;":""}</div></div>`;
         }).join("");

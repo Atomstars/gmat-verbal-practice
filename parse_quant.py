@@ -26,6 +26,12 @@ import re
 import sys
 from collections import Counter, defaultdict
 
+# Windows terminals default to CP1252, which cannot print ligatures that survive
+# in topic labels; force UTF-8 so a summary print never kills the run.
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+
 try:
     from gmat_schema import validate_records
 except ImportError:
@@ -783,9 +789,15 @@ def parse_questions_in_range(
             continue
 
         if _is_question_start(block):
+            num = _get_question_num(block)
+            # Book numbering is strictly sequential; a line-initial "N." whose N
+            # is not the successor is stem text (e.g. Q24's "...in excess of\n40.")
+            if current_q_num is not None and num != current_q_num + 1:
+                current_blocks.append((pi, block))
+                continue
             if current_q_num is not None:
                 question_groups.append((current_q_num, current_q_page, current_blocks))
-            current_q_num = _get_question_num(block)
+            current_q_num = num
             current_q_page = pi
             current_blocks = [(pi, block)]
         elif current_q_num is not None:

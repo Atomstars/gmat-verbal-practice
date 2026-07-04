@@ -36,6 +36,15 @@ unconfirmable as `null`.** Correctness beats volume.
 - **Supabase cross-device sync:** local-first, optional. Google OAuth + `progress` table.
   Project `bfaaczlxfafsxjnqqvoc` (Seoul). **Google sign-in not yet end-to-end verified.**
 - **Vector search (optional):** `api.py` (FastAPI + in-memory Qdrant). Run alongside app.
+  As of 2026-07-04 the index is **unified**: `python test_embeddings.py` merges all 3 banks
+  (910 q, each tagged `bank: og|manhattan|quant`) into `questions_embedded.json`.
+  `/search-similar` defaults to same-bank + same-type (+ optional `chapter`/`difficulty`/
+  `min_score` params); `/search` takes `bank`/`type`/`chapter`/`difficulty`; new `/chapters`
+  lists topics per bank. `python eval_retrieval.py` = retrieval quality report.
+  **Quant data fix (2026-07-04):** parser numbering bug created a phantom duplicate
+  `ps-percents-q040` carrying the wrong answer on Q24's truncated stem — fixed by a
+  sequential-numbering check in `parse_quant.py`; `questions-quant.json` regenerated
+  (500 unique ids, numbers 1–500 complete, 496 confirmed).
 - **Repo:** `github.com/Atomstars/gmat-verbal-practice` (**private**).
 - **Deploy:** Vercel **gmat-prep** → **https://gmat-prep-ivory.vercel.app**. May need
   manual unblock — see Open items.
