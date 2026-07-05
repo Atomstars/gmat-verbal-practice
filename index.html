@@ -433,9 +433,9 @@
    to keep the app 100% local (exactly like before). */
 window.SUPABASE_URL      = "https://bfaaczlxfafsxjnqqvoc.supabase.co";
 window.SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJmYWFjemx4ZmFmc3hqbnFxdm9jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE2OTI4NjgsImV4cCI6MjA5NzI2ODg2OH0.QTzwq_FLSKJ_EUUGf2SsWGRAcIOKWiOUndljS9huc_c";
-/* Vector search API — run `python api.py` to enable similar-question
-   recommendations and semantic search. Leave blank to disable silently. */
-window.VECTOR_API = "http://127.0.0.1:8000";
+/* Vector search now runs 100% in the browser (embeddings.json + transformers.js),
+   so no server is needed — it works on static hosts like Vercel. The old FastAPI
+   backend (api.py) is optional and no longer used by the app. */
 </script>
 <!-- KaTeX for rendering math in GMAT Quant questions -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
@@ -883,14 +883,14 @@ function weakestConcept(){
   }
   return best;
 }
-/* AI status: light up the Smart-search pill only when api.py is actually reachable */
+/* AI status: the vector index runs in the browser, so it's "ready" once the
+   precomputed embeddings have loaded (no server involved). */
 async function pingAI(){
   const pill=$("#aiPill"); if(!pill) return;
-  const base=VAPI();
-  if(!base){ pill.className="ai-pill off"; pill.innerHTML='<span class="dot"></span> disabled'; return; }
-  try{ const r=await fetch(base+"/health",{cache:"no-cache"}); if(!r.ok) throw 0; const j=await r.json();
-    pill.className="ai-pill on"; pill.innerHTML=`<span class="dot"></span> AI on · ${(j.questions_count||910)} indexed`;
-  }catch(e){ pill.className="ai-pill off"; pill.innerHTML='<span class="dot"></span> AI offline'; }
+  pill.className="ai-pill"; pill.innerHTML='<span class="dot"></span> loading…';
+  const ok=await loadEmbeddings();
+  if(ok){ pill.className="ai-pill on"; pill.innerHTML=`<span class="dot"></span> AI ready · ${EMB.size} indexed`; }
+  else { pill.className="ai-pill off"; pill.innerHTML='<span class="dot"></span> index unavailable'; }
 }
 
 /* ===== HOME ===== */
@@ -1234,13 +1234,48 @@ document.addEventListener("keydown",e=>{ if(!$("#run").classList.contains("on"))
   else if(/^[1-5]$/.test(e.key)){const o=App.qs[App.idx]?.options||[];if(o[+e.key-1])pick(o[+e.key-1].label);}
   else if(e.key.toLowerCase()==="f")$("#flagBtn").click(); });
 
-/* ===== VECTOR SEARCH — similar questions + semantic search ===== */
-const VAPI=()=>(window.VECTOR_API||"").replace(/\/$/,"");
-async function fetchSimilar(qid,bank){
-  const base=VAPI(); if(!base) return null;
-  try{ const r=await fetch(`${base}/search-similar/${encodeURIComponent(qid)}?limit=3${bank?`&bank=${encodeURIComponent(bank)}`:""}`);
-    if(!r.ok) return null; return (await r.json()).results||[]; }catch(e){ return null; }
+/* ===== VECTOR SEARCH — runs FULLY IN THE BROWSER (no backend) =====
+   Precomputed, L2-normalized question vectors ship in embeddings.json, so cosine
+   similarity is just a dot product in JS. The query is embedded on-device with
+   transformers.js (all-MiniLM-L6-v2, the same model used offline) — loaded lazily
+   and cached by the browser after first use. This is what makes Smart search and
+   the similar-questions panel work on a static host like Vercel. */
+const EMB=new Map(); let _embReady=false, _embLoading=null;
+async function loadEmbeddings(){
+  if(_embReady) return true;
+  if(_embLoading) return _embLoading;
+  _embLoading=(async()=>{
+    for(const q of App.all){ if(Array.isArray(q.embedding)&&!EMB.has(q.id)) EMB.set(q.id,Float32Array.from(q.embedding)); }
+    try{ const r=await fetch("embeddings.json",{cache:"force-cache"});
+      if(r.ok){ const j=await r.json(); for(const id in j){ if(!EMB.has(id)) EMB.set(id,Float32Array.from(j[id])); } } }catch(e){}
+    _embReady=EMB.size>0; return _embReady;
+  })();
+  return _embLoading;
 }
+function cosine(a,b){ let s=0; for(let i=0,n=a.length;i<n;i++) s+=a[i]*b[i]; return s; }
+function vecSimilar(id,limit){ const e=EMB.get(id); if(!e) return [];
+  const out=[]; for(const q of App.all){ if(q.id===id) continue; const v=EMB.get(q.id); if(!v) continue; out.push({q,score:cosine(e,v)}); }
+  out.sort((a,b)=>b.score-a.score); return out.slice(0,limit); }
+function vecSearch(qv,limit){ const out=[];
+  for(const q of App.all){ const v=EMB.get(q.id); if(!v) continue; out.push({q,score:cosine(qv,v)}); }
+  out.sort((a,b)=>b.score-a.score); return out.slice(0,limit); }
+/* in-browser query embedding via transformers.js (lazy import, browser-cached model) */
+let _extractor=null,_extractorLoading=null;
+async function getExtractor(onstart){
+  if(_extractor) return _extractor;
+  if(!_extractorLoading){ if(onstart) onstart();
+    _extractorLoading=(async()=>{
+      const mod=await import("https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2");
+      mod.env.allowLocalModels=false; mod.env.useBrowserCache=true;
+      _extractor=await mod.pipeline("feature-extraction","Xenova/all-MiniLM-L6-v2");
+      return _extractor;
+    })();
+  }
+  return _extractorLoading;
+}
+async function embedQuery(text,onstart){ const ex=await getExtractor(onstart);
+  const out=await ex(text,{pooling:"mean",normalize:true}); return Float32Array.from(out.data); }
+
 function renderSimilarPanel(results){
   if(!results||!results.length) return "";
   const items=results.map(r=>{
@@ -1257,8 +1292,10 @@ function renderSimilarPanel(results){
 async function showSimilarForCurrentQ(){
   const q=App.qs[App.idx]; const slot=document.getElementById("simPanelSlot");
   if(!slot||!q) return;
-  const results=await fetchSimilar(q.id,q.bank);
-  if(!results||!results.length) return;
+  await loadEmbeddings();
+  const sims=vecSimilar(q.id,3);
+  if(!sims.length) return;
+  const results=sims.map(({q,score})=>({question_id:q.id,type:q.type,difficulty:q.difficulty,subtype:q.subtype,chapter:q.chapter,score,stem:q.question.split("\n\n").pop()}));
   slot.innerHTML=renderSimilarPanel(results);
   slot.querySelectorAll(".sim-item").forEach(el=>el.addEventListener("click",()=>{
     const qi=App.qs.findIndex(x=>x.id===el.dataset.id);
@@ -1269,23 +1306,27 @@ async function showSimilarForCurrentQ(){
 }
 let _srchTimer=null;
 async function doSearch(query){
-  const base=VAPI(),el=$("#srchResults"),st=$("#srchStatus");
+  const el=$("#srchResults"),st=$("#srchStatus");
   if(!query||query.length<3){ el.classList.add("hidden"); el.innerHTML=""; st.classList.add("hidden"); return; }
-  if(!base){ st.textContent="Semantic search needs api.py running (python api.py)."; st.classList.remove("hidden"); el.classList.add("hidden"); return; }
-  st.textContent="Searching…"; st.classList.remove("hidden");
+  await loadEmbeddings();
+  if(!EMB.size){ st.textContent="Search index is still loading — try again in a moment."; st.classList.remove("hidden"); el.classList.add("hidden"); return; }
+  st.classList.remove("hidden");
+  st.textContent=_extractor?"Searching…":"Warming up the search model (first time only)…";
+  const stamp=query;
   try{
-    const r=await fetch(`${base}/search?q=${encodeURIComponent(query)}&limit=8`); if(!r.ok) throw 0;
-    const res=(await r.json()).results||[];
+    const qv=await embedQuery(query,()=>{ st.textContent="Warming up the search model (first time only)…"; });
+    if($("#srchInput").value.trim()!==stamp) return; // superseded by newer keystrokes
+    const res=vecSearch(qv,8);
     el.innerHTML=!res.length?`<div class="sr-empty">No matches for "${esc(query)}"</div>`
-      :res.map(r=>{ const q=App.all.find(x=>x.id===r.question_id);
-          const stem=(q?q.question.split("\n\n").pop():(r.stem||"")).slice(0,120);
-          return `<div class="sr-item" data-id="${esc(r.question_id)}">
-            <div class="sr-meta"><span class="pill">${esc(r.type||"")}</span>${r.difficulty?`<span class="pill d-${r.difficulty}">${esc(r.difficulty)}</span>`:""}${r.subtype?`<span class="pill" style="opacity:.7">${esc(r.subtype)}</span>`:(r.chapter?`<span class="pill" style="opacity:.7">${esc(r.chapter)}</span>`:"")}
-              <span style="color:var(--faint);font-size:11px">${Math.round((r.score||0)*100)}% match</span></div>
+      :res.map(({q,score})=>{ const stem=q.question.split("\n\n").pop().slice(0,120); const tag=q.subtype||q.chapter;
+          return `<div class="sr-item" data-id="${esc(q.id)}">
+            <div class="sr-meta"><span class="pill">${esc(q.type||"")}</span>${q.difficulty?`<span class="pill d-${q.difficulty}">${esc(q.difficulty)}</span>`:""}${tag?`<span class="pill" style="opacity:.7">${esc(tag)}</span>`:""}
+              <span style="color:var(--faint);font-size:11px">${Math.round(score*100)}% match</span></div>
             <div class="sr-text">${esc(stem)}${stem.length>=120?"&hellip;":""}</div></div>`; }).join("");
     el.classList.remove("hidden");
     st.textContent=`${res.length} result${res.length!==1?"s":""} for "${query}"`;
-  }catch(e){ el.classList.add("hidden"); st.textContent="Search unavailable — is api.py running?"; }
+  }catch(e){ console.warn("[search]",e); el.classList.add("hidden");
+    st.textContent="Couldn't load the on-device search model — check your connection and retry."; }
 }
 $("#srchInput").addEventListener("input",e=>{ clearTimeout(_srchTimer); _srchTimer=setTimeout(()=>doSearch(e.target.value.trim()),400); });
 $("#srchResults").addEventListener("click",e=>{ const item=e.target.closest(".sr-item"); if(!item) return;
@@ -1311,7 +1352,7 @@ document.querySelectorAll("[data-themebtn]").forEach(b=>b.addEventListener("clic
 applyTheme(document.documentElement.getAttribute("data-theme")==="dark"?"dark":"light");
 
 /* boot — render local-first immediately, then let Sync hydrate from the cloud (if configured) */
-(async()=>{ await loadAll(); renderLanding(); Sync.init(); Attempts.init(); })();
+(async()=>{ await loadAll(); loadEmbeddings(); renderLanding(); Sync.init(); Attempts.init(); })();
 </script>
 </body>
 </html>

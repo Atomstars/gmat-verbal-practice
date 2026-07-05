@@ -52,3 +52,13 @@ with open(out, "w", encoding="utf-8") as f:
 embedded = sum(1 for q in all_q if q.get("embedding"))
 size_mb = os.path.getsize(out) / 1024 / 1024
 print(f"Saved {len(all_q)} questions ({embedded} embedded) to {out} ({size_mb:.1f} MB)")
+
+# Also emit a slim client-side index (id -> rounded embedding) so index.html can run
+# vector search fully IN THE BROWSER — no api.py/server needed. This is what makes the
+# similar-questions panel and Smart search work on static hosts like Vercel.
+# Vectors are already L2-normalized, so cosine == dot product; 4 decimals is plenty.
+slim = {q["id"]: [round(float(x), 4) for x in q["embedding"]] for q in all_q if q.get("embedding")}
+with open("embeddings.json", "w", encoding="utf-8") as f:
+    json.dump(slim, f, ensure_ascii=False, separators=(",", ":"))
+size2 = os.path.getsize("embeddings.json") / 1024 / 1024
+print(f"Saved client index embeddings.json ({len(slim)} vectors, {size2:.1f} MB)")
