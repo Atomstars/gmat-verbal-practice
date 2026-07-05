@@ -890,7 +890,7 @@ async function pingAI(){
   if(!base){ pill.className="ai-pill off"; pill.innerHTML='<span class="dot"></span> disabled'; return; }
   try{ const r=await fetch(base+"/health",{cache:"no-cache"}); if(!r.ok) throw 0; const j=await r.json();
     pill.className="ai-pill on"; pill.innerHTML=`<span class="dot"></span> AI on · ${(j.questions_count||910)} indexed`;
-  }catch(e){ pill.className="ai-pill off"; pill.innerHTML='<span class="dot"></span> offline — run api.py'; }
+  }catch(e){ pill.className="ai-pill off"; pill.innerHTML='<span class="dot"></span> AI offline'; }
 }
 
 /* ===== HOME ===== */
