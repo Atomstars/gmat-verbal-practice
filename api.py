@@ -306,6 +306,15 @@ async def get_question(question_id: str) -> Question:
     )
 
 
+# Serve the web app (index.html, the JSON banks, diagram PNGs) from the SAME origin
+# as the API, so the vector features are always available with no separate file server
+# and no cross-origin/port juggling. Mounted LAST so the API routes registered above
+# take precedence over static-file matching for /health, /search, /search-similar, etc.
+from fastapi.staticfiles import StaticFiles  # noqa: E402
+
+app.mount("/", StaticFiles(directory=".", html=True), name="app")
+
+
 if __name__ == "__main__":
     import uvicorn
 

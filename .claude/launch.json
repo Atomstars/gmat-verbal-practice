@@ -6,6 +6,12 @@
       "runtimeExecutable": "python",
       "runtimeArgs": ["-m", "http.server", "8754"],
       "port": 8754
+    },
+    {
+      "name": "gmat-ai",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["api.py"],
+      "port": 8000
     }
   ]
 }

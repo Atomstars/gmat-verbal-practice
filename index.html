@@ -5,16 +5,19 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <meta name="theme-color" content="#4f46e5" />
 <title>GMAT Trainer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg:#f5f6fb; --bg2:#eef0f8; --surface:#ffffff; --surface2:#f7f8fc;
-    --ink:#161a2b; --muted:#5d6577; --faint:#929aad; --line:#e6e8f2; --line2:#eef0f7;
-    --brand:#4f46e5; --brand2:#7c6cff; --brand-ink:#4338ca; --accent:#06b6d4;
-    --pick:#eef0ff; --grad:linear-gradient(135deg,#5b54f0 0%,#7c6cff 55%,#22b8e6 130%);
-    --grad-soft:linear-gradient(135deg,#eef0ff,#e8f6fb);
+    --bg:#f6f7fb; --bg2:#eef0f6; --surface:#ffffff; --surface2:#f7f8fc;
+    --ink:#1a1c2b; --muted:#5f6678; --faint:#9aa1b4; --line:#e8eaf1; --line2:#f0f2f7;
+    --brand:#5b53e8; --brand2:#8b7bff; --brand-ink:#463fce; --accent:#0fb2c4;
+    --pick:#eeeffe; --grad:linear-gradient(135deg,#6a5cf0 0%,#8b5cf6 100%);
+    --grad-soft:linear-gradient(135deg,#eff0ff,#f4edff);
     --green:#15803d; --green-bg:#e9f7ee; --amber:#b45309; --amber-bg:#fdf3df;
     --red:#c81e36; --red-bg:#fdebee; --flag:#e0820a;
-    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --sans:'Inter','Inter var',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
     --serif:Georgia,"Iowan Old Style","Times New Roman",serif;
     --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
     --r:18px; --r2:14px; color-scheme:light;
@@ -24,11 +27,11 @@
   }
   :root[data-theme="dark"]{
       color-scheme:dark;
-      --bg:#0b0e18; --bg2:#0f1322; --surface:#161b2b; --surface2:#1b2133;
-      --ink:#eef0f8; --muted:#9aa3ba; --faint:#6c7690; --line:#262d42; --line2:#1d2335;
-      --brand:#7c6cff; --brand2:#9d8cff; --brand-ink:#b3a8ff; --accent:#2dd4ee;
-      --pick:#1d2240; --grad:linear-gradient(135deg,#6a5cf5 0%,#8b78ff 55%,#22b8e6 130%);
-      --grad-soft:linear-gradient(135deg,#1a2042,#102a36);
+      --bg:#0c0d15; --bg2:#11131e; --surface:#161826; --surface2:#1b1e2e;
+      --ink:#eceef7; --muted:#98a0b4; --faint:#6b7386; --line:#242739; --line2:#1c1f2e;
+      --brand:#8578ff; --brand2:#9d8cff; --brand-ink:#b6afff; --accent:#22c7db;
+      --pick:#211f3d; --grad:linear-gradient(135deg,#7060ff,#9366ff);
+      --grad-soft:linear-gradient(135deg,#1b1c3a,#241a39);
       --green:#4ade80; --green-bg:#102a1c; --amber:#fbbf24; --amber-bg:#2e2510;
       --red:#fb7185; --red-bg:#2c1620; --flag:#f5b945;
       --sh-sm:0 1px 2px rgba(0,0,0,.4);
@@ -36,7 +39,8 @@
       --sh-lg:0 10px 30px rgba(0,0,0,.5),0 40px 70px rgba(0,0,0,.55);
   }
   *{box-sizing:border-box} html,body{margin:0;min-height:100%}
-  body{background:var(--bg);color:var(--ink);font:15.5px/1.55 var(--sans);-webkit-text-size-adjust:100%;
+  body{background:var(--bg);color:var(--ink);font:15px/1.55 var(--sans);-webkit-text-size-adjust:100%;
+    -webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;letter-spacing:-.011em;
     padding-bottom:env(safe-area-inset-bottom);overflow-x:hidden}
   button{font-family:inherit;cursor:pointer} a{color:var(--brand-ink)}
   ::selection{background:color-mix(in srgb,var(--brand) 30%,transparent)}
@@ -52,18 +56,11 @@
   .appbar{position:sticky;top:0;z-index:40;background:color-mix(in srgb,var(--bg) 82%,transparent);
     backdrop-filter:blur(14px) saturate(1.4);border-bottom:1px solid var(--line);height:58px;
     display:flex;align-items:center;gap:12px;padding:0 16px}
-  .appbar .brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:15.5px;letter-spacing:-.2px}
+  .appbar .brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:15.5px;letter-spacing:-.2px;cursor:pointer}
   .appbar .brand .mk{width:30px;height:30px;border-radius:9px;background:var(--grad);display:grid;place-items:center;color:#fff;box-shadow:0 4px 12px rgba(90,84,240,.4)}
   .appbar .back{display:inline-flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--line);
     color:var(--ink);border-radius:10px;padding:7px 12px;font-weight:700;font-size:13px;box-shadow:var(--sh-sm)}
   .appbar .sp{margin-left:auto}
-  .appbar .chipstreak{display:inline-flex;align-items:center;gap:5px;background:var(--amber-bg);color:var(--amber);
-    border-radius:999px;padding:5px 11px;font-weight:800;font-size:12.5px}
-  .selwrap{position:relative}
-  .src{appearance:none;-webkit-appearance:none;background:var(--surface);color:var(--ink);border:1px solid var(--line);
-    border-radius:10px;padding:8px 28px 8px 11px;font-weight:600;font-size:12.5px;box-shadow:var(--sh-sm);
-    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23929aad' stroke-width='3'><path d='M6 9l6 6 6-6'/></svg>");
-    background-repeat:no-repeat;background-position:right 9px center}
   .themebtn{display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;flex:0 0 auto;
     background:var(--surface);border:1px solid var(--line);color:var(--ink);border-radius:10px;
     font-size:16px;line-height:1;box-shadow:var(--sh-sm);transition:border-color .15s,transform .15s}
@@ -72,26 +69,25 @@
   .themebtn .moon{display:none}
   :root[data-theme="dark"] .themebtn .sun{display:none}
   :root[data-theme="dark"] .themebtn .moon{display:inline}
+  .gearbtn{display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;flex:0 0 auto;
+    background:var(--surface);border:1px solid var(--line);color:var(--ink);border-radius:10px;font-size:17px;line-height:1;
+    box-shadow:var(--sh-sm);transition:border-color .15s,transform .15s}
+  .gearbtn:hover{border-color:var(--brand);transform:translateY(-1px)}
   .lp .top .themebtn{margin-left:auto}
+
   /* account / sync control */
-  .acct{display:flex;align-items:center;gap:8px}
-  .authbtn{display:inline-flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--line);
-    color:var(--ink);border-radius:10px;padding:7px 12px;font-weight:700;font-size:12.5px;box-shadow:var(--sh-sm);
+  .acct{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .authbtn{display:inline-flex;align-items:center;gap:7px;background:var(--surface);border:1px solid var(--line);
+    color:var(--ink);border-radius:10px;padding:9px 14px;font-weight:700;font-size:13px;box-shadow:var(--sh-sm);
     transition:border-color .15s}
   .authbtn:hover{border-color:var(--brand)}
-  .authbtn.ghost{background:transparent;box-shadow:none;color:var(--muted);padding:6px 9px;font-weight:600}
-  .acct .who{display:inline-flex;align-items:center;gap:7px;max-width:160px}
-  .acct .who img{width:24px;height:24px;border-radius:50%;flex:0 0 auto}
-  .acct .who .em{font-size:12.5px;font-weight:600;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .acct .gicon{width:14px;height:14px;flex:0 0 auto}
-  .synchint{display:inline-flex;align-items:center;gap:6px;margin-top:12px;background:transparent;border:0;
-    color:var(--brand-ink);font-weight:700;font-size:12.5px;cursor:pointer;padding:0}
-  .synchint:hover{text-decoration:underline}
-  .synchint.hidden{display:none}
+  .authbtn.ghost{background:transparent;box-shadow:none;color:var(--muted);padding:8px 11px;font-weight:600}
+  .acct .who{display:inline-flex;align-items:center;gap:8px;max-width:220px}
+  .acct .who img{width:26px;height:26px;border-radius:50%;flex:0 0 auto}
+  .acct .who .em{font-size:13px;font-weight:600;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .acct .gicon{width:15px;height:15px;flex:0 0 auto}
 
   /* ===== LANDING ===== */
-  /* display is controlled by .screen/.screen.on; only add layout when visible
-     (an #id display rule here would beat .screen{display:none} and never hide). */
   #landing{min-height:100vh;
     background:radial-gradient(1100px 560px at 50% -8%,color-mix(in srgb,var(--brand) 26%,transparent),transparent 62%),var(--bg)}
   #landing.on{display:flex;flex-direction:column}
@@ -108,10 +104,11 @@
   .hero p.sub{font-size:clamp(15px,2.4vw,18px);color:var(--muted);max-width:560px;margin:16px 0 0;line-height:1.6}
   .cta-row{display:flex;gap:12px;flex-wrap:wrap;margin-top:28px}
   .cta{border:0;border-radius:14px;padding:15px 26px;font:800 16px var(--sans);background:var(--grad);color:#fff;
-    box-shadow:0 10px 26px rgba(90,84,240,.42);transition:transform .1s,box-shadow .2s}
+    display:inline-flex;align-items:center;gap:9px;box-shadow:0 10px 26px rgba(90,84,240,.42);transition:transform .1s,box-shadow .2s}
   .cta:hover{transform:translateY(-2px);box-shadow:0 16px 34px rgba(90,84,240,.5)}
   .cta.ghost{background:var(--surface);color:var(--ink);border:1px solid var(--line);box-shadow:var(--sh-sm)}
   .cta.ghost:hover{box-shadow:var(--sh)}
+  .cta .gicon{width:19px;height:19px;background:#fff;border-radius:50%;padding:2px}
   .trust{display:flex;gap:18px;flex-wrap:wrap;margin-top:26px;color:var(--muted);font-size:13px}
   .trust span{display:inline-flex;align-items:center;gap:7px} .trust .ok{color:var(--green);font-weight:800}
   .resume{margin-top:26px;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px 18px;
@@ -125,10 +122,62 @@
   .feat b{font-size:15px} .feat p{color:var(--muted);font-size:13px;margin:5px 0 0;line-height:1.5}
   .lp .legal{color:var(--faint);font-size:11.5px;text-align:center;margin-top:34px;line-height:1.6}
 
+  /* ===== SPLASH + AUTH ===== */
+  #landing{background:radial-gradient(1200px 620px at 50% -10%,color-mix(in srgb,var(--brand) 30%,transparent),transparent 60%),var(--bg)}
+  #landing.on{display:block}
+  /* Phase A — bare logo splash */
+  .splash{position:fixed;inset:0;z-index:2;display:grid;place-items:center;cursor:pointer;
+    transition:opacity .55s cubic-bezier(.2,.7,.2,1),transform .55s cubic-bezier(.2,.7,.2,1)}
+  .splash.gone{opacity:0;transform:scale(1.06);pointer-events:none}
+  .splash-inner{display:flex;flex-direction:column;align-items:center;gap:22px;text-align:center;animation:rise .5s}
+  .splash-logo{width:104px;height:104px;border-radius:30px;background:var(--grad);display:grid;place-items:center;
+    color:#fff;font:850 46px var(--sans);box-shadow:0 22px 60px rgba(90,84,240,.5);position:relative}
+  .splash-logo::after{content:"";position:absolute;inset:-10px;border-radius:38px;border:2px solid color-mix(in srgb,var(--brand) 40%,transparent);
+    animation:pulse 2.2s ease-out infinite}
+  @keyframes pulse{0%{transform:scale(1);opacity:.7}70%{transform:scale(1.25);opacity:0}100%{opacity:0}}
+  .splash-word{font:850 30px var(--sans);letter-spacing:-.6px}
+  .splash-word span{background:var(--grad);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+  .splash-hint{color:var(--faint);font-size:13px;font-weight:600;display:inline-flex;align-items:center;gap:8px;animation:hintpulse 1.8s ease-in-out infinite}
+  .splash-hint .ch{font-size:16px}
+  @keyframes hintpulse{0%,100%{opacity:.5}50%{opacity:1}}
+  /* Phase B — auth panel */
+  .authstage{position:fixed;inset:0;z-index:3;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:16px;padding:40px 20px;overflow-y:auto;opacity:0;transform:translateY(14px);pointer-events:none;
+    transition:opacity .5s .1s cubic-bezier(.2,.7,.2,1),transform .5s .1s cubic-bezier(.2,.7,.2,1)}
+  .authstage.show{opacity:1;transform:none;pointer-events:auto}
+  .authcard{width:100%;max-width:390px;background:var(--surface);border:1px solid var(--line);border-radius:22px;
+    box-shadow:var(--sh-lg);padding:30px 26px 26px;position:relative}
+  .authcard .themebtn{position:absolute;top:16px;right:16px}
+  .ac-logo{width:52px;height:52px;border-radius:15px;background:var(--grad);display:grid;place-items:center;color:#fff;
+    font:850 24px var(--sans);box-shadow:0 10px 24px rgba(90,84,240,.45);margin-bottom:16px}
+  .ac-title{margin:0;font-size:23px;letter-spacing:-.4px}
+  .ac-sub{margin:6px 0 20px;color:var(--muted);font-size:13.5px;line-height:1.5}
+  .ac-tabs{display:flex;background:var(--surface2);border:1px solid var(--line);border-radius:12px;padding:4px;gap:4px;margin-bottom:18px}
+  .ac-tabs button{flex:1;border:0;background:transparent;color:var(--muted);border-radius:9px;padding:10px;font:800 13.5px var(--sans)}
+  .ac-tabs button.on{background:var(--surface);color:var(--brand-ink);box-shadow:var(--sh-sm)}
+  #authForm{display:flex;flex-direction:column;gap:11px}
+  .authfield{width:100%;background:var(--surface2);border:1px solid var(--line);border-radius:12px;padding:13px 14px;
+    font:500 15px var(--sans);color:var(--ink);outline:none;transition:border-color .15s,background .15s}
+  .authfield:focus{border-color:var(--brand);background:var(--surface)}
+  .authfield::placeholder{color:var(--faint)}
+  .authprimary{width:100%;background:var(--grad);color:#fff;border:0;border-radius:12px;padding:14px;font:800 15.5px var(--sans);
+    box-shadow:0 8px 20px rgba(90,84,240,.36);margin-top:3px;transition:transform .1s,box-shadow .2s}
+  .authprimary:hover{transform:translateY(-1px)} .authprimary:disabled{opacity:.6;box-shadow:none;transform:none}
+  .ac-msg{font-size:12.5px;line-height:1.5;margin-top:12px;min-height:0}
+  .ac-msg.err{color:var(--red)} .ac-msg.ok{color:var(--green)}
+  .ac-or{display:flex;align-items:center;gap:12px;color:var(--faint);font-size:12px;font-weight:700;margin:18px 0}
+  .ac-or::before,.ac-or::after{content:"";flex:1;height:1px;background:var(--line)}
+  .authgoogle,.authguest{width:100%;border-radius:12px;padding:12px;font:700 14px var(--sans);border:1px solid var(--line);
+    background:var(--surface);color:var(--ink);box-shadow:var(--sh-sm);display:flex;align-items:center;justify-content:center;gap:9px;transition:border-color .15s}
+  .authgoogle:hover,.authguest:hover{border-color:var(--brand)}
+  .authgoogle{margin-bottom:9px} .authgoogle .gicon{width:18px;height:18px}
+  .authguest{background:transparent;box-shadow:none;color:var(--muted);font-weight:600}
+  .authstage .legal{color:var(--faint);font-size:11.5px;text-align:center;line-height:1.6;max-width:390px}
+
   /* ===== SECTION HEADERS ===== */
   .pagehead{margin:6px 2px 18px}
   .pagehead .kick{color:var(--brand-ink);font-weight:800;font-size:12.5px;letter-spacing:.4px;text-transform:uppercase}
-  .pagehead h2{margin:4px 0 0;font-size:24px;letter-spacing:-.5px}
+  .pagehead h2{margin:4px 0 0;font-size:26px;letter-spacing:-.5px}
   .pagehead p{margin:6px 0 0;color:var(--muted);font-size:13.5px}
   h3.sec{font-size:12.5px;letter-spacing:.5px;text-transform:uppercase;color:var(--faint);margin:26px 2px 12px;font-weight:800}
 
@@ -144,53 +193,68 @@
   .dhero .quick{display:flex;gap:22px;margin-left:auto;flex-wrap:wrap;z-index:1}
   .dhero .q .n{font:850 24px/1 var(--sans)} .dhero .q .l{opacity:.82;font-size:11px;margin-top:5px;letter-spacing:.4px;text-transform:uppercase}
 
-  /* recommended action */
-  .reco-cta{margin-top:14px;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:15px 17px;
-    display:flex;align-items:center;gap:14px;box-shadow:var(--sh)}
-  .reco-cta .ic{width:42px;height:42px;border-radius:12px;background:var(--grad-soft);color:var(--brand-ink);display:grid;place-items:center;flex:0 0 auto}
-  .reco-cta .tx b{font-size:14.5px} .reco-cta .tx small{display:block;color:var(--muted);font-size:12.5px;margin-top:2px}
-  .reco-cta .go{margin-left:auto;background:var(--grad);color:#fff;border:0;border-radius:11px;padding:11px 17px;font-weight:800;font-size:13.5px;white-space:nowrap}
-
-  /* mode cards */
+  /* section / mode cards */
   .modes{display:grid;grid-template-columns:repeat(auto-fill,minmax(232px,1fr));gap:14px}
-  .mode{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:17px;text-align:left;
+  .mode{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:18px;text-align:left;
     box-shadow:var(--sh-sm);display:flex;flex-direction:column;gap:7px;transition:transform .1s,box-shadow .2s,border-color .2s;position:relative;overflow:hidden}
   .mode:hover{transform:translateY(-3px);box-shadow:var(--sh);border-color:color-mix(in srgb,var(--brand) 40%,var(--line))}
-  .mode .ic{width:42px;height:42px;border-radius:12px;background:var(--grad-soft);color:var(--brand-ink);display:grid;place-items:center;margin-bottom:3px}
+  .mode .ic{width:44px;height:44px;border-radius:12px;background:var(--grad-soft);color:var(--brand-ink);display:grid;place-items:center;margin-bottom:3px}
   .mode .t{font-weight:800;font-size:15.5px} .mode .d{color:var(--muted);font-size:12.5px;line-height:1.45}
-  .mode .badge{align-self:flex-start;margin-top:5px;background:var(--surface2);border:1px solid var(--line);border-radius:999px;
+  .mode .badge{align-self:flex-start;margin-top:6px;background:var(--surface2);border:1px solid var(--line);border-radius:999px;
     padding:3px 10px;font-size:11px;font-weight:800;color:var(--muted)}
-  .mode.feature{grid-column:span 1}
   .mode.feature .ic{background:var(--grad);color:#fff;box-shadow:0 6px 16px rgba(90,84,240,.4)}
   .mode[disabled]{opacity:.55;cursor:not-allowed;transform:none}
   .mode[disabled]:hover{box-shadow:var(--sh-sm);border-color:var(--line)}
 
-  /* analytics */
-  .anly{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-  @media (max-width:760px){ .anly{grid-template-columns:1fr} }
-  .card h4{margin:0 0 3px;font-size:15px} .card .hint{color:var(--muted);font-size:12.5px;margin:0 0 14px}
-  .barrow{display:flex;align-items:center;gap:10px;margin:10px 0}
-  .barrow .nm{width:120px;font-size:12.5px;font-weight:600;flex:0 0 auto}
-  .barrow .tr{flex:1;height:10px;border-radius:6px;background:var(--line2);overflow:hidden}
+  /* subchapter picker — widget cards */
+  .topicgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(212px,1fr));gap:12px}
+  .topic{display:flex;align-items:center;gap:12px;text-align:left;background:var(--surface);border:1px solid var(--line);
+    border-radius:15px;padding:15px 16px;box-shadow:var(--sh-sm);transition:transform .12s,box-shadow .2s,border-color .2s}
+  .topic:hover{transform:translateY(-2px);box-shadow:var(--sh);border-color:color-mix(in srgb,var(--brand) 42%,var(--line))}
+  .topic .tk{width:36px;height:36px;border-radius:11px;background:var(--grad-soft);color:var(--brand-ink);
+    display:grid;place-items:center;flex:0 0 auto}
+  .topic .tn{font-weight:700;font-size:14px;line-height:1.32}
+  .topic .tgo{margin-left:auto;color:var(--faint);font-size:17px;flex:0 0 auto;transition:color .15s,transform .15s}
+  .topic:hover .tgo{color:var(--brand);transform:translateX(2px)}
+
+  /* dashboard section cards */
+  .scards{display:grid;grid-template-columns:1fr;gap:14px}
+  @media (min-width:820px){ .scards{grid-template-columns:1fr 1fr} }
+  .scard{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--sh);padding:18px}
+  .scard .sc-h{display:flex;align-items:center;gap:11px;margin-bottom:12px}
+  .scard .sc-ic{width:36px;height:36px;border-radius:10px;background:var(--grad-soft);color:var(--brand-ink);display:grid;place-items:center;flex:0 0 auto}
+  .scard .sc-h b{font-size:16px}
+  .scard .sc-pct{margin-left:auto;font:850 22px var(--sans);background:var(--grad);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+  .sc-stats{display:flex;gap:16px;font-size:12.5px;color:var(--muted);margin-bottom:10px}
+  .sc-stats b{color:var(--ink)} .sc-stats .good b{color:var(--green)} .sc-stats .bad b{color:var(--red)}
+  .precbar{display:flex;height:9px;border-radius:5px;overflow:hidden;background:var(--line2);margin-bottom:14px}
+  .precbar i{display:block;height:100%} .precbar .ok{background:var(--green)} .precbar .no{background:var(--red)}
+  .bd-lbl{font:800 10.5px var(--sans);letter-spacing:.5px;text-transform:uppercase;color:var(--faint);margin:14px 0 6px}
+  .barrow{display:flex;align-items:center;gap:10px;margin:9px 0}
+  .barrow .nm{width:150px;font-size:12.5px;font-weight:600;flex:0 0 auto;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .barrow .tr{flex:1;height:9px;border-radius:6px;background:var(--line2);overflow:hidden}
   .barrow .tr i{display:block;height:100%;border-radius:6px;width:0;transition:width .6s cubic-bezier(.2,.7,.2,1)}
-  .barrow .vv{width:58px;text-align:right;font:600 12px var(--mono);color:var(--muted);flex:0 0 auto}
-  .barrow.weak .nm{color:var(--red);font-weight:800}
+  .barrow .vv{width:52px;text-align:right;font:600 12px var(--mono);color:var(--muted);flex:0 0 auto}
+  .nodata{color:var(--muted);font-size:13px;padding:14px 0;text-align:center}
   .callout{background:var(--grad-soft);border:1px solid var(--line);border-radius:13px;padding:13px 15px;margin-top:14px;font-size:13.5px}
-  .nodata{color:var(--muted);font-size:13px;padding:18px 0;text-align:center}
-  .syl{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
-  .syl .c{background:var(--surface2);border:1px solid var(--line);border-radius:12px;padding:13px}
-  .syl .c b{font-size:13px} .syl .c .big{font:850 22px var(--sans);background:var(--grad);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
-  .syl .c ul{margin:7px 0 0;padding-left:15px;color:var(--muted);font-size:12px;line-height:1.7}
-  .toolrow{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+  .toolrow{display:flex;gap:10px;flex-wrap:wrap;margin-top:4px}
   .tbtn{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:9px 14px;font-weight:700;font-size:13px;color:var(--ink);box-shadow:var(--sh-sm)}
   .tbtn.danger{color:var(--red);border-color:color-mix(in srgb,var(--red) 40%,var(--line))}
   .foot{color:var(--faint);font-size:11.5px;text-align:center;margin-top:30px;line-height:1.7}
 
+  /* settings */
+  .setrow{display:flex;align-items:center;gap:14px}
+  .setrow .hint2{color:var(--muted);font-size:12.5px;margin-top:2px}
+  .card .hint{color:var(--muted);font-size:12.5px;margin:0 0 4px}
+  .seg{display:inline-flex;background:var(--surface2);border:1px solid var(--line);border-radius:12px;padding:4px;gap:4px}
+  .seg button{border:0;background:transparent;color:var(--muted);border-radius:9px;padding:9px 16px;font:800 13px var(--sans)}
+  .seg button.on{background:var(--surface);color:var(--brand-ink);box-shadow:var(--sh-sm)}
+
   /* ===== SETUP ===== */
   .setup-card{max-width:600px;margin:0 auto}
-  .field{margin-bottom:18px}
+  .field{margin-bottom:20px}
   .field>label{display:block;font:800 11px var(--sans);letter-spacing:.6px;text-transform:uppercase;color:var(--faint);margin-bottom:9px}
-  .opts-wrap{display:flex;gap:8px;flex-wrap:wrap;max-height:180px;overflow-y:auto;padding:2px}
+  .opts-wrap{display:flex;gap:8px;flex-wrap:wrap;padding:2px}
   .chip{border:1.5px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:9px 15px;font:700 13px var(--sans);box-shadow:var(--sh-sm);transition:.12s}
   .chip:hover{border-color:color-mix(in srgb,var(--brand) 40%,var(--line))}
   .chip.on{background:var(--pick);border-color:var(--brand);color:var(--brand-ink)}
@@ -213,12 +277,13 @@
   .pill.hide{visibility:hidden}
   .pill.t-PS{background:#dbeafe;color:#1d4ed8;border:0}
   .pill.t-DS{background:#ede9fe;color:#6d28d9;border:0}
+  .pill.qtime{background:var(--pick);color:var(--brand-ink)}
   .q-diagram{display:block;max-width:100%;margin:0.75rem 0 1rem;border-radius:6px}
   .runbar .sp{margin-left:auto}
-  .runbar .prog{flex:0 0 90px;height:6px;border-radius:6px;background:var(--line2);overflow:hidden}
+  .runbar .prog{flex:0 0 80px;height:6px;border-radius:6px;background:var(--line2);overflow:hidden}
   .runbar .prog i{display:block;height:100%;background:var(--grad);width:0;transition:width .3s}
   .runbar .timer{font:800 14px var(--mono);color:var(--muted)} .runbar .timer.low{color:var(--red)}
-  .runbar .flag{background:var(--surface);border:1px solid var(--line);border-radius:9px;padding:6px 11px;font-weight:700;font-size:12.5px;color:var(--muted);box-shadow:var(--sh-sm)}
+  .runbar .flag,.runbar .quit{background:var(--surface);border:1px solid var(--line);border-radius:9px;padding:6px 11px;font-weight:700;font-size:12.5px;color:var(--muted);box-shadow:var(--sh-sm)}
   .runbar .flag.on{border-color:var(--flag);color:var(--flag);background:var(--amber-bg)}
   .rbody{max-width:1000px;margin:0 auto;padding:18px 16px 132px}
   .splitcols{display:grid;gap:20px;grid-template-columns:1fr}
@@ -245,7 +310,7 @@
   .fb{margin-top:20px;border:1px solid var(--line);border-radius:13px;overflow:hidden;animation:rise .3s}
   .fb .fh{padding:12px 15px;font-weight:800;font-size:14px;display:flex;align-items:center;gap:9px;flex-wrap:wrap}
   .fb.ok .fh{background:var(--green-bg);color:var(--green)} .fb.no .fh{background:var(--red-bg);color:var(--red)}
-  .fb .typetag{margin-left:auto;display:flex;gap:6px} .fb .typetag .pill{background:var(--surface)}
+  .fb .typetag{margin-left:auto;display:flex;gap:6px;flex-wrap:wrap} .fb .typetag .pill{background:var(--surface)}
   .fb .body{padding:14px 15px;font-size:14px;line-height:1.7;white-space:pre-wrap}
   .fb .body h5{margin:0 0 7px;font:800 10.5px var(--sans);letter-spacing:.6px;text-transform:uppercase;color:var(--faint)}
   .runfoot{position:fixed;left:0;right:0;bottom:0;z-index:35;background:color-mix(in srgb,var(--bg) 88%,transparent);
@@ -272,21 +337,64 @@
   .ri .h{display:flex;align-items:center;gap:9px;margin-bottom:6px;flex-wrap:wrap}
   .ri .dotr{width:22px;height:22px;border-radius:50%;color:#fff;font-weight:800;font-size:12px;display:grid;place-items:center;flex:0 0 auto}
   .ri.ok .dotr{background:var(--green)} .ri.no .dotr{background:var(--red)} .ri.skip .dotr{background:var(--faint)}
-  .ri .meta{margin-left:auto;color:var(--faint);font-size:11.5px;display:flex;gap:5px}
+  .ri .meta{margin-left:auto;color:var(--faint);font-size:11.5px;display:flex;gap:5px;flex-wrap:wrap}
   .ri .stem{font-size:14px;margin:0 0 7px} .ri .ans{font-size:12.5px;color:var(--muted)} .ri .ans b{color:var(--ink)}
   .ri details{margin-top:7px} .ri summary{color:var(--brand-ink);font-weight:700;font-size:12.5px}
   .ri .expl{font-size:13px;line-height:1.65;white-space:pre-wrap;margin-top:8px;border-top:1px solid var(--line2);padding-top:9px}
-  .ri details.rpsg summary{color:var(--accent-ink,var(--brand-ink))}
   .ri .psg{font:15px/1.7 var(--serif);white-space:pre-wrap;margin-top:8px;border-top:1px solid var(--line2);padding-top:9px;color:var(--ink)}
   .ri .qtime{font:700 11px var(--mono);background:var(--pick);border:1px solid var(--line);border-radius:6px;padding:1px 6px;color:var(--brand-ink)}
 
-  .empty{text-align:center;color:var(--muted);padding:60px 20px}
-  .kbd{font:11px var(--mono);border:1px solid var(--line);border-radius:5px;padding:0 5px}
+  /* ===== HOME HERO ===== */
+  .home-hero{background:var(--grad);color:#fff;border-radius:22px;padding:24px;box-shadow:var(--sh-lg);
+    position:relative;overflow:hidden;margin-bottom:16px}
+  .home-hero::after{content:"";position:absolute;right:-50px;top:-70px;width:230px;height:230px;border-radius:50%;
+    background:rgba(255,255,255,.13);filter:blur(6px)}
+  .home-hero::before{content:"";position:absolute;right:60px;bottom:-90px;width:170px;height:170px;border-radius:50%;
+    background:rgba(255,255,255,.10);filter:blur(4px)}
+  .home-hero>*{position:relative;z-index:1}
+  .home-hero .hk{font-size:12px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;opacity:.85}
+  .home-hero h2{margin:7px 0 0;font-size:27px;letter-spacing:-.6px}
+  .home-hero .hsub{opacity:.92;font-size:14px;margin-top:7px;max-width:540px;line-height:1.55}
+  .home-hero .hrow{display:flex;align-items:flex-end;gap:26px;margin-top:18px;flex-wrap:wrap}
+  .home-hero .hstats{display:flex;gap:24px}
+  .home-hero .hstats .n{font:850 24px/1 var(--sans)} .home-hero .hstats .l{opacity:.82;font-size:10.5px;text-transform:uppercase;letter-spacing:.5px;margin-top:5px}
+  .home-hero .hcta{margin-left:auto;background:#fff;color:var(--brand-ink);border:0;border-radius:12px;padding:12px 20px;
+    font:800 14px var(--sans);box-shadow:0 8px 22px rgba(0,0,0,.18);display:inline-flex;align-items:center;gap:8px;transition:transform .1s}
+  .home-hero .hcta:hover{transform:translateY(-2px)}
+
+  /* ===== AI SMART SEARCH ===== */
+  .aisearch{background:var(--surface);border:1px solid var(--line);border-radius:18px;box-shadow:var(--sh);padding:16px 16px 6px;margin-bottom:8px;
+    position:relative}
+  .aisearch::before{content:"";position:absolute;inset:-1px;border-radius:19px;padding:1px;pointer-events:none;
+    background:linear-gradient(135deg,color-mix(in srgb,var(--brand) 55%,transparent),transparent 55%);
+    -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;opacity:.7}
+  .ai-head{display:flex;align-items:center;gap:9px;margin-bottom:11px}
+  .ai-title{font-weight:800;font-size:14px;display:inline-flex;align-items:center;gap:7px}
+  .ai-spark{background:var(--grad);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;font-size:15px}
+  .ai-pill{margin-left:auto;font:800 10.5px var(--sans);letter-spacing:.3px;padding:4px 10px;border-radius:999px;
+    display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);color:var(--muted);background:var(--surface2)}
+  .ai-pill .dot{width:7px;height:7px;border-radius:50%;background:var(--faint)}
+  .ai-pill.on{color:var(--green);border-color:color-mix(in srgb,var(--green) 35%,var(--line));background:var(--green-bg)}
+  .ai-pill.on .dot{background:var(--green);box-shadow:0 0 0 3px color-mix(in srgb,var(--green) 22%,transparent);animation:blip 1.8s ease-in-out infinite}
+  @keyframes blip{0%,100%{opacity:1}50%{opacity:.45}}
+  .ai-pill.off{color:var(--amber);border-color:color-mix(in srgb,var(--amber) 30%,var(--line));background:var(--amber-bg)}
+  .ai-pill.off .dot{background:var(--amber)}
+  .ex-chips{display:flex;flex-wrap:wrap;gap:7px;margin:10px 2px 12px}
+  .ex-chip{border:1px solid var(--line);background:var(--surface2);color:var(--muted);border-radius:999px;
+    padding:6px 12px;font:600 12px var(--sans);transition:.12s}
+  .ex-chip:hover{border-color:var(--brand);color:var(--brand-ink)}
+  .aisearch .srch-wrap{margin:0}
+  .aisearch .srch-icon{background:var(--grad);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
 
   /* ===== SIMILAR QUESTIONS PANEL ===== */
   .sim-panel{margin-top:14px;border:1px solid var(--line);border-radius:13px;overflow:hidden;animation:rise .3s}
   .sim-panel .sh{padding:11px 15px;font:800 11px var(--sans);letter-spacing:.5px;text-transform:uppercase;color:var(--faint);background:var(--surface2);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:7px}
   .sim-panel .sh .dot{width:7px;height:7px;border-radius:50%;background:var(--accent)}
+  .sim-panel .sh .sp{margin-left:auto;font-size:10px;letter-spacing:.3px;color:var(--brand-ink);text-transform:none;font-weight:800}
+  .si-match{margin-left:auto;flex:0 0 auto;display:flex;flex-direction:column;align-items:flex-end;gap:4px;align-self:center}
+  .si-match .mp{font:800 11px var(--mono);color:var(--brand-ink)}
+  .si-match .mbar{width:46px;height:5px;border-radius:4px;background:var(--line2);overflow:hidden}
+  .si-match .mbar i{display:block;height:100%;background:var(--grad);border-radius:4px}
   .sim-list{display:flex;flex-direction:column}
   .sim-item{padding:11px 15px;border-bottom:1px solid var(--line2);cursor:pointer;display:flex;align-items:flex-start;gap:10px;transition:background .1s}
   .sim-item:last-child{border-bottom:0}
@@ -337,113 +445,85 @@ window.VECTOR_API = "http://127.0.0.1:8000";
 <body>
 
 <header class="appbar hidden" id="appbar">
-  <div class="brand"><span class="mk">G</span> GMAT Trainer</div>
-  <button class="back hidden" id="backBtn">← Dashboard</button>
+  <button class="back hidden" id="backBtn">← Back</button>
+  <div class="brand" id="brandHome"><span class="mk">G</span> GMAT Trainer</div>
   <span class="sp"></span>
-  <span class="chipstreak hidden" id="streakChip">🔥 <span id="streakChipN">0</span></span>
   <button class="themebtn" data-themebtn type="button" title="Toggle dark mode" aria-label="Toggle dark mode"><span class="sun">☀</span><span class="moon">☾</span></button>
-  <div class="acct hidden" id="acct"></div>
-  <div class="selwrap"><select class="src" id="srcSel" title="Question bank"></select></div>
+  <button class="gearbtn" id="gearBtn" type="button" title="Settings" aria-label="Settings">⚙</button>
 </header>
 
 <!-- ============ LANDING ============ -->
 <section id="landing" class="screen">
-  <div class="lp">
-    <div class="top"><span class="mk">G</span><b>GMAT Trainer</b>
-      <button class="themebtn" data-themebtn type="button" title="Toggle dark mode" aria-label="Toggle dark mode"><span class="sun">☀</span><span class="moon">☾</span></button></div>
-    <div class="hero">
-      <span class="eyebrow"><span class="d"></span> Verbal + Quant · GMAT Focus Edition</span>
-      <h1>Master the <span class="g">GMAT</span><br>the smart way.</h1>
-      <p class="sub">Verbal (RC &amp; CR) and Quant (Problem Solving &amp; Data Sufficiency) with real, answer-verified
-        questions — that <b>adapt to you</b>, reveal each question's type &amp; topic, and pinpoint exactly where you're losing points.</p>
-      <div class="cta-row">
-        <button class="cta" id="startBtn">Start training →</button>
-        <button class="cta ghost" id="examQuick">Try an exam sim</button>
-      </div>
-      <div class="trust">
-        <span><span class="ok">910</span> questions · 3 books</span>
-        <span><span class="ok">✓</span> answers verified vs the book keys</span>
-        <span><span class="ok">↻</span> adaptive difficulty</span>
-      </div>
-      <button class="synchint hidden" id="landingSync" type="button">☁ Sign in to sync your progress across devices →</button>
-      <div class="resume hidden" id="resumeCard">
-        <div class="rr"><b id="resumeTitle">Welcome back</b><small id="resumeSub"></small></div>
-        <button class="go" id="resumeBtn">Continue →</button>
-      </div>
+  <!-- Phase A: bare logo splash (tap / key / scroll to continue) -->
+  <div class="splash" id="splash">
+    <div class="splash-inner">
+      <div class="splash-logo">G</div>
+      <div class="splash-word">GMAT <span>Trainer</span></div>
+      <div class="splash-hint" id="splashHint"><span class="ch">↑</span> Tap anywhere to begin</div>
     </div>
-    <div class="feats">
-      <div class="feat"><div class="fi">🎯</div><b>Know your weak spots</b><p>Accuracy tracked by question type &amp; topic — Inference, Weaken, Percents, Geometry and more — so you drill what matters.</p></div>
-      <div class="feat"><div class="fi">📈</div><b>Adaptive practice</b><p>Daily passages and a continuous column that get harder as you improve, easier when you slip.</p></div>
-      <div class="feat"><div class="fi">⏱️</div><b>Real exam feel</b><p>Timed, split-screen sections that mirror the GMAT Focus interface, with a full score report.</p></div>
+  </div>
+  <!-- Phase B: auth panel -->
+  <div class="authstage" id="authStage">
+    <div class="authcard">
+      <button class="themebtn" data-themebtn type="button" title="Toggle dark mode" aria-label="Toggle dark mode"><span class="sun">☀</span><span class="moon">☾</span></button>
+      <div class="ac-logo">G</div>
+      <h2 class="ac-title" id="acTitle">Welcome</h2>
+      <p class="ac-sub" id="acSub">Sign in to sync your progress across devices — or continue as a guest.</p>
+      <div class="ac-tabs" id="acTabs">
+        <button class="on" data-t="signin" type="button">Sign in</button>
+        <button data-t="register" type="button">Register</button>
+      </div>
+      <form id="authForm" autocomplete="on">
+        <input class="authfield" id="authEmail" type="email" placeholder="you@email.com" autocomplete="email" required>
+        <input class="authfield" id="authPass" type="password" placeholder="Password (6+ characters)" autocomplete="current-password" minlength="6" required>
+        <button class="authprimary" id="authSubmit" type="submit">Sign in →</button>
+      </form>
+      <div class="ac-msg" id="acMsg"></div>
+      <div class="ac-or"><span>or</span></div>
+      <button class="authgoogle" id="authGoogle" type="button">Continue with Google</button>
+      <button class="authguest" id="authGuest" type="button">Continue as guest →</button>
     </div>
     <p class="legal" id="landingLegal"></p>
   </div>
 </section>
 
-<!-- ============ DASHBOARD ============ -->
-<section id="dash" class="screen"><div class="wrap">
-  <div class="pagehead"><div class="kick">Dashboard</div><h2 id="dashGreet">Your training</h2>
-    <p>Pick a mode, or follow the recommendation below.</p></div>
-
-  <div class="dhero">
-    <div class="ringbox">
-      <svg width="66" height="66" viewBox="0 0 66 66" aria-hidden="true">
-        <circle cx="33" cy="33" r="28" fill="none" stroke="rgba(255,255,255,.22)" stroke-width="7"/>
-        <circle id="heroArc" cx="33" cy="33" r="28" fill="none" stroke="#fff" stroke-width="7" stroke-linecap="round"
-          stroke-dasharray="175.9" stroke-dashoffset="175.9" transform="rotate(-90 33 33)" style="transition:stroke-dashoffset .8s"/>
-      </svg>
-      <div><div class="pc" id="heroPct">—</div><div class="subt" id="heroSub">no attempts yet</div></div>
+<!-- ============ HOME ============ -->
+<section id="home" class="screen"><div class="wrap">
+  <div class="home-hero" id="homeHero"></div>
+  <div class="aisearch">
+    <div class="ai-head">
+      <span class="ai-title"><span class="ai-spark">✦</span> Smart search</span>
+      <span class="ai-pill" id="aiPill"><span class="dot"></span> checking…</span>
     </div>
-    <div class="quick">
-      <div class="q"><div class="n" id="qSeen">0</div><div class="l">Done</div></div>
-      <div class="q"><div class="n" id="qWrong">0</div><div class="l">To redo</div></div>
-      <div class="q"><div class="n" id="qStreak">0</div><div class="l">Day streak</div></div>
+    <div class="srch-wrap">
+      <input class="srch-input" id="srchInput" placeholder="Describe a question — e.g. “weaken an argument about pollution”" autocomplete="off" spellcheck="false">
+      <span class="srch-icon">✦</span>
     </div>
+    <div class="ex-chips" id="exChips"></div>
+    <div id="srchResults" class="srch-results hidden"></div>
+    <p id="srchStatus" class="srch-status hidden"></p>
   </div>
-  <div class="reco-cta" id="recoCta"></div>
+  <h3 class="sec">Sections</h3>
+  <div class="modes" id="sectionGrid"></div>
+</div></section>
 
-  <div class="srch-wrap">
-    <input class="srch-input" id="srchInput" placeholder="Search questions by topic or concept..." autocomplete="off" spellcheck="false">
-    <span class="srch-icon">&#9906;</span>
-  </div>
-  <div id="srchResults" class="srch-results hidden"></div>
-  <p id="srchStatus" class="srch-status hidden"></p>
-
-  <h3 class="sec">Practice modes</h3>
-  <div class="modes" id="modeGrid"></div>
-
-  <h3 class="sec">Where you're losing points</h3>
-  <div class="anly">
-    <div class="card"><h4 id="anlyT1">Reading Comprehension</h4><p class="hint" id="anlyH1">Accuracy by question type (the book's own labels).</p><div id="rcBars"></div></div>
-    <div class="card"><h4 id="anlyT2">Critical Reasoning</h4><p class="hint" id="anlyH2">Accuracy by task (inferred from question wording).</p><div id="crBars"></div></div>
-  </div>
-  <div class="card" style="margin-top:14px"><h4 id="diffTitle">By difficulty</h4><p class="hint" id="diffHint">Across everything you've answered.</p>
-    <div id="diffBars"></div><div class="callout" id="recoBox"></div></div>
-
-  <h3 class="sec" id="sylHead">GMAT Focus — Verbal syllabus</h3>
-  <div class="card"><div class="syl" id="sylGrid"></div></div>
-
-  <h3 class="sec">Your data</h3>
-  <div class="card"><div style="color:var(--muted);font-size:13px;margin-bottom:4px" id="storeNote"></div>
-    <div class="toolrow">
-      <button class="tbtn" id="exportBtn">Export progress</button>
-      <button class="tbtn" id="importBtn">Import</button>
-      <button class="tbtn danger" id="resetBtn">Reset all</button>
-    </div></div>
-  <p class="foot" id="dashFoot"></p>
+<!-- ============ MENU (sub-navigation) ============ -->
+<section id="menu" class="screen"><div class="wrap">
+  <div class="pagehead"><div class="kick" id="menuKick"></div><h2 id="menuTitle"></h2><p id="menuDesc"></p></div>
+  <div class="modes" id="menuGrid"></div>
+  <div id="menuPick" class="hidden"></div>
 </div></section>
 
 <!-- ============ SETUP ============ -->
 <section id="setup" class="screen"><div class="wrap"><div class="setup-card">
-  <div class="pagehead"><div class="kick" id="setupKick">Practice</div><h2 id="setupTitle">Set up your session</h2>
-    <p id="setupDesc"></p></div>
-  <div class="field" id="fType"><label>Question type</label><div class="opts-wrap" id="typeChips"></div></div>
-  <div class="field" id="fConcept"><label id="conceptLbl">Concept</label><div class="opts-wrap" id="conceptChips"></div></div>
-  <div class="field" id="fDiff"><label>Difficulty</label><div class="opts-wrap" id="diffChips"></div></div>
+  <div class="pagehead"><div class="kick" id="setupKick">Session</div><h2 id="setupTitle"></h2><p id="setupDesc"></p></div>
+  <div class="field"><label>Timing</label>
+    <div class="seg" id="timeSeg"><button data-v="untimed" class="on" type="button">Untimed</button><button data-v="timed" type="button">Timed</button></div>
+    <p class="poolnote" id="timeNote" style="text-align:left;margin-top:9px"></p></div>
   <div class="field" id="fCount"><label>How many</label><select id="countSel"></select></div>
-  <div class="field" id="fOrder"><label>Order</label><div class="opts-wrap" id="orderChips">
-    <button class="chip on" data-v="shuffle">Shuffle</button><button class="chip" data-v="order">In book order</button></div></div>
-  <button class="startbtn" id="goBtn">Start →</button>
+  <div class="field"><label>Order</label><div class="opts-wrap" id="orderChips">
+    <button class="chip on" data-v="shuffle" type="button">Shuffle</button><button class="chip" data-v="order" type="button">In book order</button></div></div>
+  <button class="startbtn" id="goBtn" type="button">Start →</button>
   <div class="poolnote" id="poolNote"></div>
 </div></div></section>
 
@@ -454,13 +534,14 @@ window.VECTOR_API = "http://127.0.0.1:8000";
     <div class="tags" id="tags"></div>
     <span class="sp"></span>
     <div class="prog"><i id="prog"></i></div>
-    <button class="flag" id="flagBtn">⚑ Flag</button>
     <span class="timer hidden" id="timer">00:00</span>
+    <button class="flag" id="flagBtn" type="button">⚑ Flag</button>
+    <button class="quit" id="quitBtn" type="button">✕ Quit</button>
   </div>
   <div class="rbody"><div class="splitcols" id="splitcols"></div></div>
   <div class="runfoot"><div class="in">
     <span class="meta" id="runMeta"></span>
-    <div class="nav"><button class="btn" id="prevBtn">◀</button><button class="btn primary" id="actBtn" disabled>Submit</button></div>
+    <div class="nav"><button class="btn" id="prevBtn" type="button">◀</button><button class="btn primary" id="actBtn" type="button" disabled>Submit</button></div>
   </div></div>
 </section>
 
@@ -471,43 +552,49 @@ window.VECTOR_API = "http://127.0.0.1:8000";
     <div class="s" id="repSub"></div>
     <div class="repGrid" id="repGrid"></div>
     <div class="center-actions">
-      <button class="btn" id="repExpl">Show all explanations</button>
-      <button class="btn" id="repRedo">Redo the ones I missed</button>
-      <button class="btn primary" id="repNext" hidden>Next passage →</button>
-      <button class="btn primary" id="repHome">Back to dashboard</button>
+      <button class="btn" id="repExpl" type="button">Show all explanations</button>
+      <button class="btn" id="repRedo" type="button">Redo the ones I missed</button>
+      <button class="btn primary" id="repHome" type="button">Back to home</button>
     </div>
   </div>
   <div class="rlist" id="repList"></div>
 </div></section>
 
+<!-- ============ DASHBOARD ============ -->
+<section id="dash" class="screen"><div class="wrap" id="dashWrap"></div></section>
+
+<!-- ============ SETTINGS ============ -->
+<section id="settings" class="screen"><div class="wrap" id="setWrap"></div></section>
+
 <script>
 /* =================================================================== */
-const SOURCES={ og:{file:"questions-og.json",label:"Official Guide 2024–25"},
-  manhattan:{file:"questions.json",label:"Manhattan: All the Verbal"},
-  quant:{file:"questions-quant.json",label:"MR Quant Question Bank"} };
-const isQuant=()=>App.source==="quant";
-/* concept key: quant banks classify by chapter (topic); verbal by subtype,
-   falling back to chapter for banks with no subtype labels (Manhattan) */
-const conceptOf=q=>isQuant()?q.chapter:(q.subtype||q.chapter);
-const hasSubtypes=()=>App.all.some(q=>q.subtype);
-const hasDifficulty=()=>App.all.some(q=>q.difficulty);
-function topicsFor(type){ /* topic labels present in the loaded bank, biggest first */
-  const counts={};
-  for(const q of App.all){ if(type&&type!=="ALL"&&q.type!==type)continue; const c=conceptOf(q); if(!c)continue; counts[c]=(counts[c]||0)+1; }
-  return Object.entries(counts).sort((a,b)=>b[1]-a[1]).map(([c,n])=>({v:c,label:`${c} (${n})`}));
-}
-const RC_TYPES=["Main Idea","Supporting Idea","Inference","Application","Evaluation","Logical Structure"];
-const CR_TASKS=["Weaken","Strengthen","Assumption","Inference / Conclusion","Flaw","Evaluate",
-  "Boldface / Method","Explain a Discrepancy","Plan","Complete the Argument"];
+/* Three source books, loaded together and merged into one pool. Each question
+   is tagged with its bank; the UI never shows a book picker — sections decide
+   which questions appear. Add a 4th book here and it flows into its section. */
+const BANKS=[
+  ["og","questions-og.json","GMAT Official Guide 2024–25"],
+  ["manhattan","questions.json","Manhattan: All the Verbal"],
+  ["quant","questions-quant.json","MR Quant Question Bank"],
+];
+const isQuantType=t=>t==="PS"||t==="DS";
+/* concept (subchapter) key: quant classifies by topic (chapter); verbal by the
+   book's subtype label, falling back to chapter for banks with no subtype. */
+const conceptOf=q=>isQuantType(q.type)?q.chapter:(q.subtype||q.chapter);
 const DIFFS=["Easy","Medium","Hard"];
 const MIN_ATTEMPTS=3;
+
+const TLABEL={RC:"Reading Comprehension",CR:"Critical Reasoning",PS:"Problem Solving",DS:"Data Sufficiency"};
 const ICON={
-  daily:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="17" rx="3"/><path d="M8 2v4M16 2v4M3 9h18"/></svg>',
-  column:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19V10M10 19V5M16 19v-7M22 19H2"/></svg>',
-  practice:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>',
-  exam:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2M9 2h6"/></svg>',
-  redo:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>',
-  weak:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/></svg>',
+  verbal:'<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5a2 2 0 0 1 2-2h6v18H6a2 2 0 0 1-2-2Z"/><path d="M12 3h6a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-6"/><path d="M8 7h1M8 11h1"/></svg>',
+  quant:'<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 7h8M8 11h3M8 15h3M15 11v6"/></svg>',
+  ds:'<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3 2 8l10 5 10-5-10-5Z"/><path d="M2 16l10 5 10-5M2 12l10 5 10-5"/></svg>',
+  random:'<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 3h5v5M4 20 21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg>',
+  dash:'<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M7 15l3-4 3 3 4-6"/></svg>',
+  exam:'<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2M9 2h6"/></svg>',
+  full:'<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2Z"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>',
+  practice:'<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>',
+  topic:'<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/></svg>',
+  redo:'<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>',
 };
 
 /* ===== STORE (localStorage, Supabase-ready) ===== */
@@ -518,11 +605,6 @@ const Store=(()=>{
   function load(){ try{ const d=JSON.parse(localStorage.getItem(KEY)); return d&&d.history?d:blank(); }catch(e){ return blank(); } }
   function save(){ try{ localStorage.setItem(KEY,JSON.stringify(data)); }catch(e){}
     try{ if(window.Sync) window.Sync.onLocalChange(data); }catch(e){} }
-  const LADDER=["Easy","Medium","Hard"];
-  const dstr=d=>d.toISOString().slice(0,10);
-  const todayStr=()=>dstr(new Date());
-  const yesterdayStr=()=>{ const d=new Date(); d.setDate(d.getDate()-1); return dstr(d); };
-  function adaptLevel(level,pct){ let i=LADDER.indexOf(level); if(pct>=75)i++; else if(pct<50)i--; return LADDER[Math.max(0,Math.min(2,i))]; }
   function record(q,picked,correct){
     const h=data.history[q.id]||(data.history[q.id]={n:q.number,type:q.type,subtype:q.subtype||null,chapter:q.chapter||null,difficulty:q.difficulty||null,attempts:0,correct:0,lastResult:null,lastSeen:0});
     h.attempts++; if(correct)h.correct++; h.lastResult=correct?"correct":"wrong"; h.lastSeen=Date.now();
@@ -531,14 +613,9 @@ const Store=(()=>{
   function overall(){ let seen=0,corr=0; for(const h of Object.values(data.history)){ seen++; if(h.lastResult==="correct")corr++; } return {seen,corr,pct:seen?Math.round(100*corr/seen):null}; }
   function byField(field,type){ const a={}; for(const h of Object.values(data.history)){ if(type&&h.type!==type)continue; const k=h[field]; if(!k)continue; const x=a[k]||(a[k]={c:0,t:0}); x.t++; if(h.lastResult==="correct")x.c++; } return a; }
   return {
-    get data(){return data;}, record, save, adaptLevel,
+    get data(){return data;}, record, save,
     wrongIds(){ return Object.entries(data.history).filter(([,h])=>h.lastResult==="wrong").map(([id])=>id); },
-    overall, byField, daily(){return data.daily;}, adaptive(){return data.adaptive;},
-    getDaily(){ return {...data.daily, doneToday:data.daily.date===todayStr()}; },
-    completeDaily(pct,used,pid){ const d=data.daily,t=todayStr();
-      if(d.date!==t){ d.streak=(d.date===yesterdayStr())?(d.streak||0)+1:1; d.date=t; }
-      d.lastPct=pct; d.level=adaptLevel(used,pct); d.recent=[pid,...(d.recent||[]).filter(x=>x!==pid)].slice(0,6); save(); },
-    setColumnLevel(l){ data.adaptive.level=l; save(); },
+    overall, byField,
     exportJSON(){return JSON.stringify(data,null,2);},
     importJSON(s){ const d=JSON.parse(s); if(!d.history)throw 0; data=d; save(); },
     reset(){ data=blank(); save(); },
@@ -548,9 +625,7 @@ const Store=(()=>{
 })();
 
 /* ===== SYNC (optional Supabase backend; app is local-only if not configured) ===== */
-/* Pure merge of two progress blobs — keeps the most progress from each, order-independent.
-   history: per-question max of attempts/correct + latest lastSeen; daily: more-recent date
-   wins, max streak; adaptive level: from the more recently active side. Never loses counts. */
+/* Pure merge of two progress blobs — keeps the most progress from each, order-independent. */
 function mergeProgress(local,remote){
   const blank={version:1,history:{},daily:{date:null,level:"Easy",streak:0,lastPct:null,recent:[]},adaptive:{level:"Easy"}};
   const L={...blank,...(local||{})}, R={...blank,...(remote||{})};
@@ -573,7 +648,7 @@ function mergeProgress(local,remote){
   const lastActive=o=>Object.values(o.history||{}).reduce((m,h)=>Math.max(m,h.lastSeen||0),0);
   const lAct=lastActive(L), rAct=lastActive(R);
   const ld=L.daily||blank.daily, rd=R.daily||blank.daily;
-  const dCmp=(ld.date||"").localeCompare(rd.date||"");   // newer date wins; local on tie
+  const dCmp=(ld.date||"").localeCompare(rd.date||"");
   const base=dCmp>=0?ld:rd, other=dCmp>=0?rd:ld;
   const daily={ date:base.date, level:base.level, lastPct:base.lastPct,
     streak:Math.max(ld.streak||0,rd.streak||0),
@@ -604,6 +679,8 @@ const Sync=(()=>{
     }catch(e){}
     renderAuth();
     if(user) pull();
+    /* already signed in (e.g. returning after a Google redirect): skip the splash */
+    if(user && document.getElementById("landing")?.classList.contains("on")){ try{ renderHome(); }catch(e){} }
   }
   async function pull(){
     const c=client(); if(!c||!user) return;
@@ -613,15 +690,14 @@ const Sync=(()=>{
       const merged=mergeProgress(Store.data, data&&data.data);
       Store.hydrate(merged); lastPushed=JSON.stringify(merged);
       rerenderCurrent();
-      await upsert(merged);                 // push any local-only progress up
-    }catch(e){ /* unreachable → stay local; retry on next change/boot */ }
+      await upsert(merged);
+    }catch(e){ }
   }
   async function upsert(obj){
     const c=client(); if(!c||!user) return;
     const { error }=await c.from(TABLE).upsert({user_id:user.id,data:obj,updated_at:new Date().toISOString()});
     if(error) throw error; lastPushed=JSON.stringify(obj);
   }
-  /* debounced write-through; fetch-merge-upsert so another device is never clobbered */
   function onLocalChange(data){
     if(!enabled()||!user) return;
     clearTimeout(pushT);
@@ -632,7 +708,7 @@ const Sync=(()=>{
         const merged=mergeProgress(data, row&&row.data);
         if(JSON.stringify(merged)===lastPushed) return;
         await upsert(merged);
-      }catch(e){ /* retry on next change */ }
+      }catch(e){ }
     },1500);
   }
   async function signIn(){
@@ -640,382 +716,350 @@ const Sync=(()=>{
     if(!c){ alert("Sync isn't set up yet.\nAdd your Supabase URL + anon key near the top of index.html."); return; }
     await c.auth.signInWithOAuth({ provider:"google", options:{ redirectTo:location.origin+location.pathname } });
   }
+  /* email + password — returns {ok, session, msg}. Never throws. */
+  async function signInEmail(email,password){
+    const c=client(); if(!c) return {ok:false,msg:"Cloud sign-in isn't configured on this build."};
+    try{ const {data,error}=await c.auth.signInWithPassword({email,password});
+      if(error) return {ok:false,msg:error.message};
+      return {ok:true,session:data.session}; }catch(e){ return {ok:false,msg:"Network error — check your connection."}; }
+  }
+  async function signUpEmail(email,password){
+    const c=client(); if(!c) return {ok:false,msg:"Cloud sign-up isn't configured on this build."};
+    try{ const {data,error}=await c.auth.signUp({email,password});
+      if(error) return {ok:false,msg:error.message};
+      /* if email confirmation is on, no session comes back until the link is clicked */
+      if(data.session) return {ok:true,session:data.session};
+      return {ok:true,session:null,msg:"Account created — check your email to confirm, then sign in."}; }
+    catch(e){ return {ok:false,msg:"Network error — check your connection."}; }
+  }
   async function signOut(){ const c=client(); if(c){ try{ await c.auth.signOut(); }catch(e){} } user=null; renderAuth(); }
   function renderAuth(){
-    const acct=document.getElementById("acct"), hint=document.getElementById("landingSync");
+    const acct=document.getElementById("acct");
     if(acct){
-      if(!enabled()){ acct.classList.add("hidden"); acct.innerHTML=""; }
-      else { acct.classList.remove("hidden");
-        if(user){ const em=user.email||"Account";
-          const av=user.user_metadata&&(user.user_metadata.avatar_url||user.user_metadata.picture);
-          acct.innerHTML=`<span class="who" title="${esc(em)}">${av?`<img src="${esc(av)}" alt="" referrerpolicy="no-referrer">`:""}<span class="em">${esc(em)}</span></span><button class="authbtn ghost" id="signOutBtn" type="button">Sign out</button>`;
-          const so=document.getElementById("signOutBtn"); if(so) so.onclick=signOut;
-        } else {
-          acct.innerHTML=`<button class="authbtn" id="signInBtn" type="button">${GICON} Sign in</button>`;
-          const si=document.getElementById("signInBtn"); if(si) si.onclick=signIn;
-        }
+      if(!enabled()){ acct.innerHTML='<span style="color:var(--muted);font-size:13px">Cloud sync isn\'t configured — progress is stored on this device only.</span>'; }
+      else if(user){ const em=user.email||"Account";
+        const av=user.user_metadata&&(user.user_metadata.avatar_url||user.user_metadata.picture);
+        acct.innerHTML=`<span class="who" title="${esc(em)}">${av?`<img src="${esc(av)}" alt="" referrerpolicy="no-referrer">`:""}<span class="em">${esc(em)}</span></span><button class="authbtn ghost" id="signOutBtn" type="button">Sign out</button>`;
+        const so=document.getElementById("signOutBtn"); if(so) so.onclick=signOut;
+      } else {
+        acct.innerHTML=`<button class="authbtn" id="signInBtn" type="button">${GICON} Sign in with Google</button>`;
+        const si=document.getElementById("signInBtn"); if(si) si.onclick=signIn;
       }
     }
-    if(hint){ hint.classList.toggle("hidden", !enabled()||!!user); hint.onclick=signIn; }
   }
-  return { init, onLocalChange, signIn, signOut, enabled, renderAuth, get user(){return user;} };
+  return { init, onLocalChange, signIn, signInEmail, signUpEmail, signOut, enabled, renderAuth, get user(){return user;} };
 })();
 window.Sync=Sync;
 
-/* ===== ATTEMPTS (per-question rows in Supabase; anonymous-auth device identity) =====
-   Uses a SEPARATE Supabase client instance from Sync so the two auth sessions never
-   interfere. Anonymous sign-in gives a real JWT so RLS (auth.uid() = user_id) works
-   without any Google login. deviceId = the anonymous user's UUID, cached in localStorage. */
+/* ===== ATTEMPTS (per-question rows in Supabase; anonymous-auth device identity) ===== */
 const Attempts=(()=>{
   const DEVICE_KEY="gmat_device_id";
   let sb=null, deviceId=null, ready=false;
-
   function client(){
     if(sb) return sb;
     if(!window.SUPABASE_URL||!window.SUPABASE_ANON_KEY||!window.supabase) return null;
     sb=window.supabase.createClient(window.SUPABASE_URL,window.SUPABASE_ANON_KEY,{
-      auth:{persistSession:true,autoRefreshToken:true,
-            storageKey:"gmat_attempts_auth",  // separate storage from Sync's Google session
-            detectSessionInUrl:false}});       // don't grab the Google OAuth redirect
+      auth:{persistSession:true,autoRefreshToken:true,storageKey:"gmat_attempts_auth",detectSessionInUrl:false}});
     return sb;
   }
-
   async function init(){
     const c=client(); if(!c) return;
     try{
       const {data:{session}}=await c.auth.getSession();
       if(session?.user){ deviceId=session.user.id; ready=true; }
       else{
-        /* Create an anonymous Supabase user — gives a real JWT so RLS policies work.
-           Requires Anonymous provider enabled: Supabase → Auth → Providers → Anonymous. */
         const {data,error}=await c.auth.signInAnonymously();
         if(!error&&data?.user){ deviceId=data.user.id; ready=true; }
-        else{ console.warn("[Attempts] anon sign-in failed. Enable Anonymous provider in Supabase → Auth → Providers.",error?.message); }
+        else{ console.warn("[Attempts] anon sign-in failed.",error?.message); }
       }
       if(ready) localStorage.setItem(DEVICE_KEY,deviceId);
     }catch(e){ console.warn("[Attempts] init error:",e); }
   }
-
-  function optIdx(q,label){
-    if(!q?.options||label==null) return null;
-    const i=q.options.findIndex(o=>o.label===label);
-    return i>=0?i:null;
-  }
-
+  function optIdx(q,label){ if(!q?.options||label==null) return null; const i=q.options.findIndex(o=>o.label===label); return i>=0?i:null; }
   async function saveAttempt(q,chosenLabel,timeMs){
     const c=client(); if(!c||!ready||!deviceId) return;
     const ki=optIdx(q,q.correct_answer); if(ki===null) return;
-    const row={
-      user_id:    deviceId,
-      question_id:q.id,
-      source:     App.source,                               // 'og' | 'manhattan'
-      q_type:     q.type,                                   // 'CR' | 'RC'
-      chosen_index:optIdx(q,chosenLabel),                   // null only for exam skips
-      correct_index:ki,
-      is_correct: chosenLabel===q.correct_answer,
-      time_ms:    (typeof timeMs==="number"&&timeMs>=0)?Math.round(timeMs):null,
-    };
-    try{
-      const {error}=await c.from("attempts").insert(row);
-      if(error) console.warn("[Attempts] insert failed:",error.message);
-    }catch(e){}
+    const row={ user_id:deviceId, question_id:q.id, source:q.bank||"mixed", q_type:q.type,
+      chosen_index:optIdx(q,chosenLabel), correct_index:ki, is_correct:chosenLabel===q.correct_answer,
+      time_ms:(typeof timeMs==="number"&&timeMs>=0)?Math.round(timeMs):null };
+    try{ const {error}=await c.from("attempts").insert(row); if(error) console.warn("[Attempts] insert failed:",error.message); }catch(e){}
   }
-
-  async function getAttempts(){
-    const c=client(); if(!c||!ready||!deviceId) return [];
-    try{
-      const {data,error}=await c.from("attempts").select("*")
-        .eq("user_id",deviceId).order("created_at",{ascending:false});
-      if(error) throw error;
-      return data||[];
-    }catch(e){ return []; }
-  }
-
-  return {init,saveAttempt,getAttempts,get deviceId(){return deviceId;}};
+  return {init,saveAttempt,get deviceId(){return deviceId;}};
 })();
 
 /* ===== APP STATE ===== */
-const App={ source:"og", all:[], _loaded:{}, mode:null, cfg:null,
+const App={ all:[], mode:null, timed:false,
   qs:[], idx:0, answers:{}, flags:new Set(), checked:new Set(),
-  timer:null, timeLeft:0, elapsed:0, showTimer:false, _repExpl:false,
+  timer:null, elapsed:0, showTimer:false, _repExpl:false, _sessMeta:null, _pool:[], _setCfg:null,
   qTimes:{}, _qTimedSet:new Set(), _timingLastIdx:-1, _qStart:0 };
 const $=s=>document.querySelector(s);
 const esc=s=>String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
 const shuffle=a=>{for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]];}return a;};
 const mmss=s=>{s=Math.max(0,s|0);return String(s/60|0).padStart(2,"0")+":"+String(s%60).padStart(2,"0");};
-const SCREENS=["landing","dash","setup","run","report"];
+
+/* ===== POOLS ===== */
+const playable=q=>q.format!=="open_ended"&&q.options&&q.options.length&&q.correct_answer;
+const byTypes=types=>App.all.filter(q=>types.includes(q.type)&&playable(q));
+const byType=t=>byTypes([t]);
+const wrongOfTypes=types=>{ const w=new Set(Store.wrongIds()); return byTypes(types).filter(q=>w.has(q.id)); };
+function topicsFor(type){ const c={}; for(const q of byType(type)){ const k=conceptOf(q); if(!k)continue; c[k]=(c[k]||0)+1; }
+  return Object.entries(c).sort((a,b)=>b[1]-a[1]).map(([v,n])=>({v,n,label:`${v} (${n})`})); }
+
+/* ===== SCREENS + NAV ===== */
+const SCREENS=["landing","home","menu","setup","run","report","dash","settings"];
 function show(id){
   SCREENS.forEach(s=>$("#"+s).classList.toggle("on",s===id));
-  $("#appbar").classList.toggle("hidden",id==="landing");
-  $("#backBtn").classList.toggle("hidden",id==="dash"||id==="landing");
+  $("#appbar").classList.toggle("hidden", id==="landing"||id==="run");
+  $("#backBtn").classList.toggle("hidden", !["menu","setup","dash","settings"].includes(id));
   window.scrollTo(0,0);
 }
+let stack=[];
+function navTo(fn){ stack.push(fn); fn(); }
+function navBack(){ stack.pop(); const top=stack[stack.length-1]; (top||renderHome)(); }
 
-/* ===== LOADING ===== */
-async function loadBank(){
-  if(App._loaded[App.source]){ App.all=App._loaded[App.source]; return true; }
-  try{ const r=await fetch(SOURCES[App.source].file,{cache:"no-cache"}); if(!r.ok)throw 0; App.all=await r.json(); App._loaded[App.source]=App.all; return true; }
-  catch(e){ alert("Couldn't load "+SOURCES[App.source].file+".\nServe the folder: python -m http.server 8000"); return false; }
+/* ===== LOADING (all banks merged) ===== */
+async function loadAll(){
+  if(App.all.length) return true;
+  try{
+    const parts=await Promise.all(BANKS.map(async ([bank,file])=>{
+      const r=await fetch(file,{cache:"no-cache"}); if(!r.ok) throw 0;
+      const arr=await r.json(); arr.forEach(q=>{q.bank=bank;}); return arr;
+    }));
+    App.all=parts.flat(); return true;
+  }catch(e){ alert("Couldn't load the question banks.\nServe the folder: python -m http.server 8000"); return false; }
 }
 
-/* ===== ADAPTIVE PASSAGE ENGINE ===== */
-function buildPassages(){
-  if(App._passagesFor===App.source) return App._passages;
-  const m=new Map();
-  App.all.filter(q=>q.type==="RC"&&q.passage).forEach(q=>{ let p=m.get(q.passage);
-    if(!p){ p={pid:"p"+q.number,text:q.passage,difficulty:q.difficulty,qs:[]}; m.set(q.passage,p); } p.qs.push(q); });
-  const list=[...m.values()]; list.forEach(p=>p.qs.sort((a,b)=>(a.number||0)-(b.number||0)));
-  list.sort((a,b)=>(a.qs[0].number||0)-(b.qs[0].number||0));
-  App._passages=list; App._passagesFor=App.source; return list;
-}
-const passagesAt=l=>buildPassages().filter(p=>p.difficulty===l);
-function pickPassage(level,exclude){ let pool=passagesAt(level).filter(p=>!(exclude||[]).includes(p.pid));
-  if(!pool.length)pool=passagesAt(level); if(!pool.length)pool=buildPassages(); return pool.length?pool[Math.random()*pool.length|0]:null; }
-function startDaily(bonus){ const d=Store.getDaily(),level=d.level||"Easy";
-  const p=pickPassage(level,bonus?[]:d.recent); if(!p){ alert("This bank has no leveled passages."); return; }
-  App.mode="daily"; App._dailyBonus=!!bonus; App._curPassage=p; App._usedLevel=level;
-  App.qs=p.qs.slice(); resetRun(); startRun(); }
-function startColumn(){ App.mode="column"; App._colLevel=Store.adaptive().level||"Easy"; App._colDone=[]; App._colC=0; App._colT=0; App._colP=0; nextColumnPassage(); }
-function nextColumnPassage(){ const p=pickPassage(App._colLevel,App._colDone); if(!p){ alert("No passages available."); renderDash(); return; }
-  App._curPassage=p; App._usedLevel=App._colLevel; App._colDone.push(p.pid); App.qs=p.qs.slice(); resetRun(); startRun(); }
-function isAdaptive(){ return App.mode==="daily"||App.mode==="column"; }
-function resetRun(){ App.idx=0; App.answers={}; App.flags=new Set(); App.checked=new Set();
-  App.qTimes={}; App._qTimedSet=new Set(); App._timingLastIdx=-1; App._qStart=Date.now(); }
-
-/* ===== DASHBOARD ===== */
-const MODES=[
-  {id:"daily",ic:ICON.daily,t:"One RC a day",d:"A single passage daily. Difficulty adapts to last time, and your streak grows.",feature:true,adaptive:true},
-  {id:"column",ic:ICON.column,t:"GMAT RC column",d:"Continuous passages that get harder as you improve — like the adaptive exam.",feature:true,adaptive:true},
-  {id:"practice",ic:ICON.practice,t:"Practice",d:"Filter by type, concept & difficulty. Instant feedback + the question type after each answer."},
-  {id:"exam",ic:ICON.exam,t:"Exam simulation",d:"Timed section like the real GMAT Focus — no feedback, full score report at the end."},
-  {id:"redo",ic:ICON.redo,t:"Redo my misses",d:"Re-attempt only the questions you got wrong before.",needWrong:true},
-  {id:"weak",ic:ICON.weak,t:"Target weak spots",d:"Auto-builds a set from your lowest-accuracy types & topics.",needData:true},
-];
-function renderModes(){
-  const wrong=Store.wrongIds().length, seen=Store.overall().seen;
-  const d=Store.getDaily(), col=Store.adaptive().level, noPsg=!buildPassages().length;
-  $("#modeGrid").innerHTML=MODES.map(m=>{
-    const dis=(m.needWrong&&!wrong)||(m.needData&&seen<5)||(m.adaptive&&noPsg);
-    let badge="";
-    if(m.id==="daily") badge=noPsg?"needs OG bank":d.doneToday?`✓ done · 🔥${d.streak}`:`ready · ${d.level}`;
-    else if(m.id==="column") badge=noPsg?"needs OG bank":`resume at ${col}`;
-    else if(m.id==="redo") badge=`${wrong} saved`;
-    else if(m.needData) badge=seen<5?"need 5+ answers":"ready";
-    return `<button class="mode${m.feature?' feature':''}" data-mode="${m.id}" ${dis?"disabled":""}>
-      <span class="ic">${m.ic}</span><span class="t">${m.t}</span><span class="d">${m.d}</span>${badge?`<span class="badge">${badge}</span>`:""}</button>`;
-  }).join("");
-  $("#modeGrid").querySelectorAll(".mode").forEach(b=>b.addEventListener("click",()=>{
-    if(b.disabled)return; const id=b.dataset.mode;
-    if(id==="daily"){ const dd=Store.getDaily();
-      if(dd.doneToday){ if(confirm(`You've done today's RC (🔥 ${dd.streak}-day streak). Do a bonus passage? It won't change your streak or level.`)) startDaily(true); }
-      else startDaily(false); }
-    else if(id==="column") startColumn(); else openSetup(id);
-  }));
-}
-function bar(name,a,weak){ const pct=a&&a.t?Math.round(100*a.c/a.t):null;
-  const col=pct==null?"var(--line)":pct>=75?"var(--green)":pct>=50?"var(--amber)":"var(--red)";
-  return `<div class="barrow${weak?' weak':''}"><div class="nm">${esc(name)}</div>
-    <div class="tr"><i style="width:${pct==null?0:pct}%;background:${col}"></i></div>
-    <div class="vv">${a&&a.t?`${a.c}/${a.t}`:'—'}</div></div>`; }
-/* weakest concept in the CURRENT bank: quant -> PS/DS topics, OG -> RC/CR subtypes,
-   Manhattan -> RC/CR chapters. Only concepts present in the loaded bank count, so a
-   weak OG subtype can't hijack targeting while you're drilling quant. */
-function weakestForBank(){
-  const present=new Set(App.all.map(conceptOf));
-  const pairs=isQuant()
-    ?[["PS",Store.byField("chapter","PS")],["DS",Store.byField("chapter","DS")]]
-    :hasSubtypes()
-      ?[["RC",Store.byField("subtype","RC")],["CR",Store.byField("subtype","CR")]]
-      :[["RC",Store.byField("chapter","RC")],["CR",Store.byField("chapter","CR")]];
-  let best=null;
-  for(const [grp,agg] of pairs) for(const [name,a] of Object.entries(agg)){
-    if(!present.has(name)||a.t<MIN_ATTEMPTS)continue;
-    const p=a.c/a.t; if(!best||p<best.p)best={grp,name,a,p}; }
-  return best; }
-function renderAnalytics(){
+/* ===== LANDING (splash -> auth) ===== */
+let _landingRevealed=false, _authTab="signin";
+function renderLanding(){
+  _landingRevealed=false;
+  $("#splash").classList.remove("gone");
+  $("#authStage").classList.remove("show");
+  $("#landingLegal").textContent="Personal, fair-use study tool · 910 questions across 3 books (Verbal + Quant) · progress saved on this device unless you sign in.";
+  $("#authGoogle").innerHTML=GICON+" Continue with Google";
   const ov=Store.overall();
-  $("#heroPct").textContent=ov.pct==null?"—":ov.pct+"%";
-  $("#heroSub").textContent=ov.seen?`${ov.corr}/${ov.seen} correct`:"no attempts yet";
-  const C=175.9; $("#heroArc").style.strokeDashoffset=ov.pct==null?C:C-C*ov.pct/100;
-  $("#qSeen").textContent=ov.seen; $("#qWrong").textContent=Store.wrongIds().length;
-  const streak=Store.daily().streak||0; $("#qStreak").textContent=streak;
-  $("#streakChip").classList.toggle("hidden",!streak); $("#streakChipN").textContent=streak;
-  const weak=weakestForBank();
-  const present=new Set(App.all.map(conceptOf));
-  /* rows for one type: topics you attempted IN THIS BANK, weakest accuracy first */
-  const topicRows=(agg,grp)=>{
-    const ks=Object.keys(agg).filter(k=>present.has(k)).sort((a,b)=>(agg[a].c/agg[a].t)-(agg[b].c/agg[b].t));
-    return ks.map(k=>bar(k,agg[k],weak&&weak.grp===grp&&weak.name===k)).join("");
-  };
-  if(isQuant()){
-    $("#anlyT1").textContent="Problem Solving"; $("#anlyH1").textContent="Accuracy by topic — weakest first.";
-    $("#anlyT2").textContent="Data Sufficiency"; $("#anlyH2").textContent="Accuracy by topic — weakest first.";
-    const ps=Store.byField("chapter","PS"), ds=Store.byField("chapter","DS");
-    $("#rcBars").innerHTML=Object.keys(ps).some(k=>present.has(k))?topicRows(ps,"PS"):`<div class="nodata">No Problem Solving attempts yet.</div>`;
-    $("#crBars").innerHTML=Object.keys(ds).some(k=>present.has(k))?topicRows(ds,"DS"):`<div class="nodata">No Data Sufficiency attempts yet.</div>`;
-  }else if(hasSubtypes()){
-    $("#anlyT1").textContent="Reading Comprehension"; $("#anlyH1").textContent="Accuracy by question type (the book's own labels).";
-    $("#anlyT2").textContent="Critical Reasoning"; $("#anlyH2").textContent="Accuracy by task (inferred from question wording).";
-    const rc=Store.byField("subtype","RC"), cr=Store.byField("subtype","CR");
-    $("#rcBars").innerHTML=Object.keys(rc).length?RC_TYPES.map(t=>bar(t,rc[t],weak&&weak.grp==="RC"&&weak.name===t)).join(""):`<div class="nodata">No RC attempts yet.</div>`;
-    $("#crBars").innerHTML=Object.keys(cr).length?CR_TASKS.filter(t=>cr[t]).map(t=>bar(t,cr[t],weak&&weak.grp==="CR"&&weak.name===t)).join(""):`<div class="nodata">No CR attempts yet.</div>`;
-  }else{
-    $("#anlyT1").textContent="Reading Comprehension"; $("#anlyH1").textContent="Accuracy by chapter — weakest first.";
-    $("#anlyT2").textContent="Critical Reasoning"; $("#anlyH2").textContent="Accuracy by chapter — weakest first.";
-    const rc=Store.byField("chapter","RC"), cr=Store.byField("chapter","CR");
-    $("#rcBars").innerHTML=Object.keys(rc).some(k=>present.has(k))?topicRows(rc,"RC"):`<div class="nodata">No RC attempts yet.</div>`;
-    $("#crBars").innerHTML=Object.keys(cr).some(k=>present.has(k))?topicRows(cr,"CR"):`<div class="nodata">No CR attempts yet.</div>`;
-  }
-  const showDiff=hasDifficulty(), df=Store.byField("difficulty");
-  $("#diffTitle").textContent=showDiff?"By difficulty":"Focus recommendation";
-  $("#diffHint").textContent=showDiff?"Across everything you've answered.":"Based on your attempts in this bank.";
-  $("#diffBars").innerHTML=showDiff?DIFFS.map(d=>bar(d,df[d])).join(""):"";
-  $("#recoBox").innerHTML=weak?`💡 <b>Focus area:</b> your weakest ${isQuant()?"topic":"type"} is <b>${esc(weak.name)}</b>
-    (${weak.a.c}/${weak.a.t}, ${Math.round(100*weak.a.c/weak.a.t)}%). Use <b>Target weak spots</b> or filter Practice to it.`
-    :`Answer a few questions and this highlights the ${isQuant()?"topics":"types"} to drill.`;
-  // recommended CTA
-  const d2=Store.getDaily();
-  let rec;
-  const hasPsg=buildPassages().length>0; /* RC-passage modes exist only in banks with passages */
-  if(!ov.seen) rec=hasPsg?{ic:"📅",t:"Start with today's passage",s:"One RC a day builds the habit — difficulty adapts to you.",act:()=>startDaily(false)}
-    :{ic:"🧮",t:"Start a practice set",s:"Filter by type & topic, instant feedback after each answer.",act:()=>openSetup("practice")};
-  else if(!d2.doneToday && hasPsg) rec={ic:"📅",t:"Do today's RC",s:`Keep your 🔥 ${d2.streak}-day streak alive · level ${d2.level}.`,act:()=>startDaily(false)};
-  else if(weak) rec={ic:"🎯",t:`Drill ${weak.name}`,s:`Your weakest ${isQuant()?"topic":"type"} at ${Math.round(100*weak.a.c/weak.a.t)}%. Build a focused set.`,act:()=>openSetup("weak")};
-  else rec=hasPsg?{ic:"📈",t:"Continue the adaptive column",s:`Resume at ${Store.adaptive().level}.`,act:()=>startColumn()}
-    :{ic:"🧮",t:"Start a practice set",s:"Filter by type & topic, instant feedback after each answer.",act:()=>openSetup("practice")};
-  $("#recoCta").innerHTML=`<span class="ic">${rec.ic}</span><span class="tx"><b>${esc(rec.t)}</b><small>${esc(rec.s)}</small></span><button class="go" id="recoGo">Go →</button>`;
-  $("#recoGo").onclick=rec.act;
+  $("#acSub").textContent=ov.seen
+    ? `Welcome back — ${ov.pct}% over ${ov.seen} questions. Sign in to sync, or keep going as a guest.`
+    : "Sign in to sync your progress across devices — or continue as a guest.";
+  setAuthTab("signin");
+  $("#acMsg").textContent=""; $("#acMsg").className="ac-msg";
+  show("landing");
 }
-function renderSyllabus(){
-  if(isQuant()){
-    const topPs=topicsFor("PS").slice(0,6).map(t=>`<li>${esc(t.v)}</li>`).join("");
-    const topDs=topicsFor("DS").slice(0,6).map(t=>`<li>${esc(t.v)}</li>`).join("");
-    $("#sylHead").textContent="GMAT Focus — Quantitative syllabus";
-    $("#sylGrid").innerHTML=`
-      <div class="c"><div class="big">21</div><b>questions</b><ul><li>in 45 minutes</li><li>≈2 min 8 s each</li></ul></div>
-      <div class="c"><div class="big">2</div><b>types</b><ul><li>Problem Solving</li><li>Data Sufficiency</li><li>no calculator</li></ul></div>
-      <div class="c"><b>Top PS topics here</b><ul>${topPs}</ul></div>
-      <div class="c"><b>Top DS topics here</b><ul>${topDs}</ul></div>
-      <div class="c"><b>Format</b><ul><li>Computer-adaptive</li><li>Review &amp; edit up to 3</li><li>Score 60–90 / section</li></ul></div>`;
-    $("#dashFoot").innerHTML=`Questions from <i>Manhattan Review Quantitative Question Bank 6th Ed</i>, answers verified against the book's key. `+
-      `Topics are the book's own section labels. Nothing leaves your device.`;
-  }else{
-    $("#sylHead").textContent="GMAT Focus — Verbal syllabus";
-    $("#sylGrid").innerHTML=`
-      <div class="c"><div class="big">23</div><b>questions</b><ul><li>in 45 minutes</li><li>≈1 min 57 s each</li></ul></div>
-      <div class="c"><div class="big">2</div><b>types</b><ul><li>Reading Comprehension</li><li>Critical Reasoning</li><li>no Sentence Correction</li></ul></div>
-      <div class="c"><b>RC types</b><ul>${RC_TYPES.map(t=>`<li>${t}</li>`).join("")}</ul></div>
-      <div class="c"><b>CR tasks</b><ul>${["Weaken","Strengthen","Assumption","Inference","Flaw","Evaluate","Boldface","Explain","Plan"].map(t=>`<li>${t}</li>`).join("")}</ul></div>
-      <div class="c"><b>Format</b><ul><li>Computer-adaptive</li><li>Review &amp; edit up to 3</li><li>Score 60–90 / section</li></ul></div>`;
-    $("#dashFoot").innerHTML=(App.source==="manhattan"
-      ?`Questions from <i>Manhattan Prep — All the Verbal</i>, answers verified against the book's key. `
-      :`Questions from <i>GMAT Official Guide 2024–2025</i>, answers verified against the book's key. RC types are the book's own labels; CR tasks are inferred from question wording. `)+
-      `Nothing leaves your device.`;
-  }
-  $("#storeNote").textContent=`Saved on this device (localStorage) · ${Store.overall().seen} questions tracked.`;
+function revealAuth(){
+  if(_landingRevealed||!$("#landing").classList.contains("on")) return;
+  _landingRevealed=true;
+  $("#splash").classList.add("gone");
+  $("#authStage").classList.add("show");
 }
-function renderDash(){ clearInterval(App.timer); renderModes(); renderAnalytics(); renderSyllabus(); show("dash"); }
+function setAuthTab(t){
+  _authTab=t;
+  $("#acTabs").querySelectorAll("button").forEach(b=>b.classList.toggle("on",b.dataset.t===t));
+  $("#acTitle").textContent=t==="register"?"Create account":"Welcome back";
+  $("#authSubmit").textContent=t==="register"?"Create account →":"Sign in →";
+  $("#authPass").setAttribute("autocomplete",t==="register"?"new-password":"current-password");
+  $("#acMsg").textContent=""; $("#acMsg").className="ac-msg";
+}
+async function submitAuth(e){
+  e.preventDefault();
+  const email=$("#authEmail").value.trim(), pass=$("#authPass").value;
+  const msg=$("#acMsg"), btn=$("#authSubmit");
+  if(!email||pass.length<6){ msg.className="ac-msg err"; msg.textContent="Enter an email and a password of at least 6 characters."; return; }
+  if(!(window.Sync&&Sync.enabled())){ msg.className="ac-msg err"; msg.textContent="Cloud accounts aren't configured on this build — use “Continue as guest” for now."; return; }
+  btn.disabled=true; msg.className="ac-msg"; msg.textContent=_authTab==="register"?"Creating your account…":"Signing you in…";
+  const r=_authTab==="register"?await Sync.signUpEmail(email,pass):await Sync.signInEmail(email,pass);
+  btn.disabled=false;
+  if(!r.ok){ msg.className="ac-msg err"; msg.textContent=r.msg||"That didn't work — please try again."; return; }
+  if(r.session){ renderHome(); return; }               // signed in
+  msg.className="ac-msg ok"; msg.textContent=r.msg||"Check your email to confirm your account, then sign in.";
+  if(_authTab==="register") setTimeout(()=>setAuthTab("signin"),400);
+}
 
-/* ===== SETUP ===== */
-function chipRow(el,items,multi,active,onChange){
-  el.innerHTML=items.map(it=>`<button class="chip${active.includes(it.v)?' on':''}" data-v="${esc(it.v)}">${esc(it.label)}</button>`).join("");
-  el.querySelectorAll(".chip").forEach(b=>b.addEventListener("click",()=>{ const v=b.dataset.v;
-    if(multi){ if(v==="ALL"){active.length=0;active.push("ALL");}
-      else { const i=active.indexOf("ALL"); if(i>=0)active.splice(i,1); const j=active.indexOf(v); if(j>=0)active.splice(j,1); else active.push(v); if(!active.length)active.push("ALL"); } }
-    else { active.length=0; active.push(v); }
-    el.querySelectorAll(".chip").forEach(x=>x.classList.toggle("on",active.includes(x.dataset.v))); onChange&&onChange(); }));
+/* weakest concept across everything answered (>= MIN_ATTEMPTS tries) */
+function weakestConcept(){
+  let best=null;
+  for(const field of ["subtype","chapter"]){
+    const agg=Store.byField(field);
+    for(const [name,a] of Object.entries(agg)){ if(a.t<MIN_ATTEMPTS)continue; const p=a.c/a.t; if(!best||p<best.p)best={name,a,p}; }
+  }
+  return best;
 }
-function openSetup(mode){
-  App.mode=mode; const cfg={type:["ALL"],concept:["ALL"],diff:["ALL"],count:10,order:"shuffle"}; App.cfg=cfg;
-  const meta={practice:["Practice","Set up your session","Instant feedback after each answer, with the question type revealed."],
-    exam:["Exam","Timed section","Mirrors the GMAT Focus pace. No feedback until your score report."],
-    redo:["Review","Redo your misses","Re-attempt the questions you previously got wrong."],
-    weak:["Targeted","Target your weak spots","Auto-built from your lowest-accuracy question type."]}[mode];
-  $("#setupKick").textContent=meta[0]; $("#setupTitle").textContent=meta[1]; $("#setupDesc").textContent=meta[2];
-  const typeItems=isQuant()
-    ?[{v:"ALL",label:"All Quant"},{v:"PS",label:"Problem Solving"},{v:"DS",label:"Data Sufficiency"}]
-    :[{v:"ALL",label:"All Verbal"},{v:"RC",label:"Reading Comp"},{v:"CR",label:"Critical Reasoning"}];
-  chipRow($("#typeChips"),typeItems,false,cfg.type,()=>{updateConcept();updatePool();});
-  chipRow($("#diffChips"),[{v:"ALL",label:"All levels"},...DIFFS.map(d=>({v:d,label:d}))],true,cfg.diff,updatePool);
-  $("#countSel").innerHTML=[5,10,15,21,"All"].map(c=>`<option value="${c}"${c===10?" selected":""}>${c==="All"?"All matching":c+" questions"}</option>`).join("");
-  $("#countSel").onchange=e=>{cfg.count=e.target.value==="All"?"All":+e.target.value;updatePool();};
-  chipRow($("#orderChips"),[{v:"shuffle",label:"Shuffle"},{v:"order",label:"In book order"}],false,[cfg.order],()=>{cfg.order=$("#orderChips .on").dataset.v;});
-  $("#fCount").classList.toggle("hidden",mode==="weak");
-  $("#fConcept").classList.toggle("hidden",mode==="redo"||mode==="weak");
-  $("#fDiff").classList.toggle("hidden",mode==="weak"||!hasDifficulty());
-  if(mode==="exam")cfg.count=21;
-  updateConcept(); updatePool();
-  $("#goBtn").textContent=mode==="exam"?"Start timed section →":"Start →";
+/* AI status: light up the Smart-search pill only when api.py is actually reachable */
+async function pingAI(){
+  const pill=$("#aiPill"); if(!pill) return;
+  const base=VAPI();
+  if(!base){ pill.className="ai-pill off"; pill.innerHTML='<span class="dot"></span> disabled'; return; }
+  try{ const r=await fetch(base+"/health",{cache:"no-cache"}); if(!r.ok) throw 0; const j=await r.json();
+    pill.className="ai-pill on"; pill.innerHTML=`<span class="dot"></span> AI on · ${(j.questions_count||910)} indexed`;
+  }catch(e){ pill.className="ai-pill off"; pill.innerHTML='<span class="dot"></span> offline — run api.py'; }
+}
+
+/* ===== HOME ===== */
+const EXAMPLES=["weaken an argument","work & rate problems","geometry — circles","inference from a passage","probability & combinations","data sufficiency on averages"];
+function renderHome(){
+  stack=[];
+  const ov=Store.overall(), wrong=Store.wrongIds().length;
+  /* gradient hero: greeting + your live stats + a smart next-step */
+  const weak=weakestConcept();
+  const cta=ov.seen
+    ? (weak?{t:`Drill ${weak.name}`,act:()=>{ const pool=App.all.filter(q=>playable(q)&&conceptOf(q)===weak.name); openSession("Targeted",`Focus: ${weak.name}`,`Your weakest area — ${Math.round(100*weak.p)}% so far.`,pool); }}
+          :{t:"Random mix",act:()=>openSession("Random","Random Mix","A shuffled set from every section.",byTypes(["RC","CR","PS","DS"]))})
+    : {t:"Start Verbal",act:()=>navTo(renderVerbal)};
+  $("#homeHero").innerHTML=`
+    <div class="hk">${ov.seen?`${ov.seen} questions practiced`:"Welcome"}</div>
+    <h2>Ready to train?</h2>
+    <p class="hsub">${ov.seen?"Pick up where you left off, search for a concept, or jump into a section below.":"Search for any concept, or choose a section below. Timed or untimed — your call."}</p>
+    <div class="hrow">
+      <div class="hstats">
+        <div><div class="n">${ov.pct==null?"—":ov.pct+"%"}</div><div class="l">Accuracy</div></div>
+        <div><div class="n">${ov.seen}</div><div class="l">Done</div></div>
+        <div><div class="n">${wrong}</div><div class="l">To redo</div></div>
+      </div>
+      <button class="hcta" id="heroCta">${esc(cta.t)} →</button>
+    </div>`;
+  $("#heroCta").onclick=cta.act;
+  /* AI example chips */
+  $("#exChips").innerHTML=EXAMPLES.map(x=>`<button class="ex-chip" data-q="${esc(x)}">${esc(x)}</button>`).join("");
+  $("#exChips").querySelectorAll(".ex-chip").forEach(b=>b.onclick=()=>{ const q=b.dataset.q;
+    $("#srchInput").value=q; $("#srchInput").focus(); doSearch(q); });
+  pingAI();
+  const tiles=[
+    {k:"verbal",ic:ICON.verbal,t:"Verbal",d:"Reading Comprehension & Critical Reasoning."},
+    {k:"quant",ic:ICON.quant,t:"Quant · Problem Solving",d:"Every PS topic, arithmetic to geometry."},
+    {k:"ds",ic:ICON.ds,t:"Data Sufficiency",d:"DS across all quant topics."},
+    {k:"random",ic:ICON.random,t:"Random Mix",d:"A shuffled set drawn from every section."},
+    {k:"full",ic:ICON.full,t:"Full-length tests",d:"Timed, full-length simulation.",soon:true},
+    {k:"dash",ic:ICON.dash,t:"Dashboard",d:"Your performance, precision & weak spots.",feature:true},
+  ];
+  $("#sectionGrid").innerHTML=tiles.map(m=>`<button class="mode${m.feature?' feature':''}" data-k="${m.k}" ${m.soon?"disabled":""}>
+    <span class="ic">${m.ic}</span><span class="t">${esc(m.t)}</span><span class="d">${esc(m.d)}</span>
+    ${m.soon?'<span class="badge">Coming soon</span>':''}</button>`).join("");
+  $("#sectionGrid").querySelectorAll(".mode").forEach(b=>b.onclick=()=>{
+    if(b.disabled)return; const k=b.dataset.k;
+    if(k==="verbal") navTo(renderVerbal);
+    else if(k==="quant") navTo(()=>renderGroup("PS","Quant · Problem Solving"));
+    else if(k==="ds") navTo(()=>renderGroup("DS","Data Sufficiency"));
+    else if(k==="random") openSession("Random","Random Mix","A shuffled set from every section.",byTypes(["RC","CR","PS","DS"]));
+    else if(k==="dash") navTo(renderDashboard);
+  });
+  show("home");
+}
+
+/* ===== SECTION MENUS ===== */
+function menuHead(kick,title,desc){ $("#menuKick").textContent=kick; $("#menuTitle").textContent=title; $("#menuDesc").textContent=desc; }
+function fillMenu(tiles){
+  $("#menuPick").classList.add("hidden"); $("#menuPick").innerHTML="";
+  $("#menuGrid").classList.remove("hidden");
+  $("#menuGrid").innerHTML=tiles.map((m,i)=>`<button class="mode" data-i="${i}" ${m.disabled?"disabled":""}>
+    <span class="ic">${m.ic||ICON.practice}</span><span class="t">${esc(m.t)}</span><span class="d">${esc(m.d)}</span>
+    ${m.badge?`<span class="badge">${esc(m.badge)}</span>`:""}</button>`).join("");
+  $("#menuGrid").querySelectorAll(".mode").forEach(b=>b.onclick=()=>{ if(b.disabled)return; tiles[+b.dataset.i].act(); });
+  show("menu");
+}
+function renderVerbal(){
+  menuHead("Verbal","Verbal","Reading Comprehension, Critical Reasoning, and every Verbal question you've missed.");
+  const err=wrongOfTypes(["RC","CR"]);
+  fillMenu([
+    {ic:ICON.verbal,t:"Reading Comprehension",d:"Passage-based questions.",act:()=>navTo(()=>renderGroup("RC","Reading Comprehension"))},
+    {ic:ICON.practice,t:"Critical Reasoning",d:"Argument & reasoning questions.",act:()=>navTo(()=>renderGroup("CR","Critical Reasoning"))},
+    {ic:ICON.redo,t:"Errored Questions",d:"Every Verbal question you've gotten wrong — RC and CR mixed.",disabled:!err.length,badge:err.length?"Ready":"None yet",act:()=>openSession("Verbal · Review","Errored Verbal Questions","Re-attempt every Verbal question you missed.",err)},
+  ]);
+}
+function renderGroup(type,title){
+  menuHead(title,title,`Practice ${TLABEL[type]} — the full set, a specific subchapter, or just your misses.`);
+  const full=byType(type), wrong=wrongOfTypes([type]);
+  fillMenu([
+    {ic:ICON.practice,t:"Full set",d:`All ${TLABEL[type]} questions, any topic.`,act:()=>openSession(title,`Full ${TLABEL[type]}`,`Every ${TLABEL[type]} question in the bank.`,full)},
+    {ic:ICON.topic,t:"By subchapter",d:isQuantType(type)?"Choose a specific topic.":"Choose a specific question type.",act:()=>navTo(()=>renderTopics(type,title))},
+    {ic:ICON.redo,t:"Repractice Wrong Questions",d:"Only the ones you've missed here.",disabled:!wrong.length,badge:wrong.length?"Ready":"None yet",act:()=>openSession(title+" · Review","Repractice Wrong Questions",`Re-attempt your ${TLABEL[type]} misses.`,wrong)},
+  ]);
+}
+function renderTopics(type,title){
+  menuHead(title,title+" — subchapters",isQuantType(type)?"Choose a topic to drill.":"Choose a question type to drill.");
+  $("#menuGrid").classList.add("hidden"); $("#menuGrid").innerHTML="";
+  const topics=topicsFor(type);
+  const pick=$("#menuPick"); pick.classList.remove("hidden");
+  pick.innerHTML=topics.length?`<div class="topicgrid">`+topics.map(t=>`<button class="topic" data-v="${esc(t.v)}">
+      <span class="tk">${ICON.topic}</span><span class="tn">${esc(t.v)}</span><span class="tgo">›</span></button>`).join("")+`</div>`
+    :`<div class="nodata">No subchapters found for this section.</div>`;
+  pick.querySelectorAll(".topic").forEach(b=>b.onclick=()=>{ const v=b.dataset.v;
+    const pool=byType(type).filter(q=>conceptOf(q)===v);
+    openSession(title,v,`Practice: ${v}.`,pool);
+  });
+  show("menu");
+}
+
+/* ===== SESSION SETUP (timed / untimed + count + order) ===== */
+function openSession(kick,title,desc,pool){
+  App._pool=(pool||[]).slice(); App._sessMeta={kick,title,desc};
+  navTo(renderSetup);
+}
+function renderSetup(){
+  const {kick,title,desc}=App._sessMeta, n=App._pool.length;
+  $("#setupKick").textContent=kick; $("#setupTitle").textContent=title; $("#setupDesc").textContent=desc;
+  const opts=[5,10,15,20].filter(x=>x<n); opts.push("All");
+  const defCount=opts.includes(10)?10:(typeof opts[0]==="number"?opts[0]:"All");
+  App._setCfg={count:defCount,order:"shuffle",timed:false};
+  $("#countSel").innerHTML=opts.map(c=>`<option value="${c}"${c===defCount?" selected":""}>${c==="All"?"All available":c+" questions"}</option>`).join("");
+  $("#countSel").onchange=e=>{ App._setCfg.count=e.target.value==="All"?"All":+e.target.value; };
+  /* timing segmented control */
+  const setNote=()=>$("#timeNote").textContent=App._setCfg.timed
+    ?"A stopwatch runs while you solve — and you'll still see the time you spent on each question after answering."
+    :"No timer while you solve — but you'll still see the time you spent on each question after answering.";
+  $("#timeSeg").querySelectorAll("button").forEach(b=>{ b.classList.toggle("on",b.dataset.v==="untimed");
+    b.onclick=()=>{ App._setCfg.timed=b.dataset.v==="timed";
+      $("#timeSeg").querySelectorAll("button").forEach(x=>x.classList.toggle("on",x===b)); setNote(); }; });
+  setNote();
+  /* order */
+  $("#orderChips").querySelectorAll(".chip").forEach(b=>{ b.classList.toggle("on",b.dataset.v==="shuffle");
+    b.onclick=()=>{ App._setCfg.order=b.dataset.v; $("#orderChips").querySelectorAll(".chip").forEach(x=>x.classList.toggle("on",x===b)); }; });
+  $("#poolNote").textContent=n?"Pick your timing and length, then start.":"Nothing to practice here yet.";
+  $("#goBtn").disabled=!n;
   show("setup");
 }
-function updateConcept(){ const t=App.cfg.type[0];
-  App.cfg.concept=["ALL"];
-  if(isQuant()||!hasSubtypes()){
-    /* quant + Manhattan: pick by topic/chapter (with question counts) */
-    $("#conceptLbl").textContent="Topic";
-    chipRow($("#conceptChips"),[{v:"ALL",label:"All topics"},...topicsFor(t)],true,App.cfg.concept,updatePool);
-    return;
-  }
-  $("#conceptLbl").textContent=t==="CR"?"CR task":t==="RC"?"RC type":"Concept";
-  let items=t==="RC"?RC_TYPES:t==="CR"?CR_TASKS:[...RC_TYPES,...CR_TASKS];
-  const present=new Set(App.all.map(q=>q.subtype));
-  chipRow($("#conceptChips"),[{v:"ALL",label:"All concepts"},...items.filter(x=>present.has(x)).map(x=>({v:x,label:x}))],true,App.cfg.concept,updatePool);
-}
-function poolFor(cfg,mode){ let p=App.all.filter(q=>q.format!=="open_ended");
-  if(mode==="redo"){ const w=new Set(Store.wrongIds()); p=p.filter(q=>w.has(q.id)); }
-  if(mode==="weak"){ const wk=weakestForBank(); if(wk)p=p.filter(q=>conceptOf(q)===wk.name); }
-  if(!cfg.type.includes("ALL"))p=p.filter(q=>cfg.type.includes(q.type));
-  if(!cfg.concept.includes("ALL"))p=p.filter(q=>cfg.concept.includes(conceptOf(q)));
-  if(!cfg.diff.includes("ALL"))p=p.filter(q=>cfg.diff.includes(q.difficulty));
-  return p; }
-function updatePool(){ const p=poolFor(App.cfg,App.mode);
-  const n=App.mode==="weak"?Math.min(p.length,15):(App.cfg.count==="All"?p.length:Math.min(App.cfg.count,p.length));
-  $("#poolNote").textContent=p.length?`${p.length} questions match — you'll get ${n}.`:"No questions match this selection.";
-  $("#goBtn").disabled=!p.length; }
-$("#goBtn").addEventListener("click",()=>{ let p=poolFor(App.cfg,App.mode);
-  if(App.cfg.order==="shuffle"||App.mode==="weak"||App.mode==="redo")p=shuffle(p.slice());
-  const lim=App.mode==="weak"?Math.min(p.length,15):(App.cfg.count==="All"?p.length:Math.min(App.cfg.count,p.length));
-  App.qs=p.slice(0,lim); resetRun(); startRun(); });
+$("#goBtn").addEventListener("click",()=>{
+  let p=App._pool.slice();
+  if(App._setCfg.order==="shuffle") shuffle(p);
+  const lim=App._setCfg.count==="All"?p.length:Math.min(App._setCfg.count,p.length);
+  App.qs=p.slice(0,lim); App.timed=App._setCfg.timed; App.mode="practice"; resetRun(); startRun();
+});
 
 /* ===== RUNNER ===== */
-function isExam(){ return App.mode==="exam"; }
+function resetRun(){ App.idx=0; App.answers={}; App.flags=new Set(); App.checked=new Set();
+  App.qTimes={}; App._qTimedSet=new Set(); App._timingLastIdx=-1; App._qStart=Date.now(); }
 function startRun(){
-  clearInterval(App.timer); App.elapsed=0;
-  if(isExam()){ App.timeLeft=Math.round(App.qs.length*(45*60/(isQuant()?21:23))); App.showTimer=true; $("#timer").classList.remove("hidden"); }
-  else { App.showTimer=false; $("#timer").classList.add("hidden"); }
-  tick();
-  App.timer=setInterval(()=>{ App.elapsed++; if(isExam()){ App.timeLeft--; if(App.timeLeft<=0){tick();finish();return;} } tick(); },1000);
+  clearInterval(App.timer); App.elapsed=0; App.showTimer=App.timed;
+  $("#timer").classList.toggle("hidden",!App.timed); tick();
+  App.timer=setInterval(()=>{ App.elapsed++; tick(); },1000);
   show("run"); renderQ();
 }
-function tick(){ if(!App.showTimer)return; $("#timer").textContent=mmss(App.timeLeft); $("#timer").classList.toggle("low",App.timeLeft<=60); }
+function tick(){ if(!App.showTimer)return; $("#timer").textContent=mmss(App.elapsed); }
 function renderQ(){
-  const q=App.qs[App.idx], n=App.qs.length, answered=App.checked.has(App.idx), showType=!isExam()&&answered;
+  const q=App.qs[App.idx], n=App.qs.length, answered=App.checked.has(App.idx);
   if(App._timingLastIdx!==App.idx){ App._qStart=Date.now(); App._timingLastIdx=App.idx; }
   $("#qof").textContent=`${App.idx+1} / ${n}`;
-  $("#prog").style.width=`${(App.idx)/n*100}%`;
+  $("#prog").style.width=`${App.idx/n*100}%`;
   const typeCls=(q.type==='PS'||q.type==='DS')?`t-${q.type}`:'';
   $("#tags").innerHTML=`<span class="pill ${typeCls}">${q.type}</span>`+
-    `<span class="pill ${showType?'':'hide'}">${esc(conceptOf(q)||'—')}</span>`+
-    `<span class="pill d-${q.difficulty||''} ${showType?'':'hide'}">${esc(q.difficulty||'')}</span>`;
+    `<span class="pill ${answered?'':'hide'}">${esc(conceptOf(q)||'—')}</span>`+
+    `<span class="pill d-${q.difficulty||''} ${answered&&q.difficulty?'':'hide'}">${esc(q.difficulty||'')}</span>`;
   $("#flagBtn").classList.toggle("on",App.flags.has(App.idx));
-  $("#runMeta").textContent=isExam()?"Exam mode — no feedback until you finish":
-    App.mode==="daily"?`Daily RC · ${App._usedLevel} passage${App._dailyBonus?' (bonus)':''}`:
-    App.mode==="column"?`Adaptive column · ${App._usedLevel} · passage ${(App._colP||0)+1}`:
-    App.mode==="redo"?"Redo mode":App.mode==="weak"?"Targeting your weak type":"Practice mode";
+  $("#runMeta").textContent=(App.timed?"Timed practice":"Untimed practice")+(App._sessMeta?` · ${App._sessMeta.title}`:"");
   const parts=String(q.question).split("\n\n");
   const titled=parts.length>1&&parts[0].length<60&&!/[.?]$/.test(parts[0]);
   const qhtml=titled?`<b>${esc(parts[0])}</b><br>${esc(parts.slice(1).join("\n\n"))}`:esc(q.question);
   const diagHtml=q.diagram?`<img class="q-diagram" src="${q.diagram}" alt="figure">`:``;
-  const dir=q.type==="RC"?"The questions refer to the passage. Select the best answer.":"Select the best answer of the choices given.";
-  const sel=App.answers[q.id], reveal=!isExam()&&answered;
+  const dir=q.type==="RC"?"The questions refer to the passage. Select the best answer."
+    :q.type==="DS"?"Decide whether the statements give enough information. Select the best answer."
+    :"Select the best answer of the choices given.";
+  const sel=App.answers[q.id], reveal=answered;
   const choices=(q.options||[]).map(o=>{ let cls="choice",mk="";
     if(reveal){ if(o.label===q.correct_answer){cls+=" correct";mk='<span class="mk">Correct</span>';} else if(o.label===sel){cls+=" wrong";mk='<span class="mk">Your pick</span>';} }
     else if(o.label===sel)cls+=" sel";
     return `<li class="${cls}" data-label="${o.label}"><span class="radio"></span><span class="ctext">${esc(o.text)}</span>${mk}</li>`; }).join("");
   let fb="";
-  if(reveal){ const ok=sel===q.correct_answer;
+  if(reveal){ const ok=sel===q.correct_answer, t=App.qTimes[App.idx];
     fb=`<div class="fb ${ok?'ok':'no'}"><div class="fh">${ok?'✓ Correct':(sel?'✗ Incorrect — answer is '+q.correct_answer:'Answer is '+q.correct_answer)}
-      <span class="typetag"><span class="pill">${esc(conceptOf(q)||q.type)}</span><span class="pill d-${q.difficulty||''}">${esc(q.difficulty||'')}</span></span></div>
+      <span class="typetag"><span class="pill qtime">⏱ ${t!=null?mmss(t):'—'} on this question</span><span class="pill">${esc(conceptOf(q)||q.type)}</span>${q.difficulty?`<span class="pill d-${q.difficulty}">${esc(q.difficulty)}</span>`:''}</span></div>
       <div class="body"><h5>Explanation</h5>${esc(q.explanation||'No explanation available.')}</div></div>`; }
   const qpane=`<div class="pcard"><div class="directions">${esc(dir)}</div><div class="lbl">Question<span class="ln"></span></div>
     ${diagHtml}<p class="qtext">${qhtml}</p><ul class="choices">${choices}</ul>${fb}</div><div id="simPanelSlot"></div>`;
@@ -1027,64 +1071,40 @@ function renderQ(){
   updateAct();
   if(window.renderMathInElement) renderMathInElement(col,{delimiters:[{left:'$',right:'$',display:false}],throwOnError:false});
 }
-function pick(label){ const q=App.qs[App.idx]; if(!isExam()&&App.checked.has(App.idx))return;
+function pick(label){ const q=App.qs[App.idx]; if(App.checked.has(App.idx))return;
   App.answers[q.id]=label; $("#splitcols").querySelectorAll(".choice").forEach(li=>li.classList.toggle("sel",li.dataset.label===label)); updateAct(); }
 function updateAct(){ const q=App.qs[App.idx], last=App.idx===App.qs.length-1, b=$("#actBtn");
   $("#prevBtn").disabled=App.idx===0;
-  if(!isExam()&&!App.checked.has(App.idx)){ b.textContent="Submit"; b.className="btn primary"; b.disabled=!App.answers[q.id]; }
-  else { b.disabled=false; b.textContent=last?(isExam()?"End section ✓":"Finish ✓"):"Next ▶"; b.className="btn primary"+(last?" end":""); } }
+  if(!App.checked.has(App.idx)){ b.textContent="Submit"; b.className="btn primary"; b.disabled=!App.answers[q.id]; }
+  else { b.disabled=false; b.textContent=last?"Finish ✓":"Next ▶"; b.className="btn primary"+(last?" end":""); } }
 $("#actBtn").addEventListener("click",()=>{ const q=App.qs[App.idx], last=App.idx===App.qs.length-1;
-  if(!isExam()&&!App.checked.has(App.idx)){
-    const _tMs=Date.now()-App._qStart;
-    if(!App._qTimedSet.has(App.idx)){ App.qTimes[App.idx]=Math.round(_tMs/1000); App._qTimedSet.add(App.idx); }
-    App.checked.add(App.idx); Store.record(q,App.answers[q.id],App.answers[q.id]===q.correct_answer);
-    Attempts.saveAttempt(q,App.answers[q.id],_tMs); renderQ(); showSimilarForCurrentQ(); return; }
-  if(last){ if(isExam()) App.qTimes[App.idx]=(App.qTimes[App.idx]||0)+Math.round((Date.now()-App._qStart)/1000); finish(); return; }
-  if(isExam()) App.qTimes[App.idx]=(App.qTimes[App.idx]||0)+Math.round((Date.now()-App._qStart)/1000);
+  if(!App.checked.has(App.idx)){
+    const tMs=Date.now()-App._qStart;
+    if(!App._qTimedSet.has(App.idx)){ App.qTimes[App.idx]=Math.round(tMs/1000); App._qTimedSet.add(App.idx); }
+    App.checked.add(App.idx);
+    Store.record(q,App.answers[q.id],App.answers[q.id]===q.correct_answer);
+    Attempts.saveAttempt(q,App.answers[q.id],tMs);
+    renderQ(); showSimilarForCurrentQ(); return; }
+  if(last){ finish(); return; }
   App.idx++; renderQ(); });
-$("#prevBtn").addEventListener("click",()=>{ if(App.idx>0){
-  if(isExam()) App.qTimes[App.idx]=(App.qTimes[App.idx]||0)+Math.round((Date.now()-App._qStart)/1000);
-  App.idx--;renderQ();} });
+$("#prevBtn").addEventListener("click",()=>{ if(App.idx>0){ App.idx--; renderQ(); } });
 $("#flagBtn").addEventListener("click",()=>{ App.flags.has(App.idx)?App.flags.delete(App.idx):App.flags.add(App.idx); renderQ(); });
+$("#quitBtn").addEventListener("click",()=>{ if(confirm("Quit this session? Your answered questions are already saved.")){ clearInterval(App.timer); renderHome(); } });
 
 /* ===== FINISH + REPORT ===== */
 function finish(){
   clearInterval(App.timer);
-  if(isExam()) App.qs.forEach((q,i)=>{ if(App.answers[q.id]!=null){ Store.record(q,App.answers[q.id],App.answers[q.id]===q.correct_answer); Attempts.saveAttempt(q,App.answers[q.id],App.qTimes[i]!=null?App.qTimes[i]*1000:null); } });
-  if(isAdaptive()){ finishAdaptive(); return; }
-  let correct=0,ans=0; const bd={RC:{c:0,t:0},CR:{c:0,t:0}};
+  const present=[...new Set(App.qs.map(q=>q.type))];
+  let correct=0,ans=0; const bd={}; present.forEach(t=>bd[t]={c:0,t:0});
   App.qs.forEach(q=>{ const a=App.answers[q.id]; if(a!=null){ans++; const g=bd[q.type]; g.t++; if(a===q.correct_answer){correct++;g.c++;}} });
   const pct=ans?Math.round(100*correct/ans):0;
-  const tVals=Object.values(App.qTimes); const avgSec=tVals.length?Math.round(tVals.reduce((a,b)=>a+b,0)/tVals.length):0;
+  const tVals=Object.values(App.qTimes); const avg=tVals.length?Math.round(tVals.reduce((a,b)=>a+b,0)/tVals.length):0;
   $("#repScore").innerHTML=pct+'<small>%</small>';
-  $("#repSub").textContent=`${correct} correct of ${ans} answered · ${App.qs.length} in set · time ${mmss(App.elapsed)}`;
+  $("#repSub").textContent=`${correct} correct of ${ans} answered · ${App.qs.length} in set${App.timed?` · total ${mmss(App.elapsed)}`:""}`;
   const cell=(l,s)=>`<div class="c"><div class="n">${s.t?Math.round(100*s.c/s.t):0}%</div><div class="l">${l} · ${s.c}/${s.t}</div></div>`;
-  $("#repGrid").innerHTML=`<div class="c"><div class="n">${correct}/${App.qs.length}</div><div class="l">Overall</div></div>`+cell("RC",bd.RC)+cell("CR",bd.CR)+
-    `<div class="c"><div class="n">${avgSec?mmss(avgSec):'—'}</div><div class="l">Avg / question</div></div>`;
-  $("#repNext").hidden=true; $("#repRedo").hidden=false; $("#repHome").textContent="Back to dashboard";
-  App._repExpl=false; $("#repExpl").textContent="Show all explanations"; buildRepList(); show("report");
-}
-function finishAdaptive(){
-  const correct=App.qs.filter(q=>App.answers[q.id]===q.correct_answer).length;
-  const pct=App.qs.length?Math.round(100*correct/App.qs.length):0;
-  const used=App._usedLevel, next=Store.adaptLevel(used,pct);
-  const up=DIFFS.indexOf(next)>DIFFS.indexOf(used), down=DIFFS.indexOf(next)<DIFFS.indexOf(used);
-  const move=up?"⬆ promoted":down?"⬇ eased":"→ holding steady";
-  if(App.mode==="daily"&&!App._dailyBonus) Store.completeDaily(pct,used,App._curPassage.pid);
-  if(App.mode==="column"){ App._colLevel=next; Store.setColumnLevel(next); App._colC+=correct; App._colT+=App.qs.length; App._colP++; }
-  const tVals2=Object.values(App.qTimes); const avgSec2=tVals2.length?Math.round(tVals2.reduce((a,b)=>a+b,0)/tVals2.length):0;
-  $("#repScore").innerHTML=pct+'<small>%</small>';
-  let sub=`${correct}/${App.qs.length} on this ${used} passage`;
-  if(App.mode==="daily"){ const d=Store.getDaily(); sub+=App._dailyBonus?` · bonus (streak unchanged)`:` · 🔥 ${d.streak}-day streak`; sub+=` · next time: ${next}`; }
-  else { sub+=` · ${used} ${move} → next: ${next} · passage ${App._colP} this session`; }
-  sub+=` · ⏱ ${mmss(App.elapsed)}`;
-  $("#repSub").textContent=sub;
-  $("#repGrid").innerHTML=DIFFS.map(l=>{ const on=l===next,cur=l===used;
-    return `<div class="c" style="${on?'border-color:var(--brand)':''}"><div class="n">${on?'●':'○'}</div><div class="l">${l}${cur&&!on?' (was)':''}</div></div>`; }).join("")+
-    `<div class="c"><div class="n">${avgSec2?mmss(avgSec2):'—'}</div><div class="l">Avg / question</div></div>`;
-  $("#repRedo").hidden=true;
-  if(App.mode==="column"){ $("#repNext").hidden=false; $("#repNext").textContent=`Next passage (${next}) →`; $("#repHome").textContent="End session"; }
-  else { $("#repNext").hidden=true; $("#repHome").textContent="Back to dashboard"; }
+  $("#repGrid").innerHTML=`<div class="c"><div class="n">${correct}/${App.qs.length}</div><div class="l">Overall</div></div>`+
+    present.map(t=>cell(t,bd[t])).join("")+
+    `<div class="c"><div class="n">${avg?mmss(avg):'—'}</div><div class="l">Avg / question</div></div>`;
   App._repExpl=false; $("#repExpl").textContent="Show all explanations"; buildRepList(); show("report");
 }
 function buildRepList(){
@@ -1095,28 +1115,119 @@ function buildRepList(){
     const psg=q.passage?`<details class="rpsg"><summary>📖 Reading passage</summary><div class="psg">${esc(q.passage)}</div></details>`:"";
     const expl=App._repExpl?`<div class="expl">${esc(q.explanation||'')}</div>`:`<details><summary>Explanation</summary><div class="expl">${esc(q.explanation||'')}</div></details>`;
     return `<div class="ri ${cls}"><div class="h"><span class="dotr">${sym}</span><b>Q${i+1}</b>
-      <span class="meta"><span class="pill">${esc(conceptOf(q)||q.type)}</span><span class="pill d-${q.difficulty||''}">${esc(q.difficulty||'')}</span><span class="qtime">⏱ ${tStr}</span></span></div>
+      <span class="meta"><span class="pill">${esc(conceptOf(q)||q.type)}</span>${q.difficulty?`<span class="pill d-${q.difficulty}">${esc(q.difficulty)}</span>`:''}<span class="qtime">⏱ ${tStr}</span></span></div>
       <p class="stem">${esc(stem)}</p><div class="ans">Your answer: <b>${skip?'—':esc(a)}</b> · Correct: <b>${esc(q.correct_answer)}</b></div>${psg}${expl}</div>`; }).join("");
 }
 $("#repExpl").addEventListener("click",()=>{ App._repExpl=!App._repExpl; buildRepList(); $("#repExpl").textContent=App._repExpl?"Hide explanations":"Show all explanations"; });
 $("#repRedo").addEventListener("click",()=>{ const wrong=App.qs.filter(q=>App.answers[q.id]!==q.correct_answer);
-  if(!wrong.length){ renderDash(); return; } App.qs=shuffle(wrong.slice()); App.mode="redo"; resetRun(); startRun(); });
-$("#repNext").addEventListener("click",()=>{ if(App.mode==="column") nextColumnPassage(); });
-$("#repHome").addEventListener("click",renderDash);
+  if(!wrong.length){ renderHome(); return; } App.qs=shuffle(wrong.slice()); resetRun(); startRun(); });
+$("#repHome").addEventListener("click",renderHome);
 
-/* ===== TOOLBAR / LANDING / DATA ===== */
-function buildSrc(){ $("#srcSel").innerHTML=Object.entries(SOURCES).map(([k,v])=>`<option value="${k}"${k===App.source?" selected":""}>${esc(v.label)}</option>`).join(""); }
-$("#srcSel").addEventListener("change",async e=>{ App.source=e.target.value; if(await loadBank()) renderDash(); });
-$("#backBtn").addEventListener("click",()=>{ clearInterval(App.timer); renderDash(); });
-$("#startBtn").addEventListener("click",renderDash);
-$("#examQuick").addEventListener("click",()=>{ openSetup("exam"); });
-$("#resumeBtn").addEventListener("click",renderDash);
-$("#exportBtn").addEventListener("click",()=>{ const b=new Blob([Store.exportJSON()],{type:"application/json"});
-  const a=document.createElement("a"); a.href=URL.createObjectURL(b); a.download="gmat-progress.json"; a.click(); URL.revokeObjectURL(a.href); });
-$("#importBtn").addEventListener("click",()=>{ const inp=document.createElement("input"); inp.type="file"; inp.accept="application/json";
-  inp.onchange=()=>{ const f=inp.files[0]; if(!f)return; const r=new FileReader();
-    r.onload=()=>{ try{ Store.importJSON(r.result); renderDash(); alert("Progress imported."); }catch(e){ alert("Couldn't import that file."); } }; r.readAsText(f); }; inp.click(); });
-$("#resetBtn").addEventListener("click",()=>{ if(confirm("Erase all saved progress on this device?")){ Store.reset(); renderDash(); } });
+/* ===== DASHBOARD ===== */
+function bar(name,a){ const pct=a&&a.t?Math.round(100*a.c/a.t):null;
+  const col=pct==null?"var(--line)":pct>=75?"var(--green)":pct>=50?"var(--amber)":"var(--red)";
+  return `<div class="barrow"><div class="nm" title="${esc(name)}">${esc(name)}</div>
+    <div class="tr"><i style="width:${pct==null?0:pct}%;background:${col}"></i></div>
+    <div class="vv">${a&&a.t?`${a.c}/${a.t}`:'—'}</div></div>`; }
+function bardetail(sec){
+  if(sec.k==="verbal"){
+    const rcS=Store.byField("subtype","RC"), crS=Store.byField("subtype","CR");
+    const rcC=Store.byField("chapter","RC"), crC=Store.byField("chapter","CR");
+    const rc=Object.keys(rcS).length?rcS:rcC, cr=Object.keys(crS).length?crS:crC;
+    const block=(lbl,agg)=>{ const ks=Object.keys(agg).sort((a,b)=>(agg[a].c/agg[a].t)-(agg[b].c/agg[b].t));
+      return ks.length?`<div class="bd-lbl">${lbl} — weakest first</div>`+ks.map(k=>bar(k,agg[k])).join(""):""; };
+    const out=block("Reading Comprehension",rc)+block("Critical Reasoning",cr);
+    return out||`<div class="nodata">No Verbal attempts yet.</div>`;
+  }
+  const t=sec.types[0], agg=Store.byField("chapter",t);
+  const ks=Object.keys(agg).sort((a,b)=>(agg[a].c/agg[a].t)-(agg[b].c/agg[b].t));
+  return ks.length?`<div class="bd-lbl">By topic — weakest first</div>`+ks.map(k=>bar(k,agg[k])).join(""):`<div class="nodata">No attempts yet.</div>`;
+}
+function renderDashboard(){
+  const ov=Store.overall(), wrong=Store.wrongIds().length, C=175.9;
+  const secs=[{k:"verbal",label:"Verbal",types:["RC","CR"],ic:ICON.verbal},
+    {k:"quant",label:"Problem Solving",types:["PS"],ic:ICON.quant},
+    {k:"ds",label:"Data Sufficiency",types:["DS"],ic:ICON.ds}];
+  const secStat=types=>{ let tt=0,c=0; for(const h of Object.values(Store.data.history)){ if(!types.includes(h.type))continue; tt++; if(h.lastResult==="correct")c++; } return {t:tt,c,w:tt-c,pct:tt?Math.round(100*c/tt):null}; };
+  const cards=secs.map(s=>{ const st=secStat(s.types);
+    return `<div class="scard"><div class="sc-h"><span class="sc-ic">${s.ic}</span><b>${s.label}</b>
+      <span class="sc-pct">${st.pct==null?'—':st.pct+'%'}</span></div>
+      <div class="sc-stats"><span><b>${st.t}</b> done</span><span class="good"><b>${st.c}</b> right</span><span class="bad"><b>${st.w}</b> wrong</span></div>
+      ${st.t?`<div class="precbar"><i class="ok" style="width:${100*st.c/st.t}%"></i><i class="no" style="width:${100*st.w/st.t}%"></i></div>`:''}
+      ${bardetail(s)}</div>`; }).join("");
+  $("#dashWrap").innerHTML=`
+    <div class="pagehead"><div class="kick">Dashboard</div><h2>Your performance</h2>
+      <p>Precision and weak spots — overall and by section.</p></div>
+    <div class="dhero">
+      <div class="ringbox"><svg width="66" height="66" viewBox="0 0 66 66" aria-hidden="true">
+        <circle cx="33" cy="33" r="28" fill="none" stroke="rgba(255,255,255,.22)" stroke-width="7"/>
+        <circle cx="33" cy="33" r="28" fill="none" stroke="#fff" stroke-width="7" stroke-linecap="round"
+          stroke-dasharray="${C}" stroke-dashoffset="${ov.pct==null?C:C-C*ov.pct/100}" transform="rotate(-90 33 33)" style="transition:stroke-dashoffset .8s"/></svg>
+        <div><div class="pc">${ov.pct==null?'—':ov.pct+'%'}</div><div class="subt">${ov.seen?`${ov.corr}/${ov.seen} correct`:'no attempts yet'}</div></div></div>
+      <div class="quick">
+        <div class="q"><div class="n">${ov.seen}</div><div class="l">Done</div></div>
+        <div class="q"><div class="n">${ov.corr}</div><div class="l">Correct</div></div>
+        <div class="q"><div class="n">${wrong}</div><div class="l">To redo</div></div></div>
+    </div>
+    <h3 class="sec">By section</h3>
+    <div class="scards">${cards}</div>
+    <div class="callout" style="margin-top:16px">${dashInsight(ov)}</div>
+    <p class="foot">Overall precision <b>${ov.pct==null?'—':ov.pct+'%'}</b> across ${ov.seen} question${ov.seen===1?"":"s"}.
+      Progress is saved on this device — export or reset it in Settings.</p>`;
+  show("dash");
+}
+function dashInsight(ov){
+  if(!ov.seen) return "💡 Answer a few questions and this space highlights your weakest topic and precision.";
+  /* find single weakest concept with enough attempts, across all types */
+  let best=null;
+  for(const field of ["subtype","chapter"]){
+    const agg=Store.byField(field);
+    for(const [name,a] of Object.entries(agg)){ if(a.t<MIN_ATTEMPTS)continue; const p=a.c/a.t; if(!best||p<best.p)best={name,a,p}; }
+  }
+  if(!best) return `You're at <b>${ov.pct}%</b> precision over ${ov.seen} questions. Keep going to unlock weak-spot targeting (needs ${MIN_ATTEMPTS}+ tries per topic).`;
+  return `🎯 <b>Focus area:</b> your weakest subchapter is <b>${esc(best.name)}</b> (${best.a.c}/${best.a.t}, ${Math.round(100*best.p)}%). Open that section → <b>By subchapter</b> to drill it.`;
+}
+
+/* ===== SETTINGS ===== */
+function renderSettings(){
+  const dark=document.documentElement.getAttribute("data-theme")==="dark";
+  $("#setWrap").innerHTML=`
+    <div class="pagehead"><div class="kick">Settings</div><h2>Settings</h2><p>Appearance, account and your data.</p></div>
+    <h3 class="sec">Appearance</h3>
+    <div class="card"><div class="setrow"><div style="flex:1"><b>Theme</b><div class="hint2">Light or dark — also on the ☀/☾ button in the top bar.</div></div>
+      <div class="seg" id="themeSeg"><button data-v="light" class="${dark?'':'on'}" type="button">☀ Light</button><button data-v="dark" class="${dark?'on':''}" type="button">☾ Dark</button></div></div></div>
+    <h3 class="sec">Account</h3>
+    <div class="card"><p class="hint">Sign in to sync your progress across devices. As a guest, everything stays on this device only.</p>
+      <div class="acct" id="acct"></div></div>
+    <h3 class="sec">Your data</h3>
+    <div class="card"><div style="color:var(--muted);font-size:13px;margin-bottom:10px" id="storeNote"></div>
+      <div class="toolrow"><button class="tbtn" id="exportBtn" type="button">Export progress</button><button class="tbtn" id="importBtn" type="button">Import</button><button class="tbtn danger" id="resetBtn" type="button">Reset all</button></div></div>
+    <p class="foot">Personal, fair-use study tool · 910 questions across 3 books (Verbal + Quant). Nothing leaves your device unless you sign in.</p>`;
+  $("#storeNote").textContent=`Saved on this device (localStorage) · ${Store.overall().seen} questions tracked.`;
+  $("#themeSeg").querySelectorAll("button").forEach(b=>b.onclick=()=>{ applyTheme(b.dataset.v); renderSettings(); });
+  $("#exportBtn").onclick=()=>{ const b=new Blob([Store.exportJSON()],{type:"application/json"});
+    const a=document.createElement("a"); a.href=URL.createObjectURL(b); a.download="gmat-progress.json"; a.click(); URL.revokeObjectURL(a.href); };
+  $("#importBtn").onclick=()=>{ const inp=document.createElement("input"); inp.type="file"; inp.accept="application/json";
+    inp.onchange=()=>{ const f=inp.files[0]; if(!f)return; const r=new FileReader();
+      r.onload=()=>{ try{ Store.importJSON(r.result); renderSettings(); alert("Progress imported."); }catch(e){ alert("Couldn't import that file."); } }; r.readAsText(f); }; inp.click(); };
+  $("#resetBtn").onclick=()=>{ if(confirm("Erase all saved progress on this device?")){ Store.reset(); renderSettings(); } };
+  if(window.Sync) Sync.renderAuth();
+  show("settings");
+}
+
+/* ===== APPBAR / LANDING WIRING ===== */
+$("#brandHome").addEventListener("click",()=>{ clearInterval(App.timer); renderHome(); });
+$("#backBtn").addEventListener("click",navBack);
+$("#gearBtn").addEventListener("click",()=>navTo(renderSettings));
+
+/* splash -> auth reveal: any tap, key, scroll, or touch on the splash phase */
+["pointerdown","keydown","wheel","touchstart"].forEach(ev=>
+  window.addEventListener(ev,()=>{ if($("#landing").classList.contains("on")&&!_landingRevealed) revealAuth(); },{passive:true}));
+/* auth panel wiring */
+$("#acTabs").querySelectorAll("button").forEach(b=>b.addEventListener("click",()=>setAuthTab(b.dataset.t)));
+$("#authForm").addEventListener("submit",submitAuth);
+$("#authGoogle").addEventListener("click",()=>{ if(window.Sync) Sync.signIn(); });
+$("#authGuest").addEventListener("click",renderHome);
 
 document.addEventListener("keydown",e=>{ if(!$("#run").classList.contains("on"))return;
   if(e.key==="Enter")$("#actBtn").click(); else if(e.key==="ArrowLeft")$("#prevBtn").click();
@@ -1125,109 +1236,68 @@ document.addEventListener("keydown",e=>{ if(!$("#run").classList.contains("on"))
 
 /* ===== VECTOR SEARCH — similar questions + semantic search ===== */
 const VAPI=()=>(window.VECTOR_API||"").replace(/\/$/,"");
-
-async function fetchSimilar(qid){
+async function fetchSimilar(qid,bank){
   const base=VAPI(); if(!base) return null;
-  try{
-    /* bank filter keeps results openable in the currently loaded bank */
-    const r=await fetch(`${base}/search-similar/${encodeURIComponent(qid)}?limit=3&bank=${encodeURIComponent(App.source)}`);
-    if(!r.ok) return null;
-    return (await r.json()).results||[];
-  }catch(e){ return null; }
+  try{ const r=await fetch(`${base}/search-similar/${encodeURIComponent(qid)}?limit=3${bank?`&bank=${encodeURIComponent(bank)}`:""}`);
+    if(!r.ok) return null; return (await r.json()).results||[]; }catch(e){ return null; }
 }
-
 function renderSimilarPanel(results){
   if(!results||!results.length) return "";
   const items=results.map(r=>{
     const q=App.all.find(x=>x.id===r.question_id);
     const stem=(q?q.question.split("\n\n").pop():(r.stem||"")).slice(0,120);
-    return `<div class="sim-item" data-id="${esc(r.question_id)}">
-      <div style="flex:1;min-width:0">
+    const pctm=Math.round((r.score||0)*100);
+    return `<div class="sim-item" data-id="${esc(r.question_id)}"><div style="flex:1;min-width:0">
         <div class="si-meta"><span class="pill">${esc(r.type||"")}</span>${r.difficulty?`<span class="pill d-${r.difficulty}">${esc(r.difficulty)}</span>`:""}${r.subtype?`<span class="pill" style="opacity:.7">${esc(r.subtype)}</span>`:(r.chapter?`<span class="pill" style="opacity:.7">${esc(r.chapter)}</span>`:"")}</div>
         <div class="si-text">${esc(stem)}${stem.length>=120?"&hellip;":""}</div>
-      </div><span class="si-arr">›</span></div>`;
+      </div><span class="si-match"><span class="mp">${pctm}%</span><span class="mbar"><i style="width:${pctm}%"></i></span></span></div>`;
   }).join("");
-  return `<div class="sim-panel"><div class="sh"><span class="dot"></span>Similar questions</div><div class="sim-list">${items}</div></div>`;
+  return `<div class="sim-panel"><div class="sh"><span class="dot"></span>Similar questions<span class="sp">✦ AI-matched</span></div><div class="sim-list">${items}</div></div>`;
 }
-
 async function showSimilarForCurrentQ(){
-  if(isExam()) return;
-  const q=App.qs[App.idx];
-  const slot=document.getElementById("simPanelSlot");
+  const q=App.qs[App.idx]; const slot=document.getElementById("simPanelSlot");
   if(!slot||!q) return;
-  const results=await fetchSimilar(q.id);
+  const results=await fetchSimilar(q.id,q.bank);
   if(!results||!results.length) return;
   slot.innerHTML=renderSimilarPanel(results);
   slot.querySelectorAll(".sim-item").forEach(el=>el.addEventListener("click",()=>{
-    const found=App.all.find(x=>x.id===el.dataset.id);
-    if(!found) return;
     const qi=App.qs.findIndex(x=>x.id===el.dataset.id);
-    if(qi>=0&&qi!==App.idx){ App.idx=qi; renderQ(); }
-    else alert(`${found.type} · ${found.difficulty||"—"}\n\n${found.question.slice(0,300)}…`);
+    if(qi>=0&&qi!==App.idx){ App.idx=qi; renderQ(); return; }
+    const found=App.all.find(x=>x.id===el.dataset.id);
+    if(found) alert(`${found.type} · ${found.difficulty||"—"}\n\n${found.question.slice(0,300)}…`);
   }));
 }
-
 let _srchTimer=null;
 async function doSearch(query){
   const base=VAPI(),el=$("#srchResults"),st=$("#srchStatus");
-  if(!query||query.length<3){
-    el.classList.add("hidden"); el.innerHTML=""; st.classList.add("hidden"); return;
-  }
-  if(!base){
-    st.textContent="Semantic search needs api.py running (python api.py).";
-    st.classList.remove("hidden"); el.classList.add("hidden"); return;
-  }
+  if(!query||query.length<3){ el.classList.add("hidden"); el.innerHTML=""; st.classList.add("hidden"); return; }
+  if(!base){ st.textContent="Semantic search needs api.py running (python api.py)."; st.classList.remove("hidden"); el.classList.add("hidden"); return; }
   st.textContent="Searching…"; st.classList.remove("hidden");
   try{
-    const r=await fetch(`${base}/search?q=${encodeURIComponent(query)}&limit=8`);
-    if(!r.ok) throw 0;
+    const r=await fetch(`${base}/search?q=${encodeURIComponent(query)}&limit=8`); if(!r.ok) throw 0;
     const res=(await r.json()).results||[];
-    el.innerHTML=!res.length
-      ?`<div class="sr-empty">No matches for “${esc(query)}”</div>`
-      :res.map(r=>{
-          const q=App.all.find(x=>x.id===r.question_id);
+    el.innerHTML=!res.length?`<div class="sr-empty">No matches for "${esc(query)}"</div>`
+      :res.map(r=>{ const q=App.all.find(x=>x.id===r.question_id);
           const stem=(q?q.question.split("\n\n").pop():(r.stem||"")).slice(0,120);
-          const bankLbl=r.bank&&r.bank!==App.source&&SOURCES[r.bank]?`<span class="pill" style="opacity:.7">${esc(SOURCES[r.bank].label)}</span>`:"";
-          return `<div class="sr-item" data-id="${esc(r.question_id)}" data-bank="${esc(r.bank||"")}">
-            <div class="sr-meta"><span class="pill">${esc(r.type||"")}</span>${r.difficulty?`<span class="pill d-${r.difficulty}">${esc(r.difficulty)}</span>`:""}${r.subtype?`<span class="pill" style="opacity:.7">${esc(r.subtype)}</span>`:(r.chapter?`<span class="pill" style="opacity:.7">${esc(r.chapter)}</span>`:"")}${bankLbl}
+          return `<div class="sr-item" data-id="${esc(r.question_id)}">
+            <div class="sr-meta"><span class="pill">${esc(r.type||"")}</span>${r.difficulty?`<span class="pill d-${r.difficulty}">${esc(r.difficulty)}</span>`:""}${r.subtype?`<span class="pill" style="opacity:.7">${esc(r.subtype)}</span>`:(r.chapter?`<span class="pill" style="opacity:.7">${esc(r.chapter)}</span>`:"")}
               <span style="color:var(--faint);font-size:11px">${Math.round((r.score||0)*100)}% match</span></div>
-            <div class="sr-text">${esc(stem)}${stem.length>=120?"&hellip;":""}</div></div>`;
-        }).join("");
+            <div class="sr-text">${esc(stem)}${stem.length>=120?"&hellip;":""}</div></div>`; }).join("");
     el.classList.remove("hidden");
-    st.textContent=`${res.length} result${res.length!==1?"s":""} for “${query}”`;
+    st.textContent=`${res.length} result${res.length!==1?"s":""} for "${query}"`;
   }catch(e){ el.classList.add("hidden"); st.textContent="Search unavailable — is api.py running?"; }
 }
-
-$("#srchInput").addEventListener("input",e=>{
-  clearTimeout(_srchTimer);
-  _srchTimer=setTimeout(()=>doSearch(e.target.value.trim()),400);
-});
-$("#srchResults").addEventListener("click",async e=>{
-  const item=e.target.closest(".sr-item");
-  if(!item) return;
-  /* cross-bank result: switch the source first, then open the question */
-  const b=item.dataset.bank;
-  if(b&&b!==App.source&&SOURCES[b]){
-    App.source=b; $("#srcSel").value=b;
-    if(!await loadBank()) return;
-  }
-  const q=App.all.find(x=>x.id===item.dataset.id);
-  if(!q) return;
-  App.mode="practice"; App.qs=[q]; resetRun(); startRun();
+$("#srchInput").addEventListener("input",e=>{ clearTimeout(_srchTimer); _srchTimer=setTimeout(()=>doSearch(e.target.value.trim()),400); });
+$("#srchResults").addEventListener("click",e=>{ const item=e.target.closest(".sr-item"); if(!item) return;
+  const q=App.all.find(x=>x.id===item.dataset.id); if(!q) return;
+  App.mode="practice"; App.timed=false; App._sessMeta={title:"Search result"}; App.qs=[q]; resetRun(); startRun();
 });
 
-function renderLanding(){
-  $("#landingLegal").textContent="Personal, fair-use study tool · 910 questions across 3 books (Verbal + Quant) · progress saved on this device.";
-  const ov=Store.overall(), d=Store.getDaily();
-  if(ov.seen){ $("#resumeCard").classList.remove("hidden");
-    $("#resumeSub").textContent=`${ov.pct}% accuracy · ${ov.seen} done${d.streak?` · 🔥 ${d.streak}-day streak`:""}`; }
-  if(window.Sync) Sync.renderAuth();
-  show("landing");
-}
-/* re-render the visible screen after a background sync hydrates new data
-   (skips active setup/run/report so an in-progress session isn't disrupted) */
+/* re-render the visible screen after a background sync hydrates new data */
 function rerenderCurrent(){
-  if($("#dash").classList.contains("on")) renderDash();
+  if($("#dash").classList.contains("on")) renderDashboard();
+  else if($("#settings").classList.contains("on")) renderSettings();
+  else if($("#home").classList.contains("on")) renderHome();
   else if($("#landing").classList.contains("on")) renderLanding();
 }
 
@@ -1241,7 +1311,7 @@ document.querySelectorAll("[data-themebtn]").forEach(b=>b.addEventListener("clic
 applyTheme(document.documentElement.getAttribute("data-theme")==="dark"?"dark":"light");
 
 /* boot — render local-first immediately, then let Sync hydrate from the cloud (if configured) */
-(async()=>{ buildSrc(); await loadBank(); renderLanding(); Sync.init(); Attempts.init(); })();
+(async()=>{ await loadAll(); renderLanding(); Sync.init(); Attempts.init(); })();
 </script>
 </body>
 </html>
