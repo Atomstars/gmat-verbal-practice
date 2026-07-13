@@ -8,7 +8,7 @@ LaTeX-reconstruction functions with synthetic span data.
 import os
 import sys
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(__file__)), "pipeline"))
 
 import parse_quant as q
 

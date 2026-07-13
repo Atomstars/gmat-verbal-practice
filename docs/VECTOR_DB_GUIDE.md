@@ -1,5 +1,12 @@
 # GMAT Vector DB Setup Guide
 
+> **⚠ Partially historical (written 2026-06, single-bank era).** The app's vector
+> search now runs **fully in the browser** (`embeddings.json` + transformers.js) —
+> see [DESIGN.md](DESIGN.md) §2.5/§3.3 for the current architecture. This guide
+> remains useful for the optional local debug API (`pipeline/api.py`) and the
+> embedding recipe. `setup_qdrant.py` mentioned below was removed — `api.py` does
+> the same Qdrant load at startup. Build the index with `python pipeline/build_index.py`.
+
 ## Overview
 
 This guide covers the setup and usage of embeddings + Qdrant vector database for semantic search over GMAT questions.

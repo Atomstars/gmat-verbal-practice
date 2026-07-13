@@ -57,7 +57,9 @@ def init_qdrant():
 
     # Load embedded questions
     if not os.path.exists("questions_embedded.json"):
-        raise FileNotFoundError("questions_embedded.json not found. Run test_embeddings.py first.")
+        raise FileNotFoundError(
+            "questions_embedded.json not found. Run: python pipeline/build_index.py (from repo root)."
+        )
 
     print("Loading embedded questions...")
     with open("questions_embedded.json", encoding="utf-8") as f:

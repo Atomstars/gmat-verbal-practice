@@ -1,8 +1,8 @@
 # HANDOFF — start here
 
 Fast catch-up for a new session. Read this first, then [CLAUDE.md](CLAUDE.md) for the
-deep parser/app reference, [TECH_STACK.md](TECH_STACK.md) for the stack, and
-[PROJECT_LOG.md](PROJECT_LOG.md) for how we got here.
+deep parser/app reference, [TECH_STACK.md](docs/TECH_STACK.md) for the stack, and
+[PROJECT_LOG.md](docs/PROJECT_LOG.md) for how we got here.
 
 ## What this project is
 A **personal, fair-use** GMAT trainer. A Python parser extracts real, answer-verified
@@ -31,12 +31,11 @@ unconfirmable as `null`.** Correctness beats volume.
   - **32 diagram PNGs** in `diagrams/` — figures AND data-tables (200 DPI), each with a
     caption in `diagram_captions.json` (sidecar, merged by the parser at parse time).
   - `questions_embedded.json` — merged **all-banks** vector index (910 q) for `api.py`;
-    rebuild with `python test_embeddings.py` after any parser re-run.
-- **App:** `index.html` — "GMAT Verbal Trainer", a multi-screen SPA. Three question
-  banks selectable from the top-right dropdown:
-  - "Official Guide 2024–25" (default)
-  - "Manhattan: All the Verbal"
-  - "MR Quant Question Bank" ← added 2026-06-26
+    rebuild with `python pipeline/build_index.py` after any parser re-run.
+- **App:** `index.html` — "GMAT Trainer", a multi-screen SPA. All three banks
+  (OG Verbal, Manhattan Verbal, MR Quant) are **fetched at boot and merged into one
+  pool** (`App.all`, 910 q, each tagged `q.bank`) — no bank picker; the Sections UI
+  (Verbal / Quant / topics) decides what appears.
   - Quant math renders via **KaTeX** (CDN auto-render, `$...$` inline delimiters).
   - PS badge (blue) and DS badge (purple) in question header.
   - Geometry questions show a diagram `<img>` above the stem.
@@ -44,16 +43,17 @@ unconfirmable as `null`.** Correctness beats volume.
     Target-weak-spots, Analytics dashboard. Progress in **localStorage** (`gmat_verbal_v1`).
 - **Supabase cross-device sync:** local-first, optional. Google OAuth + `progress` table.
   Project `bfaaczlxfafsxjnqqvoc` (Seoul). **Google sign-in not yet end-to-end verified.**
-- **Vector search (optional):** `api.py` (FastAPI + in-memory Qdrant), serves **all 910
-  questions across the three banks** (`python test_embeddings.py` builds the unified
-  `questions_embedded.json`, each record tagged `bank: og|manhattan|quant`).
-  `/search-similar` defaults to same-bank + same-type (optional `bank`/`chapter`/
-  `difficulty`/`min_score` params); `/search` takes `bank`/`type`/`chapter`/`difficulty`;
-  `/chapters` lists topics per bank. The similar-questions panel filters to the current
-  bank; the search bar searches everything and auto-switches banks when you click a
-  cross-bank result. Quant retrieval is diagram-aware via caption text (e.g. "shaded
+- **Vector search — in the browser, no backend:** precomputed vectors ship in
+  `embeddings.json` (built by `python pipeline/build_index.py` together with the
+  unified `questions_embedded.json`); queries are embedded on-device via
+  transformers.js (`Xenova/all-MiniLM-L6-v2`), so Smart search + the similar-questions
+  panel work on Vercel with no server. Both rank over the merged all-banks pool
+  (`App.all`, all 910). Quant retrieval is diagram-aware via caption text (e.g. "shaded
   ring between two circles" finds the unlabeled annulus figure).
-  `python eval_retrieval.py` = retrieval quality report (consistency@5, weak queries,
+  `pipeline/api.py` (FastAPI + in-memory Qdrant over all 910 questions, with
+  bank/chapter/difficulty filters) is now an optional local debugging tool — the app
+  no longer calls it.
+  `python pipeline/eval_retrieval.py` = retrieval quality report (consistency@5, weak queries,
   near-duplicates).
   **Quant data fix (2026-07-04):** parser numbering bug created a phantom duplicate
   `ps-percents-q040` carrying the wrong answer on Q24's truncated stem — fixed by a
@@ -71,17 +71,17 @@ python -m http.server 8754      # REQUIRED — app fetch()es JSON, file:// fails
 Re-generate quant data (PDF lives outside the repo on OneDrive Desktop):
 ```bash
 pip install pymupdf pillow sentence-transformers
-python parse_quant.py "C:\Users\Akash\OneDrive\Desktop\New folder\MR-GMAT-Quantitative-Question-Bank-BTG-D27-M8_07.11.2016.pdf"
+python pipeline/parse_quant.py "C:\Users\Akash\OneDrive\Desktop\New folder\MR-GMAT-Quantitative-Question-Bank-BTG-D27-M8_07.11.2016.pdf"
 # writes questions-quant.json + diagrams/  (~60s for embeddings)
 
 # test a single topic batch first (faster, ~15s):
-python parse_quant.py "<pdf>" --ps-topics "Number properties" --ds-topics "Numbers"
+python pipeline/parse_quant.py "<pdf>" --ps-topics "Number properties" --ds-topics "Numbers"
 ```
 
 Re-generate Verbal data (PDF outside the repo):
 ```bash
 pip install pdfplumber beautifulsoup4 lxml pymupdf
-python parser.py --og "<path>/gmat-official-guide-2024-2025.pdf"
+python pipeline/parser.py --og "<path>/gmat-official-guide-2024-2025.pdf"
 ```
 
 ## Open items / next steps
@@ -105,7 +105,7 @@ python parser.py --og "<path>/gmat-official-guide-2024-2025.pdf"
 7. **Quant fraction options (~21 PS questions).** Option extraction loses hanging
    fraction denominators (e.g. q231's five options all read `$1$`; q219's option C is
    `$\frac{2}{\sqrt{}}$` missing the 3). Fix `_is_denominator_block`/`_spans_to_latex`
-   fraction reconstruction, re-parse, re-run `test_embeddings.py`. Answer letters are
+   fraction reconstruction, re-parse, re-run `pipeline/build_index.py`. Answer letters are
    unaffected — display-only issue.
 
 ## Gotchas / lessons (don't re-learn these the hard way)
@@ -130,19 +130,26 @@ python parser.py --og "<path>/gmat-official-guide-2024-2025.pdf"
 - **`gmat_theme`** (dark/light) is local-only, intentionally NOT synced to Supabase.
 - **Supabase anon key is public by design** — RLS protects each user's row.
 
-## Key files
+## Key files (repo restructured 2026-07-13 — app at root, tooling in folders)
 | File | Role |
 |---|---|
-| `parser.py` | 3 backends: `parse_pdf`/`parse_epub` (Manhattan Verbal) + `parse_og` (OG). |
-| `parse_quant.py` | Standalone quant parser: PS+DS → `questions-quant.json` + `diagrams/`. |
-| `api.py` | FastAPI vector search (Qdrant in-memory). Optional. |
-| `index.html` | The trainer SPA. Edit directly; never regenerate from parser. |
-| `index-classic.html` | Original simple single-question app (kept). |
+| `index.html` | The trainer SPA (deploy root). Edit directly; never regenerate from parser. |
 | `questions-og.json` | OG Verbal (346 q, embeddings). |
 | `questions.json` | Manhattan Verbal (64 q, embeddings). |
 | `questions-quant.json` | Manhattan Quant PS+DS (500 q, embeddings, diagram paths + captions). |
+| `embeddings.json` | `{id: [384 floats]}` slim index the browser fetches for Smart search. |
 | `diagrams/` | Cropped figure/table PNGs (200 DPI). Referenced by `diagram` field in JSON. |
-| `diagram_captions.json` | Sidecar: machine captions per diagram id; parser merges at parse time. |
-| `test_embeddings.py` | Builds the merged all-banks `questions_embedded.json` for `api.py`. |
+| `pipeline/parser.py` | 3 backends: `parse_pdf`/`parse_epub` (Manhattan Verbal) + `parse_og` (OG). |
+| `pipeline/parse_quant.py` | Standalone quant parser: PS+DS → `questions-quant.json` + `diagrams/`. |
+| `pipeline/build_index.py` | Builds `questions_embedded.json` (for api.py) + `embeddings.json` (for the app). |
+| `pipeline/api.py` | Optional FastAPI vector search (Qdrant in-memory); the app no longer calls it. |
+| `pipeline/diagram_captions.json` | Sidecar: machine captions per diagram id; parser merges at parse time. |
+| `tests/` | pytest regression suite (63 tests) for parser helpers + schema. |
+| `docs/DESIGN.md` | High-level + low-level design (start here for architecture). |
+| `docs/COVERAGE.md` | Extraction coverage + validation for the Verbal books. |
+| `prototypes/` | `index-classic.html` + `ui-*.html` design explorations (kept). |
 | `CLAUDE.md` | Deep reference: parser internals, schema, app architecture. |
-| `COVERAGE.md` | Extraction coverage + validation for the Verbal books. |
+
+Run every command from the **repo root** — all pipeline scripts read/write their
+JSON via cwd-relative paths (e.g. `python pipeline/parse_quant.py "<pdf>"` writes
+`questions-quant.json` and `diagrams/` at the root, where the app expects them).

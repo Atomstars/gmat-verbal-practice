@@ -3,7 +3,7 @@
 A complete reference for **what this app is, how it's built, and how to use it** —
 written so anyone (including a future you) can pick it up cold. For a narrative of
 *how it was built*, see [PROJECT_LOG.md](PROJECT_LOG.md); for fast session onboarding,
-see [HANDOFF.md](HANDOFF.md); for the deep parser/schema reference, see [CLAUDE.md](CLAUDE.md).
+see [HANDOFF.md](../HANDOFF.md); for the deep parser/schema reference, see [CLAUDE.md](../CLAUDE.md).
 
 ---
 
@@ -19,7 +19,7 @@ see [HANDOFF.md](HANDOFF.md); for the deep parser/schema reference, see [CLAUDE.
 > Deploys are triggered via the Vercel CLI from this repo (the Vercel project is not
 > GitHub-auto-deploy–connected at the project-settings level), so a push to `master`
 > needs a follow-up `vercel --prod` to actually go live. Always verify the live URL
-> after pushing — see [HANDOFF.md](HANDOFF.md) gotchas.
+> after pushing — see [HANDOFF.md](../HANDOFF.md) gotchas.
 
 ---
 
@@ -246,8 +246,8 @@ install.
 | [`questions.json`](questions.json) | Manhattan *All the Verbal* bank (64 Q). |
 | [`index-classic.html`](index-classic.html) | The original, simpler single-question app (kept for reference). |
 | `ui-{focus,momentum,console,exam}.html` | Four early UI design explorations (kept, not live). |
-| [`CLAUDE.md`](CLAUDE.md) | Deep technical reference for the parser internals + schema. |
-| [`HANDOFF.md`](HANDOFF.md) | Fast catch-up doc for a new working session. |
+| [`CLAUDE.md`](../CLAUDE.md) | Deep technical reference for the parser internals + schema. |
+| [`HANDOFF.md`](../HANDOFF.md) | Fast catch-up doc for a new working session. |
 | [`PROJECT_LOG.md`](PROJECT_LOG.md) | Narrative build history — the *why* behind each decision. |
 | [`COVERAGE.md`](COVERAGE.md) | Extraction coverage + validation numbers for both books. |
 | `APP_GUIDE.md` *(this file)* | Architecture + business-case curriculum, all in one place. |

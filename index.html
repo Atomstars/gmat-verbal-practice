@@ -1299,9 +1299,14 @@ async function showSimilarForCurrentQ(){
   slot.innerHTML=renderSimilarPanel(results);
   slot.querySelectorAll(".sim-item").forEach(el=>el.addEventListener("click",()=>{
     const qi=App.qs.findIndex(x=>x.id===el.dataset.id);
-    if(qi>=0&&qi!==App.idx){ App.idx=qi; renderQ(); return; }
+    if(qi>=0){ if(qi!==App.idx){ App.idx=qi; renderQ(); } return; }
     const found=App.all.find(x=>x.id===el.dataset.id);
-    if(found) alert(`${found.type} · ${found.difficulty||"—"}\n\n${found.question.slice(0,300)}…`);
+    if(!found) return;
+    /* Open it as part of this session: APPEND (never insert mid-array — answers,
+       checked and qTimes are keyed by index) and jump straight to it. */
+    App.qs.push(found);
+    App.idx=App.qs.length-1;
+    renderQ();
   }));
 }
 let _srchTimer=null;

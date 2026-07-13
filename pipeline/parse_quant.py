@@ -1511,8 +1511,9 @@ def parse_quant(pdf_path, ps_topics_filter=None, ds_topics_filter=None):
     # Merge diagram captions (sidecar file, survives re-parses). Captions are
     # machine-derived descriptions of the cropped figures used ONLY to make
     # embeddings/search see the diagram content — never shown as book content.
-    if os.path.exists("diagram_captions.json"):
-        with open("diagram_captions.json", encoding="utf-8") as f:
+    captions_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "diagram_captions.json")
+    if os.path.exists(captions_path):
+        with open(captions_path, encoding="utf-8") as f:
             captions = json.load(f)
         n_cap = 0
         for r in all_records:

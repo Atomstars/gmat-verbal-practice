@@ -10,8 +10,14 @@
     {
       "name": "gmat-ai",
       "runtimeExecutable": "python",
-      "runtimeArgs": ["api.py"],
+      "runtimeArgs": ["pipeline/api.py"],
       "port": 8000
+    },
+    {
+      "name": "gmat-web",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev", "--prefix", "web"],
+      "port": 3000
     }
   ]
 }

@@ -1,0 +1,77 @@
+/* Design tokens ported 1:1 from the vanilla app (index.html) so the migration
+   keeps the same visual identity. */
+:root {
+  --bg: #f6f7fb; --bg2: #eef0f6; --surface: #ffffff; --surface2: #f7f8fc;
+  --ink: #1a1c2b; --muted: #5f6678; --faint: #9aa1b4; --line: #e8eaf1; --line2: #f0f2f7;
+  --brand: #5b53e8; --brand2: #8b7bff; --brand-ink: #463fce; --accent: #0fb2c4;
+  --pick: #eeeffe;
+  --grad: linear-gradient(135deg, #6a5cf0 0%, #8b5cf6 100%);
+  --grad-soft: linear-gradient(135deg, #eff0ff, #f4edff);
+  --green: #15803d; --green-bg: #e9f7ee; --amber: #b45309; --amber-bg: #fdf3df;
+  --red: #c81e36; --red-bg: #fdebee; --flag: #e0820a;
+  --sans: "Inter", "Inter var", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --serif: Georgia, "Iowan Old Style", "Times New Roman", serif;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --r: 18px; --r2: 14px;
+  color-scheme: light;
+  --sh-sm: 0 1px 2px rgba(20, 24, 50, 0.05);
+  --sh: 0 2px 6px rgba(20, 24, 50, 0.05), 0 14px 34px rgba(20, 24, 50, 0.08);
+  --sh-lg: 0 8px 24px rgba(20, 24, 50, 0.1), 0 30px 60px rgba(20, 24, 50, 0.12);
+}
+[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0c0d15; --bg2: #11131e; --surface: #161826; --surface2: #1b1e2e;
+  --ink: #eceef7; --muted: #98a0b4; --faint: #6b7386; --line: #242739; --line2: #1c1f2e;
+  --brand: #8578ff; --brand2: #9d8cff; --brand-ink: #b6afff; --accent: #22c7db;
+  --pick: #211f3d;
+  --grad: linear-gradient(135deg, #7060ff, #9366ff);
+  --grad-soft: linear-gradient(135deg, #1b1c3a, #241a39);
+  --green: #4ade80; --green-bg: #102a1c; --amber: #fbbf24; --amber-bg: #2e2510;
+  --red: #fb7185; --red-bg: #2c1620; --flag: #f5b945;
+  --sh-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --sh: 0 2px 8px rgba(0, 0, 0, 0.35), 0 16px 40px rgba(0, 0, 0, 0.45);
+  --sh-lg: 0 10px 30px rgba(0, 0, 0, 0.5), 0 40px 70px rgba(0, 0, 0, 0.55);
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; min-height: 100%; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font: 15px/1.55 var(--sans);
+  -webkit-text-size-adjust: 100%;
+  -webkit-font-smoothing: antialiased;
+  letter-spacing: -0.011em;
+  overflow-x: hidden;
+}
+button { font-family: inherit; cursor: pointer; }
+a { color: var(--brand-ink); text-decoration: none; }
+::selection { background: color-mix(in srgb, var(--brand) 30%, transparent); }
+
+.wrap { max-width: 1000px; margin: 0 auto; padding: 22px 18px 64px; }
+
+.appbar {
+  position: sticky; top: 0; z-index: 40;
+  background: color-mix(in srgb, var(--bg) 82%, transparent);
+  backdrop-filter: blur(14px) saturate(1.4);
+  border-bottom: 1px solid var(--line);
+  height: 58px;
+  display: flex; align-items: center; gap: 12px;
+  padding: 0 16px;
+}
+.appbar .brand {
+  display: flex; align-items: center; gap: 10px;
+  font-weight: 800; font-size: 15.5px; letter-spacing: -0.2px;
+}
+.appbar .brand .mk {
+  width: 30px; height: 30px; border-radius: 9px;
+  background: var(--grad);
+  display: grid; place-items: center;
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(90, 84, 240, 0.4);
+}
+.appbar .sp { flex: 1; }
+.themebtn {
+  background: none; border: 1px solid var(--line); border-radius: 9px;
+  width: 34px; height: 34px; color: var(--ink); font-size: 15px;
+}

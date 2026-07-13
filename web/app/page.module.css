@@ -1,0 +1,98 @@
+.hero {
+  background: var(--grad);
+  color: #fff;
+  border-radius: var(--r);
+  padding: 24px 26px;
+  margin-top: 18px;
+  box-shadow: var(--sh);
+}
+.kick {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.85;
+}
+.hero h1 {
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  margin: 4px 0 14px;
+}
+.hstats {
+  display: flex;
+  gap: 26px;
+}
+.hstats b {
+  display: block;
+  font-size: 22px;
+  font-variant-numeric: tabular-nums;
+}
+.hstats span {
+  font-size: 12px;
+  opacity: 0.85;
+}
+.feature {
+  background: var(--grad-soft);
+}
+.error {
+  color: var(--red);
+  background: var(--red-bg);
+  border-radius: var(--r2);
+  padding: 10px 14px;
+}
+.sec {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 30px 0 12px;
+}
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 14px;
+}
+.tile {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  box-shadow: var(--sh-sm);
+  padding: 18px;
+  color: inherit;
+  transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
+}
+.tile:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--sh);
+  border-color: var(--brand2);
+}
+.tileHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+.tileType {
+  font-size: 12px;
+  font-weight: 800;
+  background: var(--pick);
+  color: var(--brand-ink);
+  border-radius: 99px;
+  padding: 2px 10px;
+}
+.tileCount {
+  font-size: 12px;
+  color: var(--faint);
+  font-variant-numeric: tabular-nums;
+}
+.tileTitle {
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+.tileDesc {
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.5;
+}

@@ -1,7 +1,7 @@
 # PROJECT_LOG — how this app came to be
 
 A narrative of the build, in order, with the decisions and why. (For current state +
-next steps, see [HANDOFF.md](HANDOFF.md).)
+next steps, see [HANDOFF.md](../HANDOFF.md).)
 
 ## 0 · Starting point
 The repo already had a Manhattan *All the Verbal* parser (`parse_pdf` + `parse_epub`,
