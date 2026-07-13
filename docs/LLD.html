@@ -1,0 +1,416 @@
+<title>GMAT Trainer &mdash; Low-Level Design</title>
+<style>
+:root{
+  --bg:#f7f8fc;--surface:#fff;--ink:#1b1e2c;--muted:#5c6478;--line:#e3e6f0;
+  --route:#4f46e5;--route-bg:#eef0fe;--route-line:#c7c9f5;
+  --comp:#7c3aed;--comp-bg:#f2ecfe;--comp-line:#d9c9f7;
+  --lib:#0e7490;--lib-bg:#e2f5f8;--lib-line:#a9dfe7;
+  --ext:#b4670a;--ext-bg:#fdf2e2;--ext-line:#f0d3a6;
+  --data:#3f7d34;--data-bg:#e9f6e5;--data-line:#bfe0b4;
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#0d1020;--surface:#161a2c;--ink:#e8eaf6;--muted:#98a1bd;--line:#272d49;
+  --route:#8f89f6;--route-bg:#1e2245;--route-line:#3a3f74;
+  --comp:#b491f7;--comp-bg:#251a3c;--comp-line:#42315e;
+  --lib:#38c0d4;--lib-bg:#0f2e36;--lib-line:#22505b;
+  --ext:#e0a458;--ext-bg:#2a2237;--ext-line:#4a3c30;
+  --data:#67c94f;--data-bg:#12301a;--data-line:#274d2c;
+}}
+:root[data-theme="dark"]{
+  --bg:#0d1020;--surface:#161a2c;--ink:#e8eaf6;--muted:#98a1bd;--line:#272d49;
+  --route:#8f89f6;--route-bg:#1e2245;--route-line:#3a3f74;
+  --comp:#b491f7;--comp-bg:#251a3c;--comp-line:#42315e;
+  --lib:#38c0d4;--lib-bg:#0f2e36;--lib-line:#22505b;
+  --ext:#e0a458;--ext-bg:#2a2237;--ext-line:#4a3c30;
+  --data:#67c94f;--data-bg:#12301a;--data-line:#274d2c;}
+:root[data-theme="light"]{
+  --bg:#f7f8fc;--surface:#fff;--ink:#1b1e2c;--muted:#5c6478;--line:#e3e6f0;
+  --route:#4f46e5;--route-bg:#eef0fe;--route-line:#c7c9f5;
+  --comp:#7c3aed;--comp-bg:#f2ecfe;--comp-line:#d9c9f7;
+  --lib:#0e7490;--lib-bg:#e2f5f8;--lib-line:#a9dfe7;
+  --ext:#b4670a;--ext-bg:#fdf2e2;--ext-line:#f0d3a6;
+  --data:#3f7d34;--data-bg:#e9f6e5;--data-line:#bfe0b4;}
+*{box-sizing:border-box}
+body{margin:0;padding:0 20px 70px;background:var(--bg);color:var(--ink);
+  font:15px/1.6 "Segoe UI",system-ui,-apple-system,sans-serif}
+.page{max-width:1200px;margin:0 auto}
+header{padding:48px 0 6px}
+.eyebrow{font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--route)}
+h1{font-size:30px;font-weight:800;letter-spacing:-.02em;margin:.15em 0 .1em}
+.lead{color:var(--muted);max-width:76ch}
+.legend{display:flex;gap:16px;flex-wrap:wrap;margin:18px 0 4px;font-size:12.5px}
+.legend span{display:inline-flex;align-items:center;gap:7px;color:var(--muted)}
+.dot{width:12px;height:12px;border-radius:3px;display:inline-block}
+.frame{background:var(--surface);border:1px solid var(--line);border-radius:14px;
+  padding:12px;overflow-x:auto;margin:16px 0 8px}
+.frame svg{display:block;min-width:1120px}
+svg text{font-family:"Segoe UI",system-ui,sans-serif;fill:var(--ink)}
+svg .m{fill:var(--muted)}
+svg .mono{font-family:Consolas,ui-monospace,monospace}
+.cap{color:var(--muted);font-size:13px;margin:0 4px 26px}
+h2{font-size:19px;margin:32px 0 .3em}
+h3{font-size:14px;margin:18px 0 .2em;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+p{max-width:78ch}
+.tblwrap{overflow-x:auto;border-radius:10px;margin:12px 0}
+table{border-collapse:collapse;width:100%;font-size:13.5px;background:var(--surface);
+  border:1px solid var(--line);border-radius:10px;overflow:hidden}
+th{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);text-align:left}
+th,td{padding:8px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+tr:last-child td{border-bottom:0}
+code{font-family:Consolas,ui-monospace,monospace;font-size:.85em;background:var(--route-bg);padding:.1em .35em;border-radius:4px}
+.seq{counter-reset:s;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:4px 0;margin:12px 0;list-style:none}
+.seq li{display:flex;gap:13px;padding:9px 16px;border-bottom:1px dashed var(--line);align-items:baseline}
+.seq li:last-child{border-bottom:0}
+.seq li::before{counter-increment:s;content:counter(s);flex:0 0 24px;height:24px;border-radius:50%;
+  background:var(--route-bg);color:var(--route);font-weight:700;font-size:12px;display:grid;place-items:center;transform:translateY(3px)}
+.seq b{font-family:Consolas,ui-monospace,monospace;font-size:13px}
+.seq span{font-size:13.5px;color:var(--muted)}
+.footer{margin-top:40px;color:var(--muted);font-size:13px;border-top:1px solid var(--line);padding-top:14px}
+</style>
+
+<div class="page">
+<header>
+  <div class="eyebrow">Architecture &middot; Low-Level Design (LLD)</div>
+  <h1>GMAT Trainer &mdash; module &amp; data detail</h1>
+  <p class="lead">The wiring diagram: every file/module in the React app, how they depend on each other,
+  the exact database tables and their security rules, and the function-level flow of a single answered
+  question. This is the level an engineer implements from.</p>
+  <div class="legend">
+    <span><i class="dot" style="background:var(--route)"></i> Routes (screens)</span>
+    <span><i class="dot" style="background:var(--comp)"></i> UI components</span>
+    <span><i class="dot" style="background:var(--lib)"></i> Logic modules (lib/)</span>
+    <span><i class="dot" style="background:var(--ext)"></i> External services</span>
+    <span><i class="dot" style="background:var(--data)"></i> Static data</span>
+  </div>
+</header>
+
+<div class="frame">
+<svg viewBox="0 0 1180 940" xmlns="http://www.w3.org/2000/svg" role="img"
+  aria-label="Low-level module dependency diagram">
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="var(--muted)"/></marker>
+  </defs>
+
+  <!-- ===== COLUMN HEADERS ===== -->
+  <text x="150" y="30" text-anchor="middle" font-size="12" font-weight="700" letter-spacing="1" fill="var(--route)">app/ &mdash; ROUTES</text>
+  <text x="418" y="30" text-anchor="middle" font-size="12" font-weight="700" letter-spacing="1" fill="var(--comp)">components/</text>
+  <text x="700" y="30" text-anchor="middle" font-size="12" font-weight="700" letter-spacing="1" fill="var(--lib)">lib/ &mdash; LOGIC</text>
+  <text x="1010" y="30" text-anchor="middle" font-size="12" font-weight="700" letter-spacing="1" fill="var(--ext)">EXTERNAL</text>
+
+  <!-- ===== ROUTES (col 1) ===== -->
+  <g font-size="12">
+    <rect x="40" y="44" width="220" height="40" rx="7" fill="var(--route-bg)" stroke="var(--route-line)"/>
+    <text x="52" y="62" class="mono" font-size="11.5" font-weight="700">layout.tsx</text>
+    <text x="52" y="77" class="m" font-size="10">app bar &middot; theme &middot; Boot()</text>
+
+    <rect x="40" y="94" width="220" height="46" rx="7" fill="var(--route-bg)" stroke="var(--route-line)"/>
+    <text x="52" y="112" class="mono" font-size="11.5" font-weight="700">page.tsx  &middot; Home</text>
+    <text x="52" y="127" class="m" font-size="10">auth gate &middot; hero stats &middot; tiles</text>
+
+    <rect x="40" y="150" width="220" height="40" rx="7" fill="var(--route-bg)" stroke="var(--route-line)"/>
+    <text x="52" y="168" class="mono" font-size="11.5" font-weight="700">setup/page.tsx</text>
+    <text x="52" y="182" class="m" font-size="10">count &middot; timing &middot; topic &middot; order</text>
+
+    <rect x="40" y="200" width="220" height="58" rx="7" fill="var(--route-bg)" stroke="var(--route)" stroke-width="1.5"/>
+    <text x="52" y="218" class="mono" font-size="11.5" font-weight="700">practice/page.tsx</text>
+    <text x="52" y="232" class="m" font-size="10">runner: pick&rarr;submit&rarr;next/prev</text>
+    <text x="52" y="245" class="m" font-size="10">flag &middot; keyboard &middot; similar &middot; report</text>
+
+    <rect x="40" y="268" width="220" height="40" rx="7" fill="var(--route-bg)" stroke="var(--route-line)"/>
+    <text x="52" y="286" class="mono" font-size="11.5" font-weight="700">dashboard/page.tsx</text>
+    <text x="52" y="300" class="m" font-size="10">ring &middot; section bars &middot; weak spot</text>
+
+    <rect x="40" y="318" width="220" height="40" rx="7" fill="var(--route-bg)" stroke="var(--route-line)"/>
+    <text x="52" y="336" class="mono" font-size="11.5" font-weight="700">settings/page.tsx</text>
+    <text x="52" y="350" class="m" font-size="10">theme &middot; account &middot; export/import</text>
+  </g>
+
+  <!-- ===== COMPONENTS (col 2) ===== -->
+  <g font-size="12">
+    <rect x="308" y="44" width="220" height="40" rx="7" fill="var(--comp-bg)" stroke="var(--comp-line)"/>
+    <text x="320" y="62" class="mono" font-size="11.5" font-weight="700">Boot.tsx</text>
+    <text x="320" y="77" class="m" font-size="10">wires Store&rarr;Sync on load</text>
+
+    <rect x="308" y="94" width="220" height="40" rx="7" fill="var(--comp-bg)" stroke="var(--comp-line)"/>
+    <text x="320" y="112" class="mono" font-size="11.5" font-weight="700">AuthGate.tsx</text>
+    <text x="320" y="127" class="m" font-size="10">sign-in / register / guest</text>
+
+    <rect x="308" y="144" width="220" height="40" rx="7" fill="var(--comp-bg)" stroke="var(--comp-line)"/>
+    <text x="320" y="162" class="mono" font-size="11.5" font-weight="700">SmartSearch.tsx</text>
+    <text x="320" y="177" class="m" font-size="10">query box &middot; results &middot; AI pill</text>
+
+    <rect x="308" y="200" width="220" height="52" rx="7" fill="var(--comp-bg)" stroke="var(--comp)" stroke-width="1.5"/>
+    <text x="320" y="218" class="mono" font-size="11.5" font-weight="700">QuestionCard.tsx</text>
+    <text x="320" y="232" class="m" font-size="10">stem &middot; options &middot; diagram</text>
+    <text x="320" y="245" class="m" font-size="10">feedback + explanation</text>
+
+    <rect x="308" y="262" width="220" height="38" rx="7" fill="var(--comp-bg)" stroke="var(--comp-line)"/>
+    <text x="320" y="280" class="mono" font-size="11.5" font-weight="700">MathText.tsx</text>
+    <text x="320" y="294" class="m" font-size="10">KaTeX $math$ renderer</text>
+
+    <rect x="308" y="310" width="220" height="38" rx="7" fill="var(--comp-bg)" stroke="var(--comp-line)"/>
+    <text x="320" y="328" class="mono" font-size="11.5" font-weight="700">ThemeToggle.tsx</text>
+    <text x="320" y="342" class="m" font-size="10">light / dark switch</text>
+  </g>
+
+  <!-- ===== LIB (col 3) ===== -->
+  <g font-size="12">
+    <rect x="576" y="44" width="248" height="42" rx="7" fill="var(--lib-bg)" stroke="var(--lib-line)"/>
+    <text x="588" y="62" class="mono" font-size="11.5" font-weight="700">types.ts</text>
+    <text x="588" y="77" class="m" font-size="10">Question schema &middot; conceptOf() &middot; labels</text>
+
+    <rect x="576" y="94" width="248" height="42" rx="7" fill="var(--lib-bg)" stroke="var(--lib-line)"/>
+    <text x="588" y="112" class="mono" font-size="11.5" font-weight="700">banks.ts</text>
+    <text x="588" y="127" class="m" font-size="10">loadAll() &rarr; merge 3 banks (910) &middot; playable()</text>
+
+    <rect x="576" y="144" width="248" height="52" rx="7" fill="var(--lib-bg)" stroke="var(--lib)" stroke-width="1.5"/>
+    <text x="588" y="162" class="mono" font-size="11.5" font-weight="700">store.ts</text>
+    <text x="588" y="176" class="m" font-size="10">record &middot; overall &middot; byField &middot; wrongIds</text>
+    <text x="588" y="189" class="m" font-size="10">updateDaily &middot; export/import &middot; localStorage</text>
+
+    <rect x="576" y="204" width="248" height="52" rx="7" fill="var(--lib-bg)" stroke="var(--lib)" stroke-width="1.5"/>
+    <text x="588" y="222" class="mono" font-size="11.5" font-weight="700">sync.ts</text>
+    <text x="588" y="236" class="m" font-size="10">Sync: pull/upsert/mergeProgress</text>
+    <text x="588" y="249" class="m" font-size="10">Attempts: telemetry &middot; signIn/out</text>
+
+    <rect x="576" y="264" width="248" height="40" rx="7" fill="var(--lib-bg)" stroke="var(--lib-line)"/>
+    <text x="588" y="282" class="mono" font-size="11.5" font-weight="700">supabase.ts</text>
+    <text x="588" y="296" class="m" font-size="10">client factories (URL + anon key)</text>
+
+    <rect x="576" y="312" width="248" height="52" rx="7" fill="var(--lib-bg)" stroke="var(--lib)" stroke-width="1.5"/>
+    <text x="588" y="330" class="mono" font-size="11.5" font-weight="700">vector.ts</text>
+    <text x="588" y="344" class="m" font-size="10">loadEmbeddings &middot; vecSearch &middot; vecSimilar</text>
+    <text x="588" y="357" class="m" font-size="10">embedQuery() &mdash; on-device MiniLM</text>
+
+    <rect x="576" y="372" width="248" height="42" rx="7" fill="var(--lib-bg)" stroke="var(--lib-line)"/>
+    <text x="588" y="390" class="mono" font-size="11.5" font-weight="700">daily.ts</text>
+    <text x="588" y="405" class="m" font-size="10">pickDaily &middot; finishDaily (adaptive level)</text>
+  </g>
+
+  <!-- ===== EXTERNAL (col 4) ===== -->
+  <g font-size="12">
+    <!-- Supabase progress -->
+    <rect x="888" y="44" width="256" height="86" rx="7" fill="var(--ext-bg)" stroke="var(--ext-line)"/>
+    <text x="900" y="62" class="mono" font-size="11.5" font-weight="700" fill="var(--ext)">Supabase &middot; progress</text>
+    <text x="900" y="79" class="mono m" font-size="10">user_id  uuid  PK / FK&rarr;auth.users</text>
+    <text x="900" y="94" class="mono m" font-size="10">data     jsonb  (whole progress blob)</text>
+    <text x="900" y="109" class="mono m" font-size="10">updated_at  timestamptz</text>
+    <text x="900" y="124" font-size="10" fill="var(--ext)">RLS: auth.uid() = user_id</text>
+
+    <!-- Supabase attempts -->
+    <rect x="888" y="142" width="256" height="104" rx="7" fill="var(--ext-bg)" stroke="var(--ext-line)"/>
+    <text x="900" y="160" class="mono" font-size="11.5" font-weight="700" fill="var(--ext)">Supabase &middot; attempts</text>
+    <text x="900" y="177" class="mono m" font-size="10">user_id &middot; question_id &middot; source</text>
+    <text x="900" y="192" class="mono m" font-size="10">q_type &middot; chosen_index &middot; correct_index</text>
+    <text x="900" y="207" class="mono m" font-size="10">is_correct &middot; time_ms</text>
+    <text x="900" y="224" font-size="10" fill="var(--ext)">per-answer timing telemetry</text>
+    <text x="900" y="239" font-size="10" class="m">insert-only &middot; anonymous identity</text>
+
+    <!-- Supabase auth -->
+    <rect x="888" y="258" width="256" height="46" rx="7" fill="var(--ext-bg)" stroke="var(--ext-line)"/>
+    <text x="900" y="276" class="mono" font-size="11.5" font-weight="700" fill="var(--ext)">Supabase &middot; Auth (GoTrue)</text>
+    <text x="900" y="291" class="m" font-size="10">email &middot; Google OAuth &middot; anonymous</text>
+
+    <!-- Model CDN -->
+    <rect x="888" y="316" width="256" height="46" rx="7" fill="var(--ext-bg)" stroke="var(--ext-line)"/>
+    <text x="900" y="334" class="mono" font-size="11.5" font-weight="700" fill="var(--ext)">Model CDN (HF / jsDelivr)</text>
+    <text x="900" y="349" class="m" font-size="10">all-MiniLM-L6-v2 &middot; cached after 1st load</text>
+
+    <!-- Static data -->
+    <rect x="888" y="380" width="256" height="70" rx="7" fill="var(--data-bg)" stroke="var(--data-line)"/>
+    <text x="900" y="398" class="mono" font-size="11.5" font-weight="700" fill="var(--data)">/data (static)</text>
+    <text x="900" y="415" class="mono m" font-size="10">questions-og / .json / -quant.json</text>
+    <text x="900" y="430" class="mono m" font-size="10">embeddings.json &middot; diagrams/*.png</text>
+    <text x="900" y="444" class="m" font-size="10">synced from repo root by sync-data.mjs</text>
+  </g>
+
+  <!-- ===== dependency arrows ===== -->
+  <g fill="none" stroke="var(--muted)" stroke-width="1.3" marker-end="url(#a)" opacity=".7">
+    <!-- layout -> Boot -->
+    <path d="M260 64 L308 64"/>
+    <!-- Home -> AuthGate, SmartSearch -->
+    <path d="M260 114 L308 114"/>
+    <path d="M260 118 L308 158"/>
+    <!-- practice -> QuestionCard -->
+    <path d="M260 226 L308 224"/>
+    <!-- QuestionCard -> MathText -->
+    <path d="M418 252 L418 262"/>
+    <!-- Home/routes -> banks + store (representative) -->
+    <path d="M260 128 C540 128 520 112 576 114"/>
+    <path d="M260 232 C520 232 540 172 576 168"/>
+    <!-- practice -> vector (similar) -->
+    <path d="M260 240 C500 340 540 336 576 336"/>
+    <!-- SmartSearch -> vector -->
+    <path d="M528 162 C556 300 556 330 576 332"/>
+    <!-- Boot -> store + sync -->
+    <path d="M528 60 C552 60 556 160 576 162"/>
+    <path d="M528 66 C556 66 556 220 576 224"/>
+    <!-- daily depends on store -->
+    <path d="M700 372 L700 196" stroke-dasharray="4 3"/>
+    <!-- store -> sync (onChange) -->
+    <path d="M700 196 L700 204"/>
+  </g>
+  <!-- lib -> external arrows -->
+  <g fill="none" stroke="var(--ext)" stroke-width="1.4" marker-end="url(#a)" opacity=".8">
+    <path d="M824 224 C860 224 864 150 888 160"/>   <!-- sync -> attempts/progress -->
+    <path d="M824 214 C860 200 866 100 888 92"/>
+    <path d="M824 286 C858 286 862 282 888 282"/>   <!-- supabase -> auth -->
+  </g>
+  <g fill="none" stroke="var(--data)" stroke-width="1.4" marker-end="url(#a)" opacity=".85">
+    <path d="M824 336 C858 336 864 340 888 340"/>   <!-- vector -> model CDN -->
+    <path d="M824 344 C860 400 866 410 888 410"/>   <!-- vector -> embeddings -->
+    <path d="M824 116 C860 116 866 400 888 404"/>   <!-- banks -> questions data -->
+  </g>
+
+  <!-- ===== BUILD PIPELINE band ===== -->
+  <rect x="40" y="484" width="1104" height="180" rx="12" fill="var(--surface)" stroke="var(--line)"/>
+  <text x="58" y="510" font-size="12" font-weight="700" letter-spacing="1" fill="var(--ext)">BUILD PIPELINE (Python &middot; offline) &mdash; produces the /data files above</text>
+
+  <g font-size="11.5">
+    <rect x="58" y="524" width="150" height="54" rx="7" fill="var(--ext-bg)" stroke="var(--ext-line)"/>
+    <text x="133" y="546" text-anchor="middle" class="mono" font-size="11">parser.py</text>
+    <text x="133" y="562" text-anchor="middle" class="m" font-size="10">parse_pdf &middot; parse_epub</text>
+    <text x="133" y="574" text-anchor="middle" class="m" font-size="10">parse_og &middot; cross_check</text>
+
+    <rect x="222" y="524" width="150" height="54" rx="7" fill="var(--ext-bg)" stroke="var(--ext-line)"/>
+    <text x="297" y="546" text-anchor="middle" class="mono" font-size="11">parse_quant.py</text>
+    <text x="297" y="562" text-anchor="middle" class="m" font-size="10">LaTeX rebuild &middot; diagram</text>
+    <text x="297" y="574" text-anchor="middle" class="m" font-size="10">interval crop &middot; captions</text>
+
+    <rect x="386" y="524" width="150" height="54" rx="7" fill="var(--ext-bg)" stroke="var(--ext-line)"/>
+    <text x="461" y="546" text-anchor="middle" class="mono" font-size="11">gmat_schema.py</text>
+    <text x="461" y="566" text-anchor="middle" class="m" font-size="10">validate_records() gate</text>
+
+    <rect x="550" y="524" width="160" height="54" rx="7" fill="var(--data-bg)" stroke="var(--data-line)"/>
+    <text x="630" y="546" text-anchor="middle" class="mono" font-size="11" font-weight="700">questions-*.json</text>
+    <text x="630" y="566" text-anchor="middle" class="m" font-size="10">+ diagrams/*.png</text>
+
+    <rect x="724" y="524" width="160" height="54" rx="7" fill="var(--ext-bg)" stroke="var(--ext-line)"/>
+    <text x="804" y="546" text-anchor="middle" class="mono" font-size="11">build_index.py</text>
+    <text x="804" y="566" text-anchor="middle" class="m" font-size="10">MiniLM embeddings</text>
+
+    <rect x="898" y="524" width="150" height="54" rx="7" fill="var(--data-bg)" stroke="var(--data-line)"/>
+    <text x="973" y="546" text-anchor="middle" class="mono" font-size="11" font-weight="700">embeddings.json</text>
+    <text x="973" y="566" text-anchor="middle" class="m" font-size="10">384-d vectors</text>
+
+    <!-- helpers row -->
+    <rect x="58" y="596" width="326" height="46" rx="7" fill="var(--surface)" stroke="var(--line)"/>
+    <text x="70" y="614" class="mono" font-size="10.5">gmat_parsing_common.py</text>
+    <text x="70" y="630" class="m" font-size="10">SMART text-clean &middot; embed_questions() (shared)</text>
+
+    <rect x="398" y="596" width="310" height="46" rx="7" fill="var(--surface)" stroke="var(--line)"/>
+    <text x="410" y="614" class="mono" font-size="10.5">eval_retrieval.py &middot; tests/ (63)</text>
+    <text x="410" y="630" class="m" font-size="10">search-quality report + regression safety net</text>
+
+    <rect x="724" y="596" width="324" height="46" rx="7" fill="var(--surface)" stroke="var(--line)" stroke-dasharray="5 4"/>
+    <text x="736" y="614" class="mono" font-size="10.5">pipeline/api.py (optional)</text>
+    <text x="736" y="630" class="m" font-size="10">FastAPI + Qdrant vector DB &mdash; dev/debug only</text>
+  </g>
+  <!-- pipeline arrows -->
+  <g fill="none" stroke="var(--ext)" stroke-width="1.3" marker-end="url(#a)" opacity=".75">
+    <path d="M208 551 L222 551"/>
+    <path d="M372 551 L386 551"/>
+    <path d="M536 551 L550 551"/>
+    <path d="M710 551 L724 551"/>
+    <path d="M884 551 L898 551"/>
+  </g>
+  <!-- pipeline output -> /data (up arrow) -->
+  <path d="M973 524 C973 470 1016 462 1016 450" fill="none" stroke="var(--data)" stroke-width="1.6" marker-end="url(#a)"/>
+  <text x="986" y="474" font-size="10" fill="var(--data)">served</text>
+
+  <!-- ===== FLOW band ===== -->
+  <rect x="40" y="688" width="1104" height="228" rx="12" fill="var(--route-bg)" opacity=".4"/>
+  <rect x="40" y="688" width="1104" height="228" rx="12" fill="none" stroke="var(--route-line)"/>
+  <text x="58" y="714" font-size="12" font-weight="700" letter-spacing="1" fill="var(--route)">RUNTIME CALL FLOW &mdash; one answered question</text>
+
+  <g font-size="11">
+    <rect x="58" y="728" width="150" height="60" rx="7" fill="var(--surface)" stroke="var(--route-line)"/>
+    <text x="133" y="752" text-anchor="middle" font-weight="600" font-size="11.5">1 &middot; Answer</text>
+    <text x="133" y="768" text-anchor="middle" class="m" font-size="10">pick(label)</text>
+    <text x="133" y="780" text-anchor="middle" class="m" font-size="10">&rarr; submit()</text>
+
+    <rect x="238" y="728" width="150" height="60" rx="7" fill="var(--surface)" stroke="var(--route-line)"/>
+    <text x="313" y="752" text-anchor="middle" font-weight="600" font-size="11.5">2 &middot; Grade</text>
+    <text x="313" y="768" text-anchor="middle" class="m" font-size="10">vs correct_answer</text>
+    <text x="313" y="780" text-anchor="middle" class="m" font-size="10">show explanation + KaTeX</text>
+
+    <rect x="418" y="728" width="150" height="60" rx="7" fill="var(--surface)" stroke="var(--route-line)"/>
+    <text x="493" y="752" text-anchor="middle" font-weight="600" font-size="11.5">3 &middot; Record</text>
+    <text x="493" y="768" text-anchor="middle" class="mono m" font-size="10">Store.record()</text>
+    <text x="493" y="780" text-anchor="middle" class="m" font-size="10">localStorage write</text>
+
+    <rect x="598" y="728" width="150" height="60" rx="7" fill="var(--surface)" stroke="var(--route-line)"/>
+    <text x="673" y="752" text-anchor="middle" font-weight="600" font-size="11.5">4 &middot; Sync</text>
+    <text x="673" y="768" text-anchor="middle" class="mono m" font-size="10">onLocalChange()</text>
+    <text x="673" y="780" text-anchor="middle" class="m" font-size="10">debounced upsert (RLS)</text>
+
+    <rect x="778" y="728" width="150" height="60" rx="7" fill="var(--surface)" stroke="var(--route-line)"/>
+    <text x="853" y="752" text-anchor="middle" font-weight="600" font-size="11.5">5 &middot; Telemetry</text>
+    <text x="853" y="768" text-anchor="middle" class="mono m" font-size="10">Attempts.save()</text>
+    <text x="853" y="780" text-anchor="middle" class="m" font-size="10">anon insert &middot; time_ms</text>
+
+    <rect x="958" y="728" width="160" height="60" rx="7" fill="var(--surface)" stroke="var(--route)" stroke-width="1.4"/>
+    <text x="1038" y="752" text-anchor="middle" font-weight="600" font-size="11.5">6 &middot; Similar Qs</text>
+    <text x="1038" y="768" text-anchor="middle" class="mono m" font-size="10">vecSimilar(id, 3)</text>
+    <text x="1038" y="780" text-anchor="middle" class="m" font-size="10">nearest of all 910</text>
+  </g>
+  <g fill="none" stroke="var(--route)" stroke-width="1.4" marker-end="url(#a)">
+    <path d="M208 758 L238 758"/>
+    <path d="M388 758 L418 758"/>
+    <path d="M568 758 L598 758"/>
+    <path d="M748 758 L778 758"/>
+    <path d="M928 758 L958 758"/>
+  </g>
+  <text x="58" y="826" font-size="11" class="m">Steps 4&ndash;5 are skipped silently if the user is a guest or offline. Step 6 is skipped in Exam mode.</text>
+
+  <!-- Smart search sub-flow -->
+  <text x="58" y="856" font-size="12" font-weight="700" letter-spacing="1" fill="var(--route)">SMART SEARCH FLOW</text>
+  <g font-size="11">
+    <rect x="58" y="866" width="176" height="38" rx="7" fill="var(--surface)" stroke="var(--route-line)"/>
+    <text x="146" y="889" text-anchor="middle" class="m" font-size="10.5">type query (400ms debounce)</text>
+    <rect x="264" y="866" width="200" height="38" rx="7" fill="var(--surface)" stroke="var(--route-line)"/>
+    <text x="364" y="884" text-anchor="middle" class="mono m" font-size="10">embedQuery() &middot; on-device MiniLM</text>
+    <text x="364" y="897" text-anchor="middle" class="m" font-size="9.5">encode text &rarr; 384 numbers</text>
+    <rect x="494" y="866" width="200" height="38" rx="7" fill="var(--surface)" stroke="var(--route-line)"/>
+    <text x="594" y="884" text-anchor="middle" class="mono m" font-size="10">vecSearch(vec, 8)</text>
+    <text x="594" y="897" text-anchor="middle" class="m" font-size="9.5">rank all 910 by similarity</text>
+    <rect x="724" y="866" width="180" height="38" rx="7" fill="var(--surface)" stroke="var(--route-line)"/>
+    <text x="814" y="889" text-anchor="middle" class="m" font-size="10.5">click &rarr; 1-question session</text>
+  </g>
+  <g fill="none" stroke="var(--route)" stroke-width="1.4" marker-end="url(#a)">
+    <path d="M234 885 L264 885"/>
+    <path d="M464 885 L494 885"/>
+    <path d="M694 885 L724 885"/>
+  </g>
+</svg>
+</div>
+<p class="cap">Fig 2 &mdash; Low-level design. Top: the React app's module dependency graph (routes &rarr; components &rarr; logic &rarr; external).
+Middle: the Python build pipeline that produces the static data. Bottom: two runtime call-flows, step by step.</p>
+
+<h2>Database schema (Supabase Postgres)</h2>
+<div class="tblwrap"><table>
+  <tr><th>Table</th><th>Columns</th><th>Security (Row-Level Security)</th><th>Written by</th></tr>
+  <tr><td><code>progress</code></td><td><code>user_id</code> (uuid, PK), <code>data</code> (jsonb &mdash; the whole progress blob), <code>updated_at</code></td>
+      <td>Policy <code>auth.uid() = user_id</code> &mdash; a signed-in user can read/write only their own row. <b>Verified &#10003;</b></td>
+      <td><code>sync.ts</code> &rarr; upsert on every answer (debounced)</td></tr>
+  <tr><td><code>attempts</code></td><td><code>user_id</code>, <code>question_id</code>, <code>source</code>, <code>q_type</code>, <code>chosen_index</code>, <code>correct_index</code>, <code>is_correct</code>, <code>time_ms</code></td>
+      <td>Insert-only telemetry under an anonymous device identity. <b>Verified &#10003;</b></td>
+      <td><code>sync.ts</code> &rarr; <code>Attempts.save()</code></td></tr>
+</table></div>
+
+<h2>Question record (the shared data contract)</h2>
+<p>Every question &mdash; from all 3 books &mdash; uses one schema, defined in <code>lib/types.ts</code> and enforced by
+<code>pipeline/gmat_schema.py</code> before any file is written.</p>
+<div class="tblwrap"><table>
+  <tr><th>Field</th><th>Meaning</th></tr>
+  <tr><td><code>id &middot; type &middot; bank</code></td><td>Stable key &middot; RC/CR/PS/DS &middot; which book it came from</td></tr>
+  <tr><td><code>question &middot; passage &middot; options</code></td><td>The stem (may contain <code>$math$</code>) &middot; RC passage &middot; the A&ndash;E choices</td></tr>
+  <tr><td><code>correct_answer &middot; explanation</code></td><td>Verified letter (or <code>null</code> if unconfirmable) &middot; the book's own explanation</td></tr>
+  <tr><td><code>subtype &middot; difficulty &middot; chapter</code></td><td>Question category &middot; Easy/Medium/Hard &middot; topic &mdash; power the filters &amp; analytics</td></tr>
+  <tr><td><code>diagram &middot; diagram_description</code></td><td>Figure image path &middot; its caption (used to make the image searchable)</td></tr>
+</table></div>
+
+<p class="footer">Companion document: <b>HLD.html</b> (system overview) &middot; full prose in <code>docs/DESIGN.md</code> &middot;
+GMAT Trainer &middot; 2026-07-13</p>
+</div>

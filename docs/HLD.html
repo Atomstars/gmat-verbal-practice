@@ -1,0 +1,255 @@
+<title>GMAT Trainer &mdash; High-Level Design</title>
+<style>
+:root{
+  --bg:#f7f8fc;--surface:#fff;--ink:#1b1e2c;--muted:#5c6478;--line:#e3e6f0;
+  --run:#4f46e5;--run-bg:#eef0fe;--run-line:#c7c9f5;
+  --off:#b4670a;--off-bg:#fdf2e2;--off-line:#f0d3a6;
+  --cloud:#0e7490;--cloud-bg:#e2f5f8;--cloud-line:#a9dfe7;
+  --data:#3f7d34;--data-bg:#e9f6e5;--data-line:#bfe0b4;
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#0d1020;--surface:#161a2c;--ink:#e8eaf6;--muted:#98a1bd;--line:#272d49;
+  --run:#8f89f6;--run-bg:#1e2245;--run-line:#3a3f74;
+  --off:#e0a458;--off-bg:#2a2237;--off-line:#4a3c30;
+  --cloud:#38c0d4;--cloud-bg:#0f2e36;--cloud-line:#22505b;
+  --data:#67c94f;--data-bg:#12301a;--data-line:#274d2c;
+}}
+:root[data-theme="dark"]{
+  --bg:#0d1020;--surface:#161a2c;--ink:#e8eaf6;--muted:#98a1bd;--line:#272d49;
+  --run:#8f89f6;--run-bg:#1e2245;--run-line:#3a3f74;
+  --off:#e0a458;--off-bg:#2a2237;--off-line:#4a3c30;
+  --cloud:#38c0d4;--cloud-bg:#0f2e36;--cloud-line:#22505b;
+  --data:#67c94f;--data-bg:#12301a;--data-line:#274d2c;}
+:root[data-theme="light"]{
+  --bg:#f7f8fc;--surface:#fff;--ink:#1b1e2c;--muted:#5c6478;--line:#e3e6f0;
+  --run:#4f46e5;--run-bg:#eef0fe;--run-line:#c7c9f5;
+  --off:#b4670a;--off-bg:#fdf2e2;--off-line:#f0d3a6;
+  --cloud:#0e7490;--cloud-bg:#e2f5f8;--cloud-line:#a9dfe7;
+  --data:#3f7d34;--data-bg:#e9f6e5;--data-line:#bfe0b4;}
+*{box-sizing:border-box}
+body{margin:0;padding:0 20px 70px;background:var(--bg);color:var(--ink);
+  font:15px/1.6 "Segoe UI",system-ui,-apple-system,sans-serif}
+.page{max-width:1120px;margin:0 auto}
+header{padding:48px 0 6px}
+.eyebrow{font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--run)}
+h1{font-size:30px;font-weight:800;letter-spacing:-.02em;margin:.15em 0 .1em}
+.lead{color:var(--muted);max-width:74ch}
+.legend{display:flex;gap:18px;flex-wrap:wrap;margin:18px 0 4px;font-size:13px}
+.legend span{display:inline-flex;align-items:center;gap:7px;color:var(--muted)}
+.dot{width:12px;height:12px;border-radius:3px;display:inline-block}
+.frame{background:var(--surface);border:1px solid var(--line);border-radius:14px;
+  padding:12px;overflow-x:auto;margin:16px 0 8px}
+.frame svg{display:block;min-width:1000px}
+svg text{font-family:"Segoe UI",system-ui,sans-serif;fill:var(--ink)}
+svg .m{fill:var(--muted)}
+svg .mono{font-family:Consolas,ui-monospace,monospace}
+.cap{color:var(--muted);font-size:13px;margin:0 4px 26px}
+h2{font-size:19px;margin:30px 0 .3em}
+p{max-width:74ch}
+.tblwrap{overflow-x:auto;border-radius:10px;margin:12px 0}
+table{border-collapse:collapse;width:100%;font-size:14px;background:var(--surface);
+  border:1px solid var(--line);border-radius:10px;overflow:hidden}
+th{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);text-align:left}
+th,td{padding:8px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+tr:last-child td{border-bottom:0}
+code{font-family:Consolas,ui-monospace,monospace;font-size:.85em;background:var(--run-bg);padding:.1em .35em;border-radius:4px}
+.footer{margin-top:40px;color:var(--muted);font-size:13px;border-top:1px solid var(--line);padding-top:14px}
+</style>
+
+<div class="page">
+<header>
+  <div class="eyebrow">Architecture &middot; High-Level Design (HLD)</div>
+  <h1>GMAT Trainer &mdash; system at a glance</h1>
+  <p class="lead">The bird's-eye view: two independent halves &mdash; an <b>offline data factory</b> (Python)
+  and a <b>serverless browser app</b> (React) &mdash; joined only by a set of static data files. This is what
+  makes the product cost nothing to run and impossible to take down with a server outage.</p>
+  <div class="legend">
+    <span><i class="dot" style="background:var(--off)"></i> Build time (offline, occasional)</span>
+    <span><i class="dot" style="background:var(--run)"></i> Runtime (browser, every session)</span>
+    <span><i class="dot" style="background:var(--data)"></i> Data artifacts (the seam)</span>
+    <span><i class="dot" style="background:var(--cloud)"></i> Cloud services (optional)</span>
+  </div>
+</header>
+
+<div class="frame">
+<svg viewBox="0 0 1080 812" xmlns="http://www.w3.org/2000/svg" role="img"
+  aria-label="High-level architecture diagram">
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="var(--muted)"/></marker>
+    <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="var(--run)"/></marker>
+    <marker id="ad" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="var(--data)"/></marker>
+  </defs>
+
+  <!-- USER -->
+  <rect x="404" y="16" width="272" height="46" rx="10" fill="var(--surface)" stroke="var(--ink)" stroke-width="1.5"/>
+  <text x="540" y="38" text-anchor="middle" font-size="14" font-weight="700">Student</text>
+  <text x="540" y="54" text-anchor="middle" font-size="11.5" class="m">web browser &middot; desktop &amp; mobile</text>
+
+  <!-- ============ BUILD ZONE ============ -->
+  <rect x="20" y="92" width="316" height="704" rx="14" fill="var(--off-bg)" opacity=".5"/>
+  <rect x="20" y="92" width="316" height="704" rx="14" fill="none" stroke="var(--off-line)"/>
+  <text x="38" y="118" font-size="12" font-weight="700" letter-spacing="1.5" fill="var(--off)">BUILD TIME &middot; PYTHON PIPELINE</text>
+  <text x="38" y="135" font-size="11" class="m">run once when adding / fixing a question bank</text>
+
+  <g font-size="12.5">
+    <rect x="40" y="150" width="276" height="46" rx="8" fill="var(--surface)" stroke="var(--off-line)"/>
+    <text x="178" y="169" text-anchor="middle" font-weight="600">3 GMAT prep books</text>
+    <text x="178" y="186" text-anchor="middle" class="m" font-size="11">PDF / EPUB &middot; not in the repo (fair use)</text>
+
+    <rect x="40" y="216" width="133" height="52" rx="8" fill="var(--surface)" stroke="var(--off-line)"/>
+    <text x="106" y="238" text-anchor="middle" class="mono" font-size="11.5">parser.py</text>
+    <text x="106" y="255" text-anchor="middle" class="m" font-size="10.5">verbal (RC/CR)</text>
+    <rect x="183" y="216" width="133" height="52" rx="8" fill="var(--surface)" stroke="var(--off-line)"/>
+    <text x="249" y="238" text-anchor="middle" class="mono" font-size="11.5">parse_quant.py</text>
+    <text x="249" y="255" text-anchor="middle" class="m" font-size="10.5">PS/DS + diagrams</text>
+
+    <rect x="40" y="288" width="276" height="52" rx="8" fill="var(--surface)" stroke="var(--off-line)"/>
+    <text x="178" y="309" text-anchor="middle" font-weight="600">Verify &amp; validate</text>
+    <text x="178" y="326" text-anchor="middle" class="m" font-size="10.5">2 independent answer signals agree, or ship &ldquo;null&rdquo;</text>
+
+    <!-- artifacts produced -->
+    <rect x="40" y="360" width="276" height="60" rx="8" fill="var(--data-bg)" stroke="var(--data-line)"/>
+    <text x="178" y="381" text-anchor="middle" font-weight="700" class="mono" font-size="11.5">questions-*.json</text>
+    <text x="178" y="398" text-anchor="middle" class="m" font-size="10.5">910 verified questions + explanations</text>
+    <text x="178" y="412" text-anchor="middle" class="mono m" font-size="10.5">+ diagrams/*.png (32 figures)</text>
+
+    <rect x="40" y="440" width="276" height="46" rx="8" fill="var(--surface)" stroke="var(--off-line)"/>
+    <text x="178" y="459" text-anchor="middle" class="mono" font-size="11.5">build_index.py</text>
+    <text x="178" y="476" text-anchor="middle" class="m" font-size="10.5">MiniLM embeds every question &rarr; vectors</text>
+
+    <rect x="40" y="506" width="276" height="52" rx="8" fill="var(--data-bg)" stroke="var(--data-line)"/>
+    <text x="178" y="527" text-anchor="middle" font-weight="700" class="mono" font-size="11.5">embeddings.json</text>
+    <text x="178" y="544" text-anchor="middle" class="m" font-size="10.5">meaning-vectors for AI search</text>
+
+    <rect x="40" y="592" width="276" height="44" rx="8" fill="var(--surface)" stroke="var(--off-line)" stroke-dasharray="5 4"/>
+    <text x="178" y="611" text-anchor="middle" class="mono" font-size="11">pipeline/api.py</text>
+    <text x="178" y="627" text-anchor="middle" class="m" font-size="10.5">optional dev tool &middot; Qdrant vector DB</text>
+
+    <text x="178" y="672" text-anchor="middle" class="m" font-size="11">Guardrails:</text>
+    <text x="178" y="690" text-anchor="middle" class="m" font-size="10.5">pydantic schema gate &middot; 63 pytest tests</text>
+    <text x="178" y="704" text-anchor="middle" class="m" font-size="10.5">nothing invented &mdash; correctness &gt; volume</text>
+  </g>
+
+  <!-- build internal arrows -->
+  <g fill="none" stroke="var(--off)" stroke-width="1.4" marker-end="url(#a)" opacity=".8">
+    <path d="M178 196 L178 216"/>
+    <path d="M178 268 L178 288"/>
+    <path d="M178 340 L178 360"/>
+    <path d="M178 420 L178 440"/>
+    <path d="M178 486 L178 506"/>
+  </g>
+
+  <!-- ============ RUNTIME ZONE ============ -->
+  <rect x="356" y="92" width="708" height="704" rx="14" fill="var(--run-bg)" opacity=".45"/>
+  <rect x="356" y="92" width="708" height="704" rx="14" fill="none" stroke="var(--run-line)"/>
+  <text x="374" y="118" font-size="12" font-weight="700" letter-spacing="1.5" fill="var(--run)">RUNTIME &middot; RUNS IN THE BROWSER</text>
+  <text x="374" y="135" font-size="11" class="m">no backend server &middot; every study session</text>
+
+  <!-- Presentation layer -->
+  <text x="374" y="162" font-size="10.5" font-weight="700" letter-spacing="1" class="m">PRESENTATION</text>
+  <rect x="374" y="170" width="330" height="66" rx="9" fill="var(--surface)" stroke="var(--run)" stroke-width="1.4"/>
+  <text x="539" y="192" text-anchor="middle" font-weight="700" font-size="13">Next.js app (React + TypeScript)</text>
+  <text x="539" y="209" text-anchor="middle" class="m" font-size="11">production rebuild &middot; component UI</text>
+  <text x="539" y="224" text-anchor="middle" class="m" font-size="11">Home &middot; Setup &middot; Runner &middot; Report &middot; Dashboard</text>
+
+  <rect x="716" y="170" width="330" height="66" rx="9" fill="var(--surface)" stroke="var(--run-line)"/>
+  <text x="881" y="192" text-anchor="middle" font-weight="700" font-size="13">Vanilla SPA (single file)</text>
+  <text x="881" y="209" text-anchor="middle" class="m" font-size="11">currently live in production</text>
+  <text x="881" y="224" text-anchor="middle" class="m" font-size="11">same features &middot; shared data + storage</text>
+
+  <!-- Client logic layer -->
+  <text x="374" y="264" font-size="10.5" font-weight="700" letter-spacing="1" class="m">CLIENT LOGIC (shared concepts)</text>
+  <rect x="374" y="272" width="215" height="78" rx="9" fill="var(--surface)" stroke="var(--run-line)"/>
+  <text x="481" y="294" text-anchor="middle" font-weight="600" font-size="12.5">Study engine</text>
+  <text x="481" y="311" text-anchor="middle" class="m" font-size="10.5">Practice &middot; Exam &middot; Daily RC</text>
+  <text x="481" y="325" text-anchor="middle" class="m" font-size="10.5">Redo &middot; adaptive difficulty</text>
+  <text x="481" y="339" text-anchor="middle" class="m" font-size="10.5">timing &middot; flags &middot; shortcuts</text>
+
+  <rect x="605" y="272" width="215" height="78" rx="9" fill="var(--surface)" stroke="var(--run-line)"/>
+  <text x="712" y="294" text-anchor="middle" font-weight="600" font-size="12.5">Progress store</text>
+  <text x="712" y="311" text-anchor="middle" class="m" font-size="10.5">accuracy &middot; streak &middot; weak spots</text>
+  <text x="712" y="325" text-anchor="middle" class="m" font-size="10.5">saved on device (localStorage)</text>
+  <text x="712" y="339" text-anchor="middle" class="m" font-size="10.5">local-first &middot; offline-capable</text>
+
+  <rect x="836" y="272" width="210" height="78" rx="9" fill="var(--surface)" stroke="var(--run-line)"/>
+  <text x="941" y="294" text-anchor="middle" font-weight="600" font-size="12.5">AI search client</text>
+  <text x="941" y="311" text-anchor="middle" class="m" font-size="10.5">semantic search + &ldquo;similar Qs&rdquo;</text>
+  <text x="941" y="325" text-anchor="middle" class="m" font-size="10.5">vector math in JavaScript</text>
+  <text x="941" y="339" text-anchor="middle" class="m" font-size="10.5">query encoded on-device</text>
+
+  <!-- Data layer (served) -->
+  <text x="374" y="378" font-size="10.5" font-weight="700" letter-spacing="1" class="m">STATIC DATA &middot; fetched from the host</text>
+  <rect x="374" y="386" width="672" height="52" rx="9" fill="var(--data-bg)" stroke="var(--data-line)"/>
+  <text x="710" y="407" text-anchor="middle" font-weight="700" class="mono" font-size="12">questions-*.json &middot; embeddings.json &middot; diagrams/*.png</text>
+  <text x="710" y="424" text-anchor="middle" class="m" font-size="11">the exact files the pipeline produced &mdash; no database needed to read them</text>
+
+  <!-- Cloud services -->
+  <text x="374" y="466" font-size="10.5" font-weight="700" letter-spacing="1" class="m">CLOUD SERVICES &middot; optional, enhance only</text>
+  <rect x="374" y="474" width="215" height="72" rx="9" fill="var(--cloud-bg)" stroke="var(--cloud-line)"/>
+  <text x="481" y="496" text-anchor="middle" font-weight="600" font-size="12.5" fill="var(--cloud)">Supabase Auth</text>
+  <text x="481" y="513" text-anchor="middle" class="m" font-size="10.5">email &middot; Google &middot; guest</text>
+  <text x="481" y="527" text-anchor="middle" class="m" font-size="10.5">anonymous device identity</text>
+
+  <rect x="605" y="474" width="215" height="72" rx="9" fill="var(--cloud-bg)" stroke="var(--cloud-line)"/>
+  <text x="712" y="496" text-anchor="middle" font-weight="600" font-size="12.5" fill="var(--cloud)">Supabase Postgres</text>
+  <text x="712" y="513" text-anchor="middle" class="m" font-size="10.5">cross-device sync &middot; attempts</text>
+  <text x="712" y="527" text-anchor="middle" class="m" font-size="10.5">row-level security per user</text>
+
+  <rect x="836" y="474" width="210" height="72" rx="9" fill="var(--cloud-bg)" stroke="var(--cloud-line)"/>
+  <text x="941" y="496" text-anchor="middle" font-weight="600" font-size="12.5" fill="var(--cloud)">Model CDN</text>
+  <text x="941" y="513" text-anchor="middle" class="m" font-size="10.5">transformers.js + MiniLM</text>
+  <text x="941" y="527" text-anchor="middle" class="m" font-size="10.5">downloaded once, then cached</text>
+
+  <!-- Hosting -->
+  <rect x="374" y="576" width="672" height="46" rx="9" fill="var(--surface)" stroke="var(--run-line)"/>
+  <text x="710" y="596" text-anchor="middle" font-weight="600" font-size="12.5">Vercel &mdash; static hosting + Git CI</text>
+  <text x="710" y="613" text-anchor="middle" class="m" font-size="11">every push to <tspan class="mono">master</tspan> auto-deploys to production</text>
+
+  <!-- runtime callout -->
+  <rect x="374" y="646" width="672" height="132" rx="10" fill="var(--surface)" stroke="var(--run-line)" stroke-dasharray="5 4"/>
+  <text x="392" y="670" font-size="12" font-weight="700" fill="var(--run)">Why this shape?</text>
+  <text x="392" y="692" font-size="11.5" class="m">&bull; Zero servers to run the product &rarr; $0 marginal cost per user, scales infinitely.</text>
+  <text x="392" y="712" font-size="11.5" class="m">&bull; Every cloud box is optional &rarr; no account, no network, or no AI model still leaves a working study app.</text>
+  <text x="392" y="732" font-size="11.5" class="m">&bull; The AI runs on the user's own device &rarr; no API keys, no per-query fees, works on a free static host.</text>
+  <text x="392" y="752" font-size="11.5" class="m">&bull; Build and runtime are decoupled &rarr; a new question bank ships by re-running the pipeline, nothing else.</text>
+  <text x="392" y="770" font-size="11.5" class="m">&bull; One data contract, two front-ends &rarr; the React rebuild and the live app share data + saved progress.</text>
+
+  <!-- runtime internal arrows -->
+  <g fill="none" stroke="var(--run)" stroke-width="1.4" marker-end="url(#ar)" opacity=".85">
+    <path d="M540 62 L540 170"/>
+    <path d="M539 236 L481 272"/>
+    <path d="M539 236 L712 272"/>
+    <path d="M539 236 L935 272"/>
+    <path d="M712 350 L712 386"/>
+    <path d="M941 350 L941 386"/>
+    <path d="M712 438 L712 474"/>
+    <path d="M941 438 L941 474"/>
+  </g>
+
+  <!-- build -> runtime data (the seam) -->
+  <path d="M316 532 C344 532 348 412 372 412" fill="none" stroke="var(--data)" stroke-width="1.8" marker-end="url(#ad)"/>
+  <text x="330" y="470" font-size="10.5" fill="var(--data)" font-weight="600">deploy</text>
+</svg>
+</div>
+<p class="cap">Fig 1 &mdash; High-level design. Arrows show data/usage flow. The green &ldquo;deploy&rdquo; arrow is the only link
+between the two halves: the pipeline's output files become the app's static data.</p>
+
+<h2>One-line summary of each box</h2>
+<div class="tblwrap"><table>
+  <tr><th>Layer</th><th>Box</th><th>Plain-English job</th></tr>
+  <tr><td>Build</td><td>Parsers + Verify</td><td>Turn prep-book PDFs into clean, answer-checked question data &mdash; never guessing.</td></tr>
+  <tr><td>Build</td><td>build_index.py</td><td>Give every question an AI &ldquo;meaning fingerprint&rdquo; so it can be searched by concept.</td></tr>
+  <tr><td>Runtime</td><td>Presentation</td><td>The screens the student sees (two front-ends sharing the same data).</td></tr>
+  <tr><td>Runtime</td><td>Client logic</td><td>Study modes, progress tracking, and the AI search &mdash; all in the browser.</td></tr>
+  <tr><td>Data</td><td>Static files</td><td>The questions + vectors, served as plain files (no database to read them).</td></tr>
+  <tr><td>Cloud</td><td>Supabase</td><td>Optional sign-in + cross-device progress sync, protected per user.</td></tr>
+  <tr><td>Cloud</td><td>Model CDN</td><td>Delivers the small AI model that runs on the user's device.</td></tr>
+  <tr><td>Cloud</td><td>Vercel</td><td>Hosts the static app; redeploys automatically on every code push.</td></tr>
+</table></div>
+
+<p class="footer">Companion document: <b>LLD.html</b> (module- and field-level detail) &middot; engineering deep-dive in
+<code>docs/DESIGN.md</code> &middot; GMAT Trainer &middot; 2026-07-13</p>
+</div>
