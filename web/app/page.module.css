@@ -1,98 +1,62 @@
+/* small page-title header, used by the Verbal/Quant/Full-length section pages */
 .hero {
   background: var(--grad);
   color: #fff;
   border-radius: var(--r);
-  padding: 24px 26px;
+  padding: 18px 22px;
   margin-top: 18px;
   box-shadow: var(--sh);
 }
+.hero h1 { font-size: 22px; font-weight: 650; letter-spacing: -0.02em; margin: 5px 0 0; }
 .kick {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  opacity: 0.85;
+  opacity: 0.78;
 }
-.hero h1 {
-  font-size: 28px;
-  font-weight: 800;
-  letter-spacing: -0.02em;
-  margin: 4px 0 14px;
-}
-.hstats {
-  display: flex;
-  gap: 26px;
-}
-.hstats b {
-  display: block;
-  font-size: 22px;
-  font-variant-numeric: tabular-nums;
-}
-.hstats span {
-  font-size: 12px;
-  opacity: 0.85;
-}
-.feature {
-  background: var(--grad-soft);
-}
+
 .error {
   color: var(--red);
   background: var(--red-bg);
   border-radius: var(--r2);
   padding: 10px 14px;
+  margin-top: 14px;
 }
+.focus {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--grad-soft);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  padding: 13px 16px;
+  margin-top: 14px;
+  color: inherit;
+}
+.focusIcon {
+  flex: 0 0 auto;
+  width: 34px; height: 34px;
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--brand-ink);
+  display: grid; place-items: center;
+}
+.focusBody { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.focusKick { font-size: 10.5px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--brand-ink); }
+.focusText { font-size: 13.5px; font-weight: 600; }
+.focusGo { flex: 0 0 auto; font-size: 12.5px; font-weight: 700; color: var(--brand-ink); }
+
 .sec {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--muted);
-  margin: 30px 0 12px;
+  margin: 26px 0 12px;
 }
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
-  gap: 14px;
-}
-.tile {
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--r);
-  box-shadow: var(--sh-sm);
-  padding: 18px;
-  color: inherit;
-  transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
-}
-.tile:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--sh);
-  border-color: var(--brand2);
-}
-.tileHead {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 10px;
-}
-.tileType {
-  font-size: 12px;
-  font-weight: 800;
-  background: var(--pick);
-  color: var(--brand-ink);
-  border-radius: 99px;
-  padding: 2px 10px;
-}
-.tileCount {
-  font-size: 12px;
-  color: var(--faint);
-  font-variant-numeric: tabular-nums;
-}
-.tileTitle {
-  font-weight: 700;
-  margin-bottom: 4px;
-}
-.tileDesc {
-  font-size: 13px;
-  color: var(--muted);
-  line-height: 1.5;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px;
 }

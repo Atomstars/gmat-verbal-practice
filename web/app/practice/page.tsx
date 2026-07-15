@@ -4,8 +4,10 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useRef, useState } from "react";
 import QuestionCard from "@/components/QuestionCard";
+import { type AdaptiveState, pickNext, startAdaptive } from "@/lib/adaptive";
 import { loadAll, playable } from "@/lib/banks";
 import { finishDaily, pickDaily } from "@/lib/daily";
+import { bookOrder, takeBook } from "@/lib/order";
 import { Store } from "@/lib/store";
 import { Attempts } from "@/lib/sync";
 import { conceptOf, type Letter, type QType, type Question } from "@/lib/types";
@@ -31,8 +33,10 @@ interface Answer { picked: Letter; correct: boolean; timeMs: number; }
 function Runner() {
   const router = useRouter();
   const params = useSearchParams();
-  const mode = params.get("mode") ?? "practice"; // practice | exam | redo
+  const mode = params.get("mode") ?? "practice"; // practice | exam | redo | daily | gmatfocus
   const exam = mode === "exam";
+  const adaptive = mode === "gmatfocus"; // GMAT Focus: difficulty follows performance
+  const limit = +(params.get("limit") ?? 0); // countdown seconds (0 = none)
   const title = params.get("title") ?? "Practice";
 
   const [all, setAll] = useState<Question[]>([]);
@@ -48,32 +52,60 @@ function Runner() {
   const [flags, setFlags] = useState<Set<string>>(new Set());
   const qStart = useRef(Date.now());
   const dailyDone = useRef(false);
+  const adaptiveRef = useRef<AdaptiveState | null>(null);
+  const lastCorrectRef = useRef(false);
 
   /* build the session pool once */
   useEffect(() => {
     loadAll().then((data) => {
       setAll(data);
-      let pool = data.filter(playable);
+
+      /* GMAT Focus: questions are chosen adaptively, one at a time */
+      if (adaptive) {
+        const t = params.get("types")?.split(",") as QType[] | undefined;
+        const started = startAdaptive(data, +(params.get("n") ?? 23), t?.length ? t : undefined);
+        adaptiveRef.current = started?.state ?? null;
+        setQs(started ? [started.first] : []);
+        qStart.current = Date.now();
+        return;
+      }
+
       const ids = params.get("ids");
       if (mode === "daily") {
-        pool = pickDaily(data); // one passage at your adaptive level, in order
-      } else if (ids) {
+        setQs(pickDaily(data)); // one passage at your adaptive level, in order
+        qStart.current = Date.now();
+        return;
+      }
+
+      let pool = data.filter(playable);
+      if (ids) {
         const want = new Set(ids.split(","));
         pool = pool.filter((q) => want.has(q.id));
       } else {
         if (mode === "redo") {
           const wrong = new Set(Store.wrongIds());
           pool = pool.filter((q) => wrong.has(q.id));
-        } else {
-          const types = (params.get("types")?.split(",") ?? []) as QType[];
-          if (types.length) pool = pool.filter((q) => types.includes(q.type));
         }
-        const topic = params.get("topic");
-        if (topic) pool = pool.filter((q) => conceptOf(q) === topic);
-        if ((params.get("order") ?? "shuffle") === "shuffle") pool = shuffle(pool);
-        const n = +(params.get("n") ?? 10);
-        pool = pool.slice(0, n);
+        const types = (params.get("types")?.split(",") ?? []) as QType[];
+        if (types.length) pool = pool.filter((q) => types.includes(q.type));
       }
+      const topic = params.get("topic");
+      if (topic) pool = pool.filter((q) => conceptOf(q) === topic);
+      const diff = params.get("diff");
+      if (diff) pool = pool.filter((q) => q.difficulty === diff);
+
+      /* Always book order (RC passages kept as units), unless this is an
+         explicitly randomized entry (Random Mix / Exam simulation). */
+      if (params.get("order") === "shuffle" || exam) {
+        pool = shuffle(pool);
+        const n = +(params.get("n") ?? pool.length);
+        pool = pool.slice(0, n);
+      } else if (ids || mode === "redo") {
+        pool = bookOrder(pool);
+      } else {
+        pool = takeBook(pool, +(params.get("n") ?? pool.length));
+      }
+
       setQs(pool);
       qStart.current = Date.now();
     });
@@ -88,6 +120,12 @@ function Runner() {
     return () => clearInterval(t);
   }, [finished]);
 
+  /* countdown: auto-finish when the time limit is reached */
+  useEffect(() => {
+    if (limit && !finished && elapsed >= limit) setFinished(true);
+  }, [limit, elapsed, finished]);
+  const remaining = limit ? Math.max(0, limit - elapsed) : elapsed;
+
   const q = qs?.[idx] ?? null;
   /* reviewing an already-answered question (◀ nav): show its saved state */
   const prevAns = q ? answers[q.id] : undefined;
@@ -95,7 +133,7 @@ function Runner() {
   const effPicked = prevAns ? prevAns.picked : picked;
 
   const prev = () => {
-    if (idx === 0) return;
+    if (idx === 0 || adaptive) return; // no going back in adaptive mode (like the real exam)
     setSimilar([]); setPicked(null); setSubmitted(false);
     setIdx(idx - 1);
   };
@@ -103,12 +141,13 @@ function Runner() {
   const submit = () => {
     if (!q || !picked || effSubmitted) return;
     const correct = picked === q.correct_answer;
+    lastCorrectRef.current = correct;
     const timeMs = Date.now() - qStart.current;
     setAnswers((a) => ({ ...a, [q.id]: { picked, correct, timeMs } }));
     setSubmitted(true);
-    Store.record(q, picked, correct);
+    Store.record(q, picked, correct, timeMs);
     void Attempts.save(q, picked, timeMs);
-    if (!exam) {
+    if (!exam && !adaptive) {
       void loadEmbeddings(all).then((ok) => {
         if (ok) setSimilar(vecSimilar(all, q.id, 3));
       });
@@ -122,6 +161,13 @@ function Runner() {
     setPicked(null);
     setSubmitted(false);
     qStart.current = Date.now();
+    if (adaptiveRef.current) {
+      const nq = pickNext(adaptiveRef.current, lastCorrectRef.current);
+      if (!nq) { setFinished(true); return; }
+      setQs((prevQs) => [...(prevQs ?? []), nq]);
+      setIdx((i) => i + 1);
+      return;
+    }
     if (idx + 1 < qs.length) setIdx(idx + 1);
     else setFinished(true);
     if (fromExam) return;
@@ -241,72 +287,93 @@ function Runner() {
     );
   }
 
-  /* ===== runner ===== */
+  /* ===== runner (exam-style: dark top strip + fixed bottom nav) ===== */
+  const atLast = adaptive
+    ? !!(adaptiveRef.current && adaptiveRef.current.servedIds.size >= adaptiveRef.current.target)
+    : idx + 1 >= qs.length;
+
   return (
-    <main className="wrap">
-      <div className={styles.bar}>
-        <span className={styles.kick}>{title}{exam ? " · EXAM" : ""}</span>
-        <span className={styles.count}>
-          {idx + 1} / {qs.length}
-          {(timed || exam) && <span className={styles.clock}> · {mmss(elapsed)}</span>}
-        </span>
-        {idx > 0 && (
-          <button type="button" className={styles.quit} onClick={prev} title="Previous (←)">
-            ◀
-          </button>
-        )}
-        {q && (
-          <button
-            type="button"
-            className={`${styles.quit} ${flags.has(q.id) ? styles.flagOn : ""}`}
-            onClick={() =>
-              setFlags((f) => {
-                const n = new Set(f);
-                if (n.has(q.id)) n.delete(q.id); else n.add(q.id);
-                return n;
-              })
-            }
-            title="Flag (F)"
-          >
-            ⚑
-          </button>
-        )}
-        <button type="button" className={styles.quit} onClick={() => setFinished(true)}>
-          ✕ End
-        </button>
-      </div>
-
-      {q && (
-        <QuestionCard q={q} picked={effPicked} submitted={effSubmitted && !exam} onPick={setPicked} />
-      )}
-
-      {!exam && submitted && similar.length > 0 && (
-        <div className={styles.simPanel}>
-          <div className={styles.simHead}>Similar questions <em>✦ AI-matched</em></div>
-          {similar.map(({ q: sq, score }) => (
-            <button key={sq.id} type="button" className={styles.simItem} onClick={() => openSimilar(sq)}>
-              <span className={styles.meta}>
-                <b>{sq.type}</b>{sq.difficulty && <i>{sq.difficulty}</i>}<i>{sq.subtype ?? sq.chapter}</i>
-                <em>{Math.round(score * 100)}%</em>
+    <>
+      <div className={styles.examBar}>
+        <div className={styles.examBarIn}>
+          <div className={styles.examBarLeft}>
+            <span className={styles.examSection}>
+              {exam ? "Exam Simulation" : adaptive ? "GMAT Focus" : title}
+            </span>
+            <span className={styles.examQnum}>
+              Question {idx + 1} of {adaptive ? adaptiveRef.current?.target ?? 23 : qs.length}
+            </span>
+          </div>
+          <div className={styles.examBarRight}>
+            {(timed || exam) && (
+              <span className={`${styles.examClock} ${limit && remaining <= 60 ? styles.low : ""}`}>
+                {mmss(remaining)}
               </span>
-              <span className={styles.simStem}>{sq.question.split("\n\n").pop()!.slice(0, 110)}…</span>
+            )}
+            {q && (
+              <button
+                type="button"
+                className={`${styles.markBtn} ${flags.has(q.id) ? styles.markOn : ""}`}
+                onClick={() =>
+                  setFlags((f) => {
+                    const n = new Set(f);
+                    if (n.has(q.id)) n.delete(q.id); else n.add(q.id);
+                    return n;
+                  })
+                }
+                title="Mark for Review (F)"
+              >
+                ⚑ Mark for Review
+              </button>
+            )}
+            <button type="button" className={styles.endBtn} onClick={() => setFinished(true)}>
+              End
             </button>
-          ))}
+          </div>
         </div>
-      )}
-
-      <div className={styles.actions}>
-        {!effSubmitted || exam ? (
-          <button className={styles.primary} disabled={!picked} onClick={submit}>
-            {exam && idx + 1 === qs.length ? "Finish" : "Submit"}
-          </button>
-        ) : (
-          <button className={styles.primary} onClick={() => next()}>
-            {idx + 1 < qs.length ? "Next →" : "Finish"}
-          </button>
-        )}
       </div>
-    </main>
+
+      <main className={`wrap ${styles.runnerMain}`}>
+        {q && (
+          <QuestionCard q={q} picked={effPicked} submitted={effSubmitted && !exam} onPick={setPicked} />
+        )}
+
+        {!exam && submitted && similar.length > 0 && (
+          <div className={styles.simPanel}>
+            <div className={styles.simHead}>Similar questions <em>✦ AI-matched</em></div>
+            {similar.map(({ q: sq, score }) => (
+              <button key={sq.id} type="button" className={styles.simItem} onClick={() => openSimilar(sq)}>
+                <span className={styles.meta}>
+                  <b>{sq.type}</b>{sq.difficulty && <i>{sq.difficulty}</i>}<i>{sq.subtype ?? sq.chapter}</i>
+                  <em>{Math.round(score * 100)}%</em>
+                </span>
+                <span className={styles.simStem}>{sq.question.split("\n\n").pop()!.slice(0, 110)}…</span>
+              </button>
+            ))}
+          </div>
+        )}
+      </main>
+
+      <div className={styles.navBar}>
+        <div className={styles.navBarIn}>
+          {!adaptive && idx > 0 && (
+            <button type="button" className={styles.backBtn} onClick={prev}>
+              ◀ Back
+            </button>
+          )}
+          <span className={styles.navSpacer} />
+          {!effSubmitted || exam ? (
+            <button className={styles.confirmBtn} disabled={!picked} onClick={submit}>
+              {exam && atLast ? "Finish" : "Confirm Answer"}
+            </button>
+          ) : (
+            <button className={styles.confirmBtn} onClick={() => next()}>
+              {atLast ? "Finish" : "Next →"}
+            </button>
+          )}
+        </div>
+      </div>
+    </>
   );
 }
 

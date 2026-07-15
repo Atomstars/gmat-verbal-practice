@@ -1,24 +1,44 @@
 .stage {
-  min-height: calc(100vh - 58px);
+  position: relative;
+  min-height: calc(100vh - 56px);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 22px;
+  gap: 20px;
   padding: 30px 18px;
 }
+/* soft brand wash for depth, matching the premium pages' treatment */
+.stage::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(700px 320px at 50% 8%, color-mix(in srgb, var(--brand) 12%, transparent), transparent 70%);
+  pointer-events: none;
+}
+
+.brand { display: flex; align-items: center; gap: 12px; position: relative; }
+.mark {
+  width: 38px; height: 38px; border-radius: 9px;
+  background: var(--navy); color: #fff;
+  display: grid; place-items: center;
+  font-family: var(--serif); font-weight: 700; font-size: 19px;
+}
 .logo {
-  font-size: 34px;
-  font-weight: 900;
+  font-size: 30px;
+  font-weight: 700;
   letter-spacing: -0.03em;
 }
+/* NOT var(--grad): in dark mode that gradient is deep navy, which lands almost
+   invisibly on the near-black background. Brand→brand2 stays legible in both. */
 .logo span {
-  background: var(--grad);
+  background: linear-gradient(135deg, var(--brand), var(--brand2));
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
 }
 .card {
+  position: relative;
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--r);
@@ -36,7 +56,9 @@
   flex: 1; border: 0; background: none; border-radius: 7px;
   padding: 7px 0; font-weight: 600; color: var(--muted);
 }
-.tabs .on { background: var(--surface); color: var(--ink); box-shadow: var(--sh-sm); }
+/* --pick, not --surface: surface is lighter than its surface2 container in
+   light mode but darker in dark, which makes the active tab vanish. */
+.tabs .on { background: var(--pick); color: var(--brand-ink); box-shadow: var(--sh-sm); font-weight: 700; }
 .form { display: flex; flex-direction: column; gap: 9px; }
 .form input {
   background: var(--surface2); border: 1.5px solid var(--line);
@@ -44,9 +66,11 @@
 }
 .form input:focus { outline: none; border-color: var(--brand); }
 .primary {
-  background: var(--grad); color: #fff; border: 0; border-radius: var(--r2);
+  background: var(--brand); color: #fff; border: 0; border-radius: var(--r2);
   font-weight: 700; padding: 11px 0;
+  box-shadow: 0 3px 10px color-mix(in srgb, var(--brand) 32%, transparent);
 }
+.primary:hover:not(:disabled) { background: var(--brand-ink); }
 .primary:disabled { opacity: 0.5; }
 .msg, .msgErr { font-size: 13px; margin-top: 10px; }
 .msg { color: var(--green); }
@@ -57,4 +81,4 @@
 }
 .google { background: var(--surface2); border: 1.5px solid var(--line); color: var(--ink); }
 .guest { background: none; border: 0; color: var(--brand-ink); }
-.foot { color: var(--faint); font-size: 12px; text-align: center; max-width: 420px; }
+.foot { color: var(--faint); font-size: 12px; text-align: center; max-width: 420px; position: relative; }

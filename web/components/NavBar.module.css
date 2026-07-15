@@ -1,0 +1,85 @@
+/* the auth gate owns the screen until sign-in/guest is chosen — none of these
+   links are reachable yet, so hide them (flag set in AuthGate.tsx) */
+:global(html[data-authgate]) .nav { display: none; }
+
+.nav {
+  position: sticky;
+  top: 56px;
+  z-index: 39;
+  background: color-mix(in srgb, var(--bg) 92%, transparent);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--line);
+}
+.navIn {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 0 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.navIn::-webkit-scrollbar { display: none; }
+
+.link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+  padding: 11px 13px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+  border-bottom: 2px solid transparent;
+  background: none;
+  border-top: 0; border-left: 0; border-right: 0;
+  font-family: inherit;
+  cursor: pointer;
+}
+.link:hover { color: var(--ink); }
+.link.on {
+  color: var(--brand-ink);
+  border-bottom-color: var(--brand);
+}
+
+/* gold "premium" treatment for Tutor / Analyzer */
+.premium {
+  background: linear-gradient(135deg, #b8892f, #e8c873 45%, #b8892f);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  font-weight: 700;
+}
+.premium.on { border-bottom-color: #c99a3d; }
+
+/* ===== dropdown ===== */
+.dropWrap { position: relative; }
+.panel {
+  /* position: fixed + top/left are set inline (NavDropdown portals this to
+     <body> to escape .navIn's overflow-x clipping — see NavDropdown.tsx) */
+  z-index: 45;
+  min-width: 210px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  box-shadow: var(--sh-lg);
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+}
+.panelItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 9px 10px;
+  border-radius: var(--r2);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+  white-space: nowrap;
+}
+.panelItem:hover { background: var(--surface2); }
+.panelHint { font-size: 10.5px; font-weight: 500; color: var(--faint); }

@@ -1,12 +1,11 @@
-# Only the static app + its question data should ship to Vercel. The browser
-# fetches index.html + questions-*.json + embeddings.json + diagrams/*.png;
-# nothing else is needed at runtime, so keep the Python pipeline, docs, tests,
-# prototypes, generated indexes and source books out.
+# Vercel builds the Next.js app in web/ (see vercel.json). Its prebuild step
+# (web/scripts/sync-data.mjs) copies the root question banks + embeddings into
+# web/public/data, so those JSON files must stay uploaded. Keep the Python
+# pipeline, docs, tests, prototypes, generated indexes and source books out.
 pipeline
 docs
 tests
 prototypes
-web
 node_modules
 _*.py
 *.py

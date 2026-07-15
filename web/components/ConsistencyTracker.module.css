@@ -1,0 +1,200 @@
+.box {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  box-shadow: var(--sh-sm);
+  padding: 18px;
+  margin-top: 16px;
+}
+
+/* ===== header ===== */
+.head { display: flex; align-items: center; justify-content: center; gap: 14px; }
+.headMain { min-width: 0; text-align: center; }
+.title { font-weight: 650; font-size: 15px; letter-spacing: -0.01em; }
+.sub {
+  font-size: 12.5px; color: var(--faint); margin-top: 3px;
+  display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap;
+}
+.subTotal { color: var(--ink); font-family: var(--mono); font-weight: 600; }
+.trendUp, .trendDown { font-weight: 700; font-size: 11.5px; }
+.trendUp { color: var(--green); }
+.trendDown { color: var(--faint); }
+
+.streak {
+  display: flex; align-items: center; gap: 5px; flex: 0 0 auto;
+  font-size: 12px; font-weight: 600; color: var(--flag);
+  background: var(--amber-bg);
+  border: 1px solid color-mix(in srgb, var(--flag) 22%, transparent);
+  border-radius: 99px; padding: 5px 11px;
+}
+.streak b { font-family: var(--mono); font-size: 13px; font-weight: 700; }
+
+/* ===== range switcher ===== */
+.ranges {
+  display: flex; gap: 2px; width: fit-content; margin: 14px auto 0;
+  background: var(--surface2); border: 1px solid var(--line);
+  border-radius: 99px; padding: 3px;
+}
+.range {
+  border: 0; background: none; border-radius: 99px;
+  padding: 5px 13px; font: inherit; font-size: 11.5px; font-weight: 600;
+  color: var(--muted); transition: background 0.15s, color 0.15s;
+}
+.range:hover { color: var(--ink); }
+/* brand tint rather than --surface: surface is lighter than its surface2
+   container in light mode but darker in dark mode, which flips the pill from
+   "raised/selected" to "recessed". --pick tints in the same direction in both. */
+.rangeOn {
+  background: var(--pick); color: var(--brand-ink);
+  box-shadow: var(--sh-sm); font-weight: 700;
+}
+
+/* ===== week view: stacked per-section bars ===== */
+/* fixed width so 7 thin bars stay a readable cluster instead of drifting
+   apart across a wide card (the split panel fills the rest — see .panels) */
+.bars {
+  display: flex; gap: 8px; align-items: flex-end;
+  height: 108px; width: 340px; max-width: 100%;
+}
+.barCol {
+  flex: 1; height: 100%;
+  display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 5px;
+}
+.barVal {
+  font-size: 9px; font-family: var(--mono); color: var(--faint);
+  height: 12px; white-space: nowrap;
+}
+.barTrack {
+  display: flex; flex-direction: column-reverse;
+  border-radius: 5px 5px 3px 3px; overflow: hidden;
+  background: var(--line);
+  transition: height 0.35s cubic-bezier(0.4, 0, 0.2, 1), width 0.2s ease;
+}
+/* thickness scales with effort: a glance shows heavy vs light days */
+.t0 { width: 4px; height: 4px; }
+.t1 { width: 9px; height: 30%; }
+.t2 { width: 14px; height: 62%; }
+.t3 { width: 20px; height: 100%; box-shadow: 0 0 0 1px color-mix(in srgb, var(--brand) 28%, transparent); }
+.seg { display: block; width: 100%; }
+
+.barDow { font-size: 10px; font-weight: 600; color: var(--faint); position: relative; }
+.barDow.today { color: var(--brand-ink); font-weight: 800; }
+.barDow.today::after {
+  content: ""; position: absolute; left: 50%; bottom: -5px; transform: translateX(-50%);
+  width: 3px; height: 3px; border-radius: 50%; background: var(--brand);
+}
+
+/* ===== month / quarter: heatmap beside the effort split ===== */
+/* three zones across the full card — chart | effort split | stats. Centring a
+   fixed-width cluster instead would leave dead margins either side. */
+.panels {
+  display: grid; grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 36px; align-items: center; margin-top: 18px;
+}
+.panels .split { margin-top: 0; }
+@media (max-width: 900px) {
+  .panels { grid-template-columns: 1fr; gap: 22px; justify-items: center; }
+  .panels .split { width: 100%; }
+  .bars { width: 100%; }
+}
+
+.heatBlock { min-width: 0; }
+/* month ticks sit above their column; text is allowed to spill right */
+.heatMonths { display: flex; gap: 4px; padding-left: 32px; margin-bottom: 5px; }
+.heatMonth {
+  flex: 0 0 14px; width: 14px;
+  font-size: 9.5px; font-weight: 600; color: var(--faint);
+  white-space: nowrap; overflow: visible;
+}
+.heatGrid { display: flex; gap: 6px; }
+.heatRows {
+  display: grid; grid-template-rows: repeat(7, 14px); gap: 4px;
+  flex: 0 0 26px; font-size: 8.5px; color: var(--faint);
+}
+.heatRows span { line-height: 14px; }
+.heatRows span:nth-child(1) { grid-row: 2; }
+.heatRows span:nth-child(2) { grid-row: 4; }
+.heatRows span:nth-child(3) { grid-row: 6; }
+
+.heat { display: flex; gap: 4px; }
+.heatCol { display: grid; grid-template-rows: repeat(7, 14px); gap: 4px; }
+.cell {
+  width: 14px; height: 14px; border-radius: 3px; display: block;
+  transition: transform 0.12s ease;
+}
+.cell:hover { transform: scale(1.3); }
+.cellVoid { width: 14px; height: 14px; }
+.h0 { background: var(--line); }
+.h1 { background: color-mix(in srgb, var(--brand) 32%, var(--surface2)); }
+.h2 { background: color-mix(in srgb, var(--brand) 62%, var(--surface2)); }
+.h3 { background: var(--brand); }
+.cellToday { box-shadow: 0 0 0 1.5px var(--brand-ink); }
+
+.heatKey {
+  display: flex; align-items: center; justify-content: center; gap: 3px;
+  font-size: 9.5px; color: var(--faint); margin-top: 10px;
+}
+.heatKey .cell { width: 11px; height: 11px; }
+.heatKey .cell:hover { transform: none; }
+.heatKey span { margin: 0 3px; }
+
+/* ===== effort split ===== */
+.split { margin-top: 20px; }
+.splitEmpty {
+  font-size: 12px; color: var(--faint); text-align: center; line-height: 1.6;
+  border: 1px dashed var(--line); border-radius: var(--r2); padding: 16px 14px;
+}
+.splitLabel {
+  font-size: 10px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase;
+  color: var(--faint); margin-bottom: 8px; text-align: center;
+}
+.splitBar {
+  display: flex; height: 10px; border-radius: 99px; overflow: hidden;
+  background: var(--surface2); gap: 2px;
+}
+.splitSeg { display: block; height: 100%; transition: width 0.35s ease; min-width: 3px; }
+.splitKeys { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px 14px; margin-top: 11px; }
+.splitKey {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 11.5px; color: var(--muted);
+}
+.splitKey b { color: var(--ink); font-family: var(--mono); font-size: 11px; font-weight: 600; }
+.dot { width: 8px; height: 8px; border-radius: 50%; flex: 0 0 auto; }
+
+/* section palette — shared by bars, split bar and legend dots */
+.secRC { background: var(--brand); }
+.secCR { background: #8a6ef2; }
+.secPS { background: var(--accent); }
+.secDS { background: var(--green); }
+
+/* ===== stat cards ===== */
+/* third zone: stacked stats, divided from the split panel by a rule */
+.stats {
+  display: flex; flex-direction: column; gap: 16px;
+  padding-left: 32px; border-left: 1px solid var(--line2);
+}
+.stat { display: flex; flex-direction: column; gap: 2px; }
+.stat b {
+  font-family: var(--mono); font-size: 17px; font-weight: 600; color: var(--ink);
+  letter-spacing: -0.02em;
+}
+.stat b small { font-size: 11px; color: var(--faint); font-weight: 500; }
+.stat span {
+  font-size: 10px; color: var(--faint); font-weight: 600;
+  letter-spacing: 0.03em; text-transform: uppercase;
+}
+
+@media (max-width: 900px) {
+  /* stacked layout: stats read better as a row under the chart */
+  .stats {
+    flex-direction: row; justify-content: center; flex-wrap: wrap; gap: 14px 40px;
+    padding-left: 0; padding-top: 16px;
+    border-left: 0; border-top: 1px solid var(--line2);
+    width: 100%;
+  }
+  .stat { align-items: center; }
+}
+@media (max-width: 560px) {
+  .bars { height: 92px; }
+  .stats { gap: 12px 28px; }
+}

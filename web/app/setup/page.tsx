@@ -5,14 +5,19 @@ import { Suspense, useEffect, useMemo, useState } from "react";
 import { loadAll, playable } from "@/lib/banks";
 import { Store } from "@/lib/store";
 import type { QType, Question } from "@/lib/types";
-import { conceptOf, isQuantType, TYPE_LABEL } from "@/lib/types";
+import { conceptOf, TYPE_LABEL } from "@/lib/types";
 import styles from "./setup.module.css";
+
+const DIFFS = ["Easy", "Medium", "Hard"] as const;
+const DURATIONS = [10, 20, 30, 40]; // minutes
 
 function Setup() {
   const router = useRouter();
   const params = useSearchParams();
   const types = (params.get("types")?.split(",") ?? []) as QType[];
   const mode = params.get("mode") ?? "practice"; // practice | exam | redo
+  const only = params.get("only"); // 'topic' | 'diff' | null — which division this entry is for
+  const incomingOrder = params.get("order"); // forwarded to /practice (e.g. Random Mix)
   const title =
     params.get("title") ??
     (types.length === 1 ? TYPE_LABEL[types[0]] : "Practice session");
@@ -20,32 +25,55 @@ function Setup() {
   const [all, setAll] = useState<Question[]>([]);
   const [timed, setTimed] = useState(mode === "exam");
   const [count, setCount] = useState(mode === "exam" ? 23 : 10);
-  const [order, setOrder] = useState<"shuffle" | "book">("shuffle");
-  const [topic, setTopic] = useState("");
+  const [topic, setTopic] = useState(params.get("topic") ?? "");
+  const [diff, setDiff] = useState(params.get("diff") ?? "All");
+  const [limitMin, setLimitMin] = useState(20);
 
   useEffect(() => { loadAll().then(setAll); }, []);
 
-  const pool = useMemo(() => {
+  /* base pool (type AND redo filters compose, so "Review · Verbal" etc. work) */
+  const basePool = useMemo(() => {
     let p = all.filter(playable);
     if (mode === "redo") {
       const wrong = new Set(Store.wrongIds());
       p = p.filter((q) => wrong.has(q.id));
-    } else if (types.length) p = p.filter((q) => types.includes(q.type));
-    if (topic) p = p.filter((q) => conceptOf(q) === topic);
+    }
+    if (types.length) p = p.filter((q) => types.includes(q.type));
     return p;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [all, topic, mode, params]);
+  }, [all, mode, params]);
 
   const topics = useMemo(() => {
-    if (types.length !== 1 || !isQuantType(types[0])) return [];
     const c: Record<string, number> = {};
-    for (const q of all.filter((q) => q.type === types[0] && playable(q))) {
+    for (const q of basePool) {
       const k = conceptOf(q);
       if (k) c[k] = (c[k] ?? 0) + 1;
     }
     return Object.entries(c).sort((a, b) => b[1] - a[1]);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [all, params]);
+  }, [basePool]);
+
+  const hasDifficulty = useMemo(() => basePool.some((q) => q.difficulty), [basePool]);
+
+  /* difficulty counts within the current topic selection */
+  const diffCounts = useMemo(() => {
+    const c: Record<string, number> = { All: 0, Easy: 0, Medium: 0, Hard: 0 };
+    for (const q of basePool) {
+      if (topic && conceptOf(q) !== topic) continue;
+      c.All++;
+      if (q.difficulty) c[q.difficulty] = (c[q.difficulty] ?? 0) + 1;
+    }
+    return c;
+  }, [basePool, topic]);
+
+  const pool = useMemo(() => {
+    let p = basePool;
+    if (topic) p = p.filter((q) => conceptOf(q) === topic);
+    if (diff !== "All") p = p.filter((q) => q.difficulty === diff);
+    return p;
+  }, [basePool, topic, diff]);
+
+  const showTopic = only !== "diff" && topics.length > 1;
+  const showDiff = only !== "topic" && hasDifficulty;
 
   const start = () => {
     const n = Math.min(count, pool.length);
@@ -53,12 +81,18 @@ function Setup() {
     if (types.length) q.set("types", types.join(","));
     q.set("mode", mode);
     q.set("n", String(n));
-    q.set("order", order);
-    if (timed) q.set("timed", "1");
     if (topic) q.set("topic", topic);
-    q.set("title", title + (topic ? ` · ${topic}` : ""));
+    if (diff !== "All") q.set("diff", diff);
+    if (timed) { q.set("timed", "1"); q.set("limit", String(limitMin * 60)); }
+    if (incomingOrder) q.set("order", incomingOrder);
+    q.set(
+      "title",
+      title + (topic ? ` · ${topic}` : "") + (diff !== "All" ? ` · ${diff}` : ""),
+    );
     router.push(`/practice?${q.toString()}`);
   };
+
+  const countOpts = [5, 10, 15, 21, 23, 30];
 
   return (
     <main className="wrap">
@@ -66,15 +100,34 @@ function Setup() {
         <div className={styles.kick}>Session</div>
         <h1>{title}</h1>
 
-        {topics.length > 0 && (
+        {showTopic && (
           <div className={styles.field}>
-            <label>Topic</label>
+            <label>{types[0] === "RC" || types[0] === "CR" ? "Question type" : "Topic"}</label>
             <select value={topic} onChange={(e) => setTopic(e.target.value)}>
-              <option value="">All topics ({pool.length})</option>
+              <option value="">All ({basePool.length})</option>
               {topics.map(([t, n]) => (
                 <option key={t} value={t}>{t} ({n})</option>
               ))}
             </select>
+          </div>
+        )}
+
+        {showDiff && (
+          <div className={styles.field}>
+            <label>Difficulty</label>
+            <div className={styles.chips}>
+              {(["All", ...DIFFS] as const).map((d) => (
+                <button
+                  key={d}
+                  type="button"
+                  disabled={d !== "All" && !diffCounts[d]}
+                  className={diff === d ? styles.on : ""}
+                  onClick={() => setDiff(d)}
+                >
+                  {d}{d !== "All" && <span className={styles.chipN}> {diffCounts[d]}</span>}
+                </button>
+              ))}
+            </div>
           </div>
         )}
 
@@ -86,22 +139,32 @@ function Setup() {
           </div>
         </div>
 
+        {timed && (
+          <div className={styles.field}>
+            <label>Time limit</label>
+            <div className={styles.chips}>
+              {DURATIONS.map((m) => (
+                <button
+                  key={m}
+                  type="button"
+                  className={limitMin === m ? styles.on : ""}
+                  onClick={() => setLimitMin(m)}
+                >
+                  {m} min
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
         <div className={styles.field}>
           <label>How many</label>
           <select value={count} onChange={(e) => setCount(+e.target.value)}>
-            {[5, 10, 15, 21, 23, 30].map((n) => (
+            {countOpts.map((n) => (
               <option key={n} value={n}>{n} questions</option>
             ))}
             <option value={999}>Everything ({pool.length})</option>
           </select>
-        </div>
-
-        <div className={styles.field}>
-          <label>Order</label>
-          <div className={styles.chips}>
-            <button className={order === "shuffle" ? styles.on : ""} onClick={() => setOrder("shuffle")} type="button">Shuffle</button>
-            <button className={order === "book" ? styles.on : ""} onClick={() => setOrder("book")} type="button">In book order</button>
-          </div>
         </div>
 
         <button className={styles.start} onClick={start} disabled={!pool.length}>
@@ -109,10 +172,10 @@ function Setup() {
         </button>
         <p className={styles.note}>
           {pool.length
-            ? `${pool.length} questions available${mode === "exam" ? " · exam pacing: no feedback until the report" : ""}.`
+            ? `${pool.length} question${pool.length === 1 ? "" : "s"} available${mode === "exam" ? " · exam pacing: no feedback until the report" : ""}.`
             : mode === "redo"
               ? "Nothing to redo yet — missed questions land here."
-              : "Loading questions…"}
+              : "No questions match these filters."}
         </p>
       </div>
     </main>

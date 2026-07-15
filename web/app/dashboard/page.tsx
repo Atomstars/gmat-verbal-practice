@@ -107,6 +107,17 @@ export default function Dashboard() {
       </div>
 
       <div className={styles.callout}>{insight}</div>
+
+      <div className={styles.actions}>
+        <Link
+          href="/setup?mode=redo&title=Redo%20my%20misses"
+          className={styles.redoBtn}
+          aria-disabled={wrong === 0}
+        >
+          ↻ Redo my misses{wrong ? ` (${wrong})` : ""}
+        </Link>
+      </div>
+
       <p className={styles.foot}>
         Progress is saved on this device — export or reset it in <Link href="/settings">Settings</Link>.
       </p>

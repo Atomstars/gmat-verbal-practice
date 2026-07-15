@@ -1,5 +1,10 @@
-import type { Question } from "./types";
+import type { QType, Question } from "./types";
 import { conceptOf } from "./types";
+
+const MIN_ATTEMPTS = 3;
+const CONCEPT_FIELD: Record<QType, "subtype" | "chapter"> = {
+  RC: "subtype", CR: "subtype", PS: "chapter", DS: "chapter",
+};
 
 /**
  * Progress store — localStorage, SAME KEY as the vanilla app (gmat_verbal_v1)
@@ -19,9 +24,13 @@ export interface HistoryEntry {
   ts: number;
 }
 
+/** Per-day, per-question-type time spent (ms), used by the consistency tracker. */
+export type ActivityDay = Partial<Record<"RC" | "CR" | "PS" | "DS", number>>;
+
 export interface StoreData {
   version: number;
   history: Record<string, HistoryEntry>;
+  activity: Record<string, ActivityDay>; // "YYYY-MM-DD" -> per-type ms
   daily: {
     date: string | null;
     level: string;
@@ -35,6 +44,7 @@ export interface StoreData {
 const blank = (): StoreData => ({
   version: 1,
   history: {},
+  activity: {},
   daily: { date: null, level: "Easy", streak: 0, lastPct: null, recent: [] },
   adaptive: { level: "Easy" },
 });
@@ -43,7 +53,9 @@ function load(): StoreData {
   if (typeof window === "undefined") return blank();
   try {
     const d = JSON.parse(localStorage.getItem(KEY) ?? "");
-    return d && d.history ? d : blank();
+    if (!d || !d.history) return blank();
+    d.activity ??= {}; // backfill for progress saved before activity tracking existed
+    return d;
   } catch {
     return blank();
   }
@@ -71,7 +83,7 @@ export const Store = {
     return load();
   },
 
-  record(q: Question, picked: string, correct: boolean) {
+  record(q: Question, picked: string, correct: boolean, timeMs?: number) {
     const data = load();
     const h = data.history[q.id] ?? {
       lastResult: "wrong" as const,
@@ -91,6 +103,11 @@ export const Store = {
     h.difficulty = q.difficulty ?? null;
     h.ts = Date.now();
     data.history[q.id] = h;
+    if (typeof timeMs === "number" && timeMs > 0) {
+      const day = new Date().toISOString().slice(0, 10);
+      const bucket = (data.activity[day] ??= {});
+      bucket[q.type] = (bucket[q.type] ?? 0) + timeMs;
+    }
     save(data);
   },
 
@@ -135,6 +152,55 @@ export const Store = {
     try {
       localStorage.setItem(KEY, JSON.stringify(obj));
     } catch {}
+  },
+
+  /** last-N-days study time, per day and per section — powers the consistency
+      tracker's bar thickness/color and its weekly breakdown. */
+  consistency(days = 7) {
+    const data = load();
+    const today = new Date();
+    const out: { date: string; totalMs: number; bySection: ActivityDay }[] = [];
+    for (let i = days - 1; i >= 0; i--) {
+      const d = new Date(today);
+      d.setDate(d.getDate() - i);
+      const key = d.toISOString().slice(0, 10);
+      const bySection = data.activity[key] ?? {};
+      const totalMs = Object.values(bySection).reduce((a, b) => a + (b ?? 0), 0);
+      out.push({ date: key, totalMs, bySection });
+    }
+    return out;
+  },
+
+  /** consecutive days (ending today or yesterday) with any recorded activity. */
+  streak() {
+    const data = load();
+    let n = 0;
+    const d = new Date();
+    // allow "today not started yet" to still show yesterday's streak
+    if (!data.activity[d.toISOString().slice(0, 10)]) d.setDate(d.getDate() - 1);
+    for (;;) {
+      const key = d.toISOString().slice(0, 10);
+      if (!data.activity[key] || !Object.keys(data.activity[key]).length) break;
+      n++;
+      d.setDate(d.getDate() - 1);
+    }
+    return n;
+  },
+
+  /** Ranked weakest concepts (RC/CR by subtype, PS/DS by chapter), worst
+      first, with at least `minAttempts` tries. Powers the Home "focus today"
+      callout and the Analyzer page. */
+  weakest(minAttempts = MIN_ATTEMPTS) {
+    const out: { type: QType; concept: string; c: number; t: number; pct: number }[] = [];
+    (["RC", "CR", "PS", "DS"] as QType[]).forEach((type) => {
+      const agg = this.byField(CONCEPT_FIELD[type], type);
+      for (const [concept, a] of Object.entries(agg)) {
+        if (a.t < minAttempts) continue;
+        out.push({ type, concept, c: a.c, t: a.t, pct: Math.round((100 * a.c) / a.t) });
+      }
+    });
+    out.sort((a, b) => a.pct - b.pct);
+    return out;
   },
 
   /** accuracy grouped by a history field (subtype/chapter/difficulty) */

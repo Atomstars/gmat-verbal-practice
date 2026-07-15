@@ -1,29 +1,47 @@
-.bar {
+/* ===== exam top strip (navy, full-bleed, sticky under the app bar) ===== */
+.examBar {
+  position: sticky;
+  top: 56px;
+  z-index: 30;
+  background: var(--navy);
+  color: #fff;
+  border-bottom: 1px solid color-mix(in srgb, #fff 10%, var(--navy));
+}
+.examBarIn {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 10px 18px;
   display: flex;
-  align-items: baseline;
-  gap: 14px;
-  margin: 8px 0 16px;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
 }
-.kick {
-  font-size: 13px; font-weight: 700; letter-spacing: 0.06em;
-  text-transform: uppercase; color: var(--brand-ink);
+.examBarLeft { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.examSection {
+  font-size: 10.5px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+  opacity: 0.72;
 }
-.count {
-  margin-left: auto; font-size: 13px; color: var(--muted);
+.examQnum {
+  font-size: 13.5px; font-weight: 600; font-variant-numeric: tabular-nums;
+}
+.examBarRight { display: flex; align-items: center; gap: 10px; margin-left: auto; }
+.examClock {
+  font-family: var(--mono); font-weight: 600; font-size: 14.5px;
   font-variant-numeric: tabular-nums;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 5px; padding: 4px 9px;
 }
-.clock { color: var(--ink); font-weight: 700; }
-.quit {
-  background: none; border: 1px solid var(--line); border-radius: 9px;
-  color: var(--muted); font-size: 12px; padding: 4px 10px;
+.examClock.low { background: color-mix(in srgb, var(--red) 55%, transparent); color: #fff; }
+.markBtn, .endBtn {
+  background: transparent; border: 1px solid rgba(255, 255, 255, 0.28); color: #fff;
+  border-radius: 5px; font-size: 12.5px; font-weight: 600; padding: 6px 11px;
+  white-space: nowrap;
 }
-.actions { display: flex; justify-content: flex-end; margin-top: 16px; }
-.primary {
-  background: var(--grad); color: #fff; border: 0; border-radius: var(--r2);
-  font-weight: 700; font-size: 15px; padding: 11px 26px;
-  box-shadow: 0 6px 18px rgba(90, 84, 240, 0.35);
-}
-.primary:disabled { opacity: 0.45; cursor: default; box-shadow: none; }
+.markBtn:hover, .endBtn:hover { background: rgba(255, 255, 255, 0.1); }
+.markBtn.markOn { background: var(--flag); border-color: var(--flag); color: #1a1200; }
+
+/* ===== runner content ===== */
+.runnerMain { padding-bottom: 96px; }
 
 /* similar panel */
 .simPanel {
@@ -32,7 +50,7 @@
   padding: 14px 16px; margin-top: 14px;
   display: flex; flex-direction: column; gap: 8px;
 }
-.simHead { font-weight: 800; font-size: 13.5px; }
+.simHead { font-weight: 700; font-size: 13.5px; }
 .simHead em { font-style: normal; color: var(--brand-ink); font-size: 11.5px; margin-left: 8px; }
 .simItem {
   text-align: left; background: var(--surface2); border: 1px solid var(--line);
@@ -41,12 +59,36 @@
 }
 .simItem:hover { border-color: var(--brand2); }
 .meta { display: flex; gap: 8px; align-items: baseline; font-size: 11px; }
-.meta b { background: var(--pick); color: var(--brand-ink); border-radius: 99px; padding: 1px 8px; }
+.meta b { background: var(--pick); color: var(--brand-ink); border-radius: 4px; padding: 1px 8px; font-weight: 700; }
 .meta i { font-style: normal; color: var(--muted); }
 .meta em { font-style: normal; color: var(--faint); margin-left: auto; }
 .simStem { font-size: 13px; }
 
-/* report */
+/* ===== fixed bottom nav (Back / Confirm — exam convention) ===== */
+.navBar {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 35;
+  background: color-mix(in srgb, var(--surface) 94%, transparent);
+  backdrop-filter: blur(10px);
+  border-top: 1px solid var(--line);
+}
+.navBarIn {
+  max-width: 1080px; margin: 0 auto; padding: 12px 18px;
+  display: flex; align-items: center; gap: 12px;
+}
+.navSpacer { flex: 1; }
+.backBtn {
+  background: var(--surface); border: 1.5px solid var(--line); color: var(--ink);
+  border-radius: var(--r2); padding: 11px 18px; font-weight: 600; font-size: 14px;
+}
+.backBtn:hover { border-color: var(--brand2); }
+.confirmBtn {
+  background: var(--brand); color: #fff; border: 0; border-radius: var(--r2);
+  font-weight: 700; font-size: 14.5px; padding: 12px 28px;
+  box-shadow: 0 3px 10px color-mix(in srgb, var(--brand) 35%, transparent);
+}
+.confirmBtn:disabled { opacity: 0.4; cursor: default; box-shadow: none; }
+
+/* ===== report ===== */
 .report {
   background: var(--surface); border: 1px solid var(--line);
   border-radius: var(--r); box-shadow: var(--sh);
@@ -54,6 +96,10 @@
 }
 .report h1 { margin: 4px 0 6px; }
 .report p { color: var(--muted); margin: 0; }
+.kick {
+  font-size: 12px; font-weight: 700; letter-spacing: 0.06em;
+  text-transform: uppercase; color: var(--brand-ink);
+}
 .repActions {
   display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 16px;
 }
@@ -74,7 +120,7 @@
 .ok { color: var(--green); font-weight: 800; }
 .bad { color: var(--red); font-weight: 800; }
 .repMeta { color: var(--muted); font-size: 12px; }
-.repTime { margin-left: auto; color: var(--faint); font-size: 12px; }
+.repTime { margin-left: auto; color: var(--faint); font-size: 12px; font-family: var(--mono); }
 .repStem { font-size: 13.5px; margin-top: 5px; }
 .repAns { font-size: 12.5px; color: var(--muted); margin-top: 5px; }
 .repExpl {

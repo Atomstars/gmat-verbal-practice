@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { loadAll } from "@/lib/banks";
 import { embCount, embedQuery, loadEmbeddings, vecSearch } from "@/lib/vector";
 import type { Question } from "@/lib/types";
+import Icon from "./Icon";
 import styles from "./SmartSearch.module.css";
 
 const EXAMPLES = [
@@ -12,6 +13,8 @@ const EXAMPLES = [
   "inference from a passage", "probability & combinations", "data sufficiency on averages",
 ];
 
+/** A single, compact search field — results and quick-start examples appear
+    as a dropdown overlay so the input never grows the page layout. */
 export default function SmartSearch() {
   const router = useRouter();
   const [all, setAll] = useState<Question[]>([]);
@@ -19,7 +22,9 @@ export default function SmartSearch() {
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState("");
   const [results, setResults] = useState<{ q: Question; score: number }[] | null>(null);
+  const [open, setOpen] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const rootRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     loadAll().then(async (qs) => {
@@ -27,6 +32,19 @@ export default function SmartSearch() {
       const ok = await loadEmbeddings(qs);
       setAi(ok ? "on" : "off");
     });
+  }, []);
+
+  useEffect(() => {
+    const onClick = (e: MouseEvent) => {
+      if (rootRef.current && !rootRef.current.contains(e.target as Node)) setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(false); };
+    document.addEventListener("mousedown", onClick);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onClick);
+      document.removeEventListener("keydown", onKey);
+    };
   }, []);
 
   const search = async (text: string) => {
@@ -38,9 +56,9 @@ export default function SmartSearch() {
       );
       const res = vecSearch(all, qv, 8);
       setResults(res);
-      setStatus(`${res.length} result${res.length !== 1 ? "s" : ""} for "${text}"`);
+      setStatus(`${res.length} result${res.length !== 1 ? "s" : ""}`);
     } catch {
-      setStatus("Couldn't load the on-device search model — check your connection and retry.");
+      setStatus("Search unavailable — check your connection.");
     }
   };
 
@@ -50,50 +68,58 @@ export default function SmartSearch() {
     timer.current = setTimeout(() => search(v.trim()), 400);
   };
 
+  const go = (id: string) => {
+    setOpen(false);
+    router.push(`/practice?ids=${id}`);
+  };
+
   return (
-    <div className={styles.box}>
-      <div className={styles.head}>
-        <span className={styles.title}>Smart search</span>
-        <span className={`${styles.pill} ${styles[ai]}`}>
-          {ai === "on" ? `AI ready · ${embCount()} indexed` : ai === "loading" ? "loading…" : "index unavailable"}
-        </span>
+    <div className={styles.box} ref={rootRef}>
+      <div className={styles.inputWrap}>
+        <span className={styles.searchIcon}><Icon name="target" size={15} /></span>
+        <input
+          className={styles.input}
+          placeholder="Describe a question…"
+          value={query}
+          onFocus={() => setOpen(true)}
+          onChange={(e) => onInput(e.target.value)}
+          spellCheck={false}
+        />
+        <span className={`${styles.dot} ${styles[ai]}`} title={
+          ai === "on" ? `AI search ready · ${embCount()} indexed` : ai === "loading" ? "Loading search index…" : "Search index unavailable"
+        } />
       </div>
-      <input
-        className={styles.input}
-        placeholder="Describe a question — e.g. “weaken an argument about pollution”"
-        value={query}
-        onChange={(e) => onInput(e.target.value)}
-        spellCheck={false}
-      />
-      <div className={styles.chips}>
-        {EXAMPLES.map((x) => (
-          <button key={x} type="button" onClick={() => { setQuery(x); search(x); }}>
-            {x}
-          </button>
-        ))}
-      </div>
-      {status && <div className={styles.status}>{status}</div>}
-      {results && (
-        <div className={styles.results}>
-          {results.map(({ q, score }) => {
-            const stem = q.question.split("\n\n").pop()!.slice(0, 120);
-            return (
-              <button
-                key={q.id}
-                type="button"
-                className={styles.item}
-                onClick={() => router.push(`/practice?ids=${q.id}`)}
-              >
-                <span className={styles.meta}>
-                  <b>{q.type}</b>
-                  {q.difficulty && <i>{q.difficulty}</i>}
-                  <i>{q.subtype ?? q.chapter}</i>
-                  <em>{Math.round(score * 100)}% match</em>
-                </span>
-                <span className={styles.stem}>{stem}…</span>
-              </button>
-            );
-          })}
+
+      {open && (
+        <div className={styles.drop}>
+          {!query && (
+            <div className={styles.chips}>
+              {EXAMPLES.map((x) => (
+                <button key={x} type="button" onClick={() => { setQuery(x); search(x); }}>
+                  {x}
+                </button>
+              ))}
+            </div>
+          )}
+          {status && <div className={styles.status}>{status}</div>}
+          {results && results.length > 0 && (
+            <div className={styles.results}>
+              {results.map(({ q, score }) => {
+                const stem = q.question.split("\n\n").pop()!.slice(0, 110);
+                return (
+                  <button key={q.id} type="button" className={styles.item} onClick={() => go(q.id)}>
+                    <span className={styles.meta}>
+                      <b>{q.type}</b>
+                      {q.difficulty && <i>{q.difficulty}</i>}
+                      <i>{q.subtype ?? q.chapter}</i>
+                      <em>{Math.round(score * 100)}%</em>
+                    </span>
+                    <span className={styles.stem}>{stem}…</span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </div>
       )}
     </div>

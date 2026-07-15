@@ -19,6 +19,13 @@ export default function AuthGate({ onDone }: { onDone: () => void }) {
     });
   }, [onDone]);
 
+  /* flag the gate so the global nav hides itself — its links aren't reachable
+     until sign-in or guest is chosen (see NavBar.module.css) */
+  useEffect(() => {
+    document.documentElement.dataset.authgate = "1";
+    return () => { delete document.documentElement.dataset.authgate; };
+  }, []);
+
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || pass.length < 6) {
@@ -43,8 +50,11 @@ export default function AuthGate({ onDone }: { onDone: () => void }) {
 
   return (
     <div className={styles.stage}>
-      <div className={styles.logo}>
-        GMAT <span>Trainer</span>
+      <div className={styles.brand}>
+        <span className={styles.mark}>G</span>
+        <div className={styles.logo}>
+          GMAT <span>Trainer</span>
+        </div>
       </div>
       <div className={styles.card}>
         <h2>{tab === "register" ? "Create account" : "Welcome back"}</h2>

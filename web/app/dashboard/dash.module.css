@@ -25,7 +25,7 @@
 .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; }
 .card {
   background: var(--surface); border: 1px solid var(--line);
-  border-radius: var(--r2); padding: 14px 16px;
+  border-radius: var(--r); padding: 14px 16px;
 }
 .cardHead { display: flex; justify-content: space-between; margin-bottom: 8px; }
 .cardHead span { font-weight: 800; color: var(--brand-ink); font-variant-numeric: tabular-nums; }
@@ -37,6 +37,14 @@
   margin-top: 10px; overflow: hidden;
 }
 .barTrack i { display: block; height: 100%; background: var(--green); border-radius: 99px; }
+
+.actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
+.redoBtn {
+  display: inline-block; background: var(--surface); border: 1px solid var(--line);
+  border-radius: var(--r2); padding: 10px 15px; font-weight: 600; font-size: 13.5px;
+  color: var(--ink); box-shadow: var(--sh-sm);
+}
+.redoBtn[aria-disabled="true"] { opacity: 0.5; pointer-events: none; }
 
 .callout {
   background: var(--grad-soft); border: 1px solid var(--line);

@@ -11,6 +11,7 @@ export function mergeProgress(local: StoreData | null, remote: StoreData | null)
   const blank: StoreData = {
     version: 1,
     history: {},
+    activity: {},
     daily: { date: null, level: "Easy", streak: 0, lastPct: null, recent: [] },
     adaptive: { level: "Easy" },
   };
@@ -37,6 +38,19 @@ export function mergeProgress(local: StoreData | null, remote: StoreData | null)
       lastResult: newer.lastResult,
     };
   }
+  /* activity: per day+section, keep the larger ms (avoids double-counting a
+     round-tripped sync while still capturing whichever device logged more). */
+  const la = L.activity ?? {}, ra = R.activity ?? {};
+  const activity: StoreData["activity"] = {};
+  for (const day of new Set([...Object.keys(la), ...Object.keys(ra)])) {
+    const a = la[day] ?? {}, b = ra[day] ?? {};
+    const merged: Record<string, number> = {};
+    for (const type of new Set([...Object.keys(a), ...Object.keys(b)])) {
+      merged[type] = Math.max(a[type as keyof typeof a] ?? 0, b[type as keyof typeof b] ?? 0);
+    }
+    activity[day] = merged;
+  }
+
   const lastActive = (o: StoreData) =>
     Object.values(o.history ?? {}).reduce((m, h: any) => Math.max(m, h.lastSeen || 0), 0);
   const lAct = lastActive(L), rAct = lastActive(R);
@@ -46,6 +60,7 @@ export function mergeProgress(local: StoreData | null, remote: StoreData | null)
   return {
     version: 1,
     history: hist,
+    activity,
     daily: {
       date: base.date, level: base.level, lastPct: base.lastPct,
       streak: Math.max(ld.streak || 0, rd.streak || 0),

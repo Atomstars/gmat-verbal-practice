@@ -12,19 +12,13 @@ interface Props {
 }
 
 export default function QuestionCard({ q, picked, submitted, onPick }: Props) {
-  return (
-    <div className={styles.card}>
-      <div className={styles.head}>
-        <span className={`${styles.pill} ${styles["t" + q.type]}`}>{q.type}</span>
-        {q.difficulty && <span className={styles.pill}>{q.difficulty}</span>}
-        {q.chapter && <span className={styles.chapter}>{q.chapter}</span>}
+  const questionPane = (
+    <div className={styles.questionPane}>
+      <div className={styles.qHead}>
+        <span className={`${styles.tag} ${styles["t" + q.type]}`}>{q.type}</span>
+        {q.difficulty && <span className={styles.tag}>{q.difficulty}</span>}
+        {q.chapter && <span className={styles.tagMuted}>{q.chapter}</span>}
       </div>
-
-      {q.passage && (
-        <div className={styles.passage}>
-          <MathParas text={q.passage} />
-        </div>
-      )}
 
       {q.diagram && (
         // eslint-disable-next-line @next/next/no-img-element
@@ -59,6 +53,11 @@ export default function QuestionCard({ q, picked, submitted, onPick }: Props) {
               <span className={styles.optText}>
                 <MathText text={o.text} />
               </span>
+              {(isCorrect || isWrongPick) && (
+                <span className={styles.optMark} aria-hidden="true">
+                  {isCorrect ? "✓" : "✕"}
+                </span>
+              )}
             </button>
           );
         })}
@@ -66,23 +65,39 @@ export default function QuestionCard({ q, picked, submitted, onPick }: Props) {
 
       {submitted && (
         <div className={styles.feedback}>
-          <div
-            className={
-              picked === q.correct_answer ? styles.verdictCorrect : styles.verdictWrong
-            }
-          >
+          <div className={picked === q.correct_answer ? styles.verdictOk : styles.verdictNo}>
+            <span className={styles.verdictMark}>
+              {picked === q.correct_answer ? "✓" : "✕"}
+            </span>
             {picked === q.correct_answer
               ? "Correct"
-              : `Not quite — the answer is ${q.correct_answer}`}
+              : `Incorrect — the correct answer is ${q.correct_answer}`}
           </div>
-          {q.subtype && <span className={styles.pill}>{q.subtype}</span>}
+          {q.subtype && <span className={styles.tagMuted}>{q.subtype}</span>}
           {q.explanation && (
             <div className={styles.explanation}>
+              <div className={styles.explanationLabel}>Explanation</div>
               <MathParas text={q.explanation} />
             </div>
           )}
         </div>
       )}
+    </div>
+  );
+
+  if (!q.passage) {
+    return <div className={styles.examShell}>{questionPane}</div>;
+  }
+
+  return (
+    <div className={`${styles.examShell} ${styles.hasPassage}`}>
+      <div className={styles.passagePane}>
+        <div className={styles.paneLabel}>Reading Passage</div>
+        <div className={styles.passage}>
+          <MathParas text={q.passage} />
+        </div>
+      </div>
+      {questionPane}
     </div>
   );
 }

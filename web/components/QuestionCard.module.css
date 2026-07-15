@@ -1,100 +1,160 @@
-.card {
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--r);
-  box-shadow: var(--sh);
-  padding: 22px 24px;
+/* Exam-style question surface: a split "passage | question" desk, plain
+   lettered-bubble choice list (not boxed cards), flat metadata tags — modeled
+   on the actual GMAT Focus Edition testing screen rather than a chat/quiz UI. */
+
+.examShell {
+  display: block;
+}
+@media (min-width: 900px) {
+  .examShell.hasPassage {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: start;
+    gap: 0;
+    border: 1px solid var(--line);
+    border-radius: var(--r);
+    overflow: hidden;
+    background: var(--surface);
+  }
+  .examShell.hasPassage .passagePane,
+  .examShell.hasPassage .questionPane {
+    max-height: calc(100vh - 190px);
+    overflow-y: auto;
+  }
+  .examShell.hasPassage .passagePane {
+    border-right: 1px solid var(--line);
+  }
 }
 
-.head {
+.passagePane {
+  background: var(--surface2);
+  padding: 18px 22px;
+}
+.questionPane {
+  background: var(--surface);
+  padding: 20px 22px;
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+}
+.examShell.hasPassage .questionPane {
+  border: 0;
+  border-radius: 0;
+}
+@media (max-width: 899px) {
+  .examShell.hasPassage .passagePane {
+    border: 1px solid var(--line);
+    border-radius: var(--r);
+    margin-bottom: 14px;
+  }
+}
+
+.paneLabel {
+  font-size: 10.5px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--faint); margin-bottom: 12px; padding-bottom: 8px;
+  border-bottom: 1px solid var(--line);
+}
+
+.qHead {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   flex-wrap: wrap;
   margin-bottom: 14px;
 }
 
-.pill {
+.tag {
   display: inline-block;
-  font-size: 11.5px;
+  font-size: 10.5px;
   font-weight: 700;
-  padding: 2px 10px;
-  border-radius: 99px;
-  background: var(--pick);
-  color: var(--brand-ink);
-}
-.tPS { background: #dbeafe; color: #1d4ed8; }
-.tDS { background: #ede9fe; color: #6d28d9; }
-:global([data-theme="dark"]) .tPS { background: #172554; color: #93c5fd; }
-:global([data-theme="dark"]) .tDS { background: #2e1065; color: #c4b5fd; }
-
-.chapter {
-  font-size: 12.5px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 4px;
+  border: 1px solid var(--line);
+  background: var(--surface2);
   color: var(--muted);
+}
+.tPS, .tDS { border-color: color-mix(in srgb, var(--brand) 35%, var(--line)); color: var(--brand-ink); background: var(--pick); }
+.tagMuted {
+  font-size: 11.5px;
+  color: var(--faint);
 }
 
 .passage {
   font-family: var(--serif);
-  font-size: 15.5px;
-  line-height: 1.65;
-  border-left: 3px solid var(--line);
-  padding: 2px 0 2px 16px;
-  margin-bottom: 16px;
+  font-size: 15px;
+  line-height: 1.75;
+  color: var(--ink);
 }
-.passage p { margin: 0 0 0.85em; }
+.passage p { margin: 0 0 0.9em; }
 .passage p:last-child { margin-bottom: 0; }
 
 .diagram {
   display: block;
   max-width: 100%;
   margin: 0.75rem 0 1rem;
-  border-radius: 6px;
+  border-radius: 4px;
+  border: 1px solid var(--line);
 }
 
-.stem { font-size: 15.5px; }
+.stem { font-size: 15.5px; line-height: 1.6; }
 .stem p { margin: 0 0 0.7em; }
 
 .options {
   display: flex;
   flex-direction: column;
-  gap: 9px;
   margin-top: 18px;
+  border-top: 1px solid var(--line);
 }
 
 .opt {
   display: flex;
-  gap: 12px;
-  align-items: baseline;
+  gap: 13px;
+  align-items: flex-start;
   text-align: left;
-  background: var(--surface2);
-  border: 1.5px solid var(--line);
-  border-radius: var(--r2);
-  padding: 11px 14px;
+  width: 100%;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  padding: 13px 4px;
   font-size: 14.5px;
   color: var(--ink);
-  transition: border-color 0.15s, background 0.15s;
+  transition: background 0.12s;
 }
-.opt:not(:disabled):hover { border-color: var(--brand2); }
-.optPicked { border-color: var(--brand); background: var(--pick); }
-.optCorrect { border-color: var(--green); background: var(--green-bg); }
-.optWrong { border-color: var(--red); background: var(--red-bg); }
+.opt:not(:disabled):hover { background: var(--surface2); }
+.optPicked { background: var(--pick); }
+.optCorrect { background: color-mix(in srgb, var(--green) 9%, transparent); }
+.optWrong { background: color-mix(in srgb, var(--red) 9%, transparent); }
 
 .optLabel {
-  flex: 0 0 24px;
-  height: 24px;
+  flex: 0 0 25px;
+  height: 25px;
   border-radius: 50%;
-  border: 1.5px solid var(--line);
+  border: 1.5px solid var(--faint);
   display: grid;
   place-items: center;
   font-size: 12px;
   font-weight: 700;
+  color: var(--muted);
+  background: var(--surface);
   align-self: flex-start;
+  margin-top: 1px;
 }
-.optPicked .optLabel { border-color: var(--brand); color: var(--brand-ink); }
-.optCorrect .optLabel { border-color: var(--green); color: var(--green); }
-.optWrong .optLabel { border-color: var(--red); color: var(--red); }
+.optPicked .optLabel { border-color: var(--brand); background: var(--brand); color: #fff; }
+.optCorrect .optLabel { border-color: var(--green); background: var(--green); color: #fff; }
+.optWrong .optLabel { border-color: var(--red); background: var(--red); color: #fff; }
 
 .optText { flex: 1; min-width: 0; }
+
+.optMark {
+  flex: 0 0 auto;
+  font-weight: 800;
+  font-size: 14px;
+  margin-left: auto;
+  padding-left: 8px;
+}
+.optCorrect .optMark { color: var(--green); }
+.optWrong .optMark { color: var(--red); }
 
 .feedback {
   margin-top: 18px;
@@ -102,19 +162,39 @@
   padding-top: 16px;
 }
 
-.verdictCorrect,
-.verdictWrong {
-  font-weight: 800;
-  font-size: 15px;
-  margin-bottom: 8px;
+.verdictOk, .verdictNo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  font-size: 14.5px;
+  margin-bottom: 10px;
 }
-.verdictCorrect { color: var(--green); }
-.verdictWrong { color: var(--red); }
+.verdictMark {
+  display: inline-flex;
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  align-items: center; justify-content: center;
+  font-size: 12px; color: #fff;
+}
+.verdictOk { color: var(--green); }
+.verdictOk .verdictMark { background: var(--green); }
+.verdictNo { color: var(--red); }
+.verdictNo .verdictMark { background: var(--red); }
 
 .explanation {
-  margin-top: 10px;
-  font-size: 14px;
+  margin-top: 12px;
+  font-size: 13.5px;
   color: var(--muted);
-  line-height: 1.6;
+  line-height: 1.65;
+  background: var(--surface2);
+  border: 1px solid var(--line);
+  border-radius: var(--r2);
+  padding: 14px 16px;
+}
+.explanationLabel {
+  font-size: 10.5px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--faint); margin-bottom: 8px;
 }
 .explanation p { margin: 0 0 0.7em; }
+.explanation p:last-child { margin-bottom: 0; }

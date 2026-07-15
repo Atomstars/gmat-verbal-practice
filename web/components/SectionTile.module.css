@@ -1,0 +1,66 @@
+.tile {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--line);
+  border-radius: var(--r);
+  box-shadow: var(--sh-sm);
+  padding: 18px;
+  color: inherit;
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  transition: box-shadow 0.15s, border-color 0.15s, transform 0.15s;
+}
+.tile:hover {
+  box-shadow: var(--sh);
+  border-color: var(--brand2);
+  border-left-color: var(--brand);
+  transform: translateY(-1px);
+}
+.tile.feature {
+  border-left-color: var(--brand);
+  background: var(--grad-soft);
+}
+
+.icon {
+  flex: 0 0 auto;
+  width: 40px; height: 40px;
+  border-radius: 10px;
+  display: grid; place-items: center;
+}
+.ac-blue { background: color-mix(in srgb, var(--brand) 14%, var(--surface2)); color: var(--brand-ink); }
+.ac-teal { background: color-mix(in srgb, var(--accent) 16%, var(--surface2)); color: var(--accent); }
+.ac-violet { background: color-mix(in srgb, #7c5cff 16%, var(--surface2)); color: #8a6ef2; }
+.ac-amber { background: var(--amber-bg); color: var(--amber); }
+.ac-green { background: var(--green-bg); color: var(--green); }
+.ac-gold { background: linear-gradient(155deg, #2a2110, #1a1608); color: #e8c873; }
+
+.tile.gold:hover { border-left-color: #c99a3d; }
+.premiumBadge {
+  flex: 0 0 auto;
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  padding: 3px 8px;
+  border-radius: 99px;
+  background: linear-gradient(135deg, #b8892f, #e8c873 45%, #b8892f);
+  color: #2a1c04;
+}
+
+.title {
+  font-weight: 650;
+  font-size: 14.5px;
+  flex: 1;
+  min-width: 0;
+}
+.count {
+  flex: 0 0 auto;
+  font-size: 11px;
+  font-weight: 700;
+  font-family: var(--mono);
+  color: var(--faint);
+  background: var(--surface2);
+  border: 1px solid var(--line);
+  border-radius: 99px;
+  padding: 3px 9px;
+}

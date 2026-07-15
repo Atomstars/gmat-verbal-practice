@@ -1,8 +1,33 @@
 import type { Metadata } from "next";
+import { IBM_Plex_Mono, IBM_Plex_Sans, IBM_Plex_Serif } from "next/font/google";
 import Link from "next/link";
 import "./globals.css";
 import Boot from "@/components/Boot";
+import NavBar from "@/components/NavBar";
 import ThemeToggle from "@/components/ThemeToggle";
+
+/* IBM Plex — drawn for technical/testing interfaces, which is exactly the
+   register this app wants: Sans for UI chrome, Serif for reading passages
+   (an authoritative "printed page" feel), Mono for timers and question counts. */
+const plexSans = IBM_Plex_Sans({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-plex-sans",
+  display: "swap",
+});
+const plexSerif = IBM_Plex_Serif({
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
+  style: ["normal", "italic"],
+  variable: "--font-plex-serif",
+  display: "swap",
+});
+const plexMono = IBM_Plex_Mono({
+  subsets: ["latin"],
+  weight: ["500", "600"],
+  variable: "--font-plex-mono",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "GMAT Trainer",
@@ -17,7 +42,11 @@ document.documentElement.setAttribute("data-theme",t);}catch(e){}`;
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html
+      lang="en"
+      suppressHydrationWarning
+      className={`${plexSans.variable} ${plexSerif.variable} ${plexMono.variable}`}
+    >
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeInit }} />
       </head>
@@ -34,6 +63,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             ⚙
           </Link>
         </header>
+        <NavBar />
         {children}
       </body>
     </html>
