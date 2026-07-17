@@ -21,6 +21,7 @@ export interface HistoryEntry {
   subtype?: string | null;
   chapter?: string | null;
   difficulty?: string | null;
+  lastTimeMs?: number; // time spent on the most recent attempt (for the History view)
   ts: number;
 }
 
@@ -102,6 +103,7 @@ export const Store = {
     h.chapter = q.chapter ?? null;
     h.difficulty = q.difficulty ?? null;
     h.ts = Date.now();
+    if (typeof timeMs === "number" && timeMs > 0) h.lastTimeMs = timeMs;
     data.history[q.id] = h;
     if (typeof timeMs === "number" && timeMs > 0) {
       const day = new Date().toISOString().slice(0, 10);
@@ -127,6 +129,12 @@ export const Store = {
     return Object.entries(data.history)
       .filter(([, h]) => h.lastResult === "wrong")
       .map(([id]) => id);
+  },
+
+  /** Every question the user has attempted at least once (any result).
+      Used to keep fresh practice sessions from re-serving seen questions. */
+  seenIds(): string[] {
+    return Object.keys(load().history);
   },
 
   updateDaily(fn: (d: StoreData["daily"]) => StoreData["daily"]) {

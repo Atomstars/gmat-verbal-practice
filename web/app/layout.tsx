@@ -3,6 +3,7 @@ import { IBM_Plex_Mono, IBM_Plex_Sans, IBM_Plex_Serif } from "next/font/google";
 import Link from "next/link";
 import "./globals.css";
 import Boot from "@/components/Boot";
+import BackButton from "@/components/BackButton";
 import NavBar from "@/components/NavBar";
 import ThemeToggle from "@/components/ThemeToggle";
 
@@ -53,6 +54,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         <Boot />
         <header className="appbar">
+          <BackButton />
           <Link href="/" className="brand" style={{ color: "inherit" }}>
             <span className="mk">G</span> GMAT Trainer
           </Link>

@@ -23,6 +23,8 @@ function VerbalMenu() {
     const w = new Set(Store.wrongIds());
     return all.filter((q) => q.type === t && playable(q) && w.has(q.id)).length;
   };
+  const doneOf = (t: QType) =>
+    all ? Object.values(Store.get().history).filter((h) => h.type === t).length : 0;
 
   /* ---- per-type submenu (RC or CR) ---- */
   if (type === "RC" || type === "CR") {
@@ -47,6 +49,8 @@ function VerbalMenu() {
             icon="zap" accent="amber" title="GMAT Focus" feature />
           <Tile href={`/setup?types=${type}&mode=redo&title=${encodeURIComponent(`${label} · Review`)}`}
             icon="refresh" accent="green" title="Repractice wrong" count={`${w} saved`} />
+          <Tile href={`/history?types=${type}&title=${encodeURIComponent(`${label} · History`)}`}
+            icon="clock" accent="gold" title="History" count={`${doneOf(type)} done`} />
         </div>
         <p className={styles.sec} style={{ marginTop: 24 }}>
           <Link href="/verbal">← All Verbal</Link>
@@ -75,6 +79,8 @@ function VerbalMenu() {
           title="Daily RC" />
         <Tile href="/setup?types=RC,CR&mode=redo&title=Errored%20Verbal" icon="refresh" accent="green"
           title="Errored Verbal" count={`${totalWrong} saved`} />
+        <Tile href="/history?types=RC,CR&title=Verbal%20%C2%B7%20History" icon="clock" accent="gold"
+          title="History" count={`${doneOf("RC") + doneOf("CR")} done`} />
       </div>
     </main>
   );

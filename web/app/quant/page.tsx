@@ -23,6 +23,7 @@ function QuantMenu() {
     const w = new Set(Store.wrongIds());
     return pool.filter((q) => w.has(q.id)).length;
   })();
+  const done = all ? Object.values(Store.get().history).filter((h) => h.type === type).length : 0;
 
   const label = TYPE_LABEL[type];
   const t = encodeURIComponent(label);
@@ -40,6 +41,8 @@ function QuantMenu() {
         <Tile href={`/setup?types=${type}&only=topic&title=${t}`} icon="list" accent="teal" title="By topic" />
         <Tile href={`/setup?types=${type}&mode=redo&title=${encodeURIComponent(`${label} · Review`)}`}
           icon="refresh" accent="green" title="Repractice wrong" count={`${wrong} saved`} />
+        <Tile href={`/history?types=${type}&title=${encodeURIComponent(`${label} · History`)}`}
+          icon="clock" accent="gold" title="History" count={`${done} done`} />
       </div>
     </main>
   );

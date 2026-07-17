@@ -72,11 +72,21 @@ function Setup() {
     return p;
   }, [basePool, topic, diff]);
 
+  /* Every session shows a question only once, so exclude already-attempted
+     questions here too — counts reflect what you'll actually be served. Only
+     Review (redo) is exempt (it exists to resurface misses). */
+  const seen = useMemo(() => new Set(Store.seenIds()), [all]);
+  const freshPool = useMemo(
+    () => (mode === "redo" ? pool : pool.filter((q) => !seen.has(q.id))),
+    [pool, seen, mode],
+  );
+  const doneCount = pool.length - freshPool.length;
+
   const showTopic = only !== "diff" && topics.length > 1;
   const showDiff = only !== "topic" && hasDifficulty;
 
   const start = () => {
-    const n = Math.min(count, pool.length);
+    const n = Math.min(count, freshPool.length);
     const q = new URLSearchParams();
     if (types.length) q.set("types", types.join(","));
     q.set("mode", mode);
@@ -163,19 +173,23 @@ function Setup() {
             {countOpts.map((n) => (
               <option key={n} value={n}>{n} questions</option>
             ))}
-            <option value={999}>Everything ({pool.length})</option>
+            <option value={999}>Everything ({freshPool.length})</option>
           </select>
         </div>
 
-        <button className={styles.start} onClick={start} disabled={!pool.length}>
+        <button className={styles.start} onClick={start} disabled={!freshPool.length}>
           Start →
         </button>
         <p className={styles.note}>
-          {pool.length
-            ? `${pool.length} question${pool.length === 1 ? "" : "s"} available${mode === "exam" ? " · exam pacing: no feedback until the report" : ""}.`
+          {freshPool.length
+            ? `${freshPool.length} ${mode === "redo" ? "" : "new "}question${freshPool.length === 1 ? "" : "s"} available${
+                mode !== "redo" && doneCount ? ` · ${doneCount} already done` : ""
+              }${mode === "exam" ? " · exam pacing: no feedback until the report" : ""}.`
             : mode === "redo"
               ? "Nothing to redo yet — missed questions land here."
-              : "No questions match these filters."}
+              : pool.length
+                ? "You've already done every question in this selection — try Review, or a different topic."
+                : "No questions match these filters."}
         </p>
       </div>
     </main>

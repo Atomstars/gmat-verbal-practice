@@ -41,6 +41,7 @@ function Runner() {
 
   const [all, setAll] = useState<Question[]>([]);
   const [qs, setQs] = useState<Question[] | null>(null);
+  const [allSeen, setAllSeen] = useState(false); // fresh practice ran dry because everything's been attempted
   const [idx, setIdx] = useState(0);
   const [picked, setPicked] = useState<Letter | null>(null);
   const [answers, setAnswers] = useState<Record<string, Answer>>({});
@@ -59,25 +60,37 @@ function Runner() {
   useEffect(() => {
     loadAll().then((data) => {
       setAll(data);
+      setAllSeen(false); // recomputed below when a fresh session runs dry
+
+      const ids = params.get("ids");
+      /* A question is shown ONCE, ever: every mode drops questions you've
+         already attempted. The only exceptions are the flows whose whole
+         purpose is to resurface seen questions — Review (redo) and an
+         explicit id-set (Retry from History / "redo the ones I missed"). */
+      const resurface = mode === "redo" || !!ids;
+      const seen = new Set(Store.seenIds());
+      const fresh = resurface ? data : data.filter((q) => !seen.has(q.id));
 
       /* GMAT Focus: questions are chosen adaptively, one at a time */
       if (adaptive) {
         const t = params.get("types")?.split(",") as QType[] | undefined;
-        const started = startAdaptive(data, +(params.get("n") ?? 23), t?.length ? t : undefined);
+        const started = startAdaptive(fresh, +(params.get("n") ?? 23), t?.length ? t : undefined);
         adaptiveRef.current = started?.state ?? null;
         setQs(started ? [started.first] : []);
+        setAllSeen(!started);
         qStart.current = Date.now();
         return;
       }
 
-      const ids = params.get("ids");
       if (mode === "daily") {
-        setQs(pickDaily(data)); // one passage at your adaptive level, in order
+        const dq = pickDaily(fresh); // one unseen passage at your adaptive level
+        setQs(dq);
+        setAllSeen(dq.length === 0);
         qStart.current = Date.now();
         return;
       }
 
-      let pool = data.filter(playable);
+      let pool = fresh.filter(playable);
       if (ids) {
         const want = new Set(ids.split(","));
         pool = pool.filter((q) => want.has(q.id));
@@ -93,6 +106,20 @@ function Runner() {
       if (topic) pool = pool.filter((q) => conceptOf(q) === topic);
       const diff = params.get("diff");
       if (diff) pool = pool.filter((q) => q.difficulty === diff);
+
+      /* Ran dry because everything matching is already done (vs. no match at
+         all)? Compare against the same filters over the full bank. */
+      if (!resurface && pool.length === 0) {
+        const types = (params.get("types")?.split(",") ?? []) as QType[];
+        const matched = data.filter(
+          (q) =>
+            playable(q) &&
+            (!types.length || types.includes(q.type)) &&
+            (!topic || conceptOf(q) === topic) &&
+            (!diff || q.difficulty === diff),
+        ).length;
+        setAllSeen(matched > 0);
+      }
 
       /* Always book order (RC passages kept as units), unless this is an
          explicitly randomized entry (Random Mix / Exam simulation). */
@@ -218,16 +245,30 @@ function Runner() {
   }, [q, picked, effSubmitted, finished, idx, qs]);
 
   if (!qs) return <main className="wrap">Loading questions…</main>;
-  if (!qs.length)
+  if (!qs.length) {
+    const typeParam = params.get("types");
+    const reviewHref = `/setup?mode=redo${typeParam ? `&types=${typeParam}` : ""}&title=${encodeURIComponent("Review · Mistakes")}`;
+    const historyHref = `/history${typeParam ? `?types=${typeParam}` : ""}`;
     return (
       <main className="wrap">
         <div className={styles.report}>
-          <h1>No questions here yet</h1>
-          <p>{mode === "redo" ? "Missed questions land in Redo." : "Try different filters."}</p>
-          <Link href="/" className={styles.homeBtn}>Back to home</Link>
+          <h1>{allSeen ? "You've practiced every question here" : "No questions here yet"}</h1>
+          <p>
+            {allSeen
+              ? "Nice work — you've attempted all of these. Review the ones you missed, or look back over your history."
+              : mode === "redo"
+                ? "Missed questions land in Redo."
+                : "Try different filters."}
+          </p>
+          <div className={styles.repActions}>
+            {allSeen && <Link href={reviewHref} className={styles.homeBtn}>Review mistakes</Link>}
+            {allSeen && <Link href={historyHref} className={styles.homeBtn}>See history</Link>}
+            <Link href="/" className={styles.homeBtn}>Back to home</Link>
+          </div>
         </div>
       </main>
     );
+  }
 
   /* ===== report ===== */
   if (finished) {
