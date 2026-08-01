@@ -66,6 +66,14 @@ a { color: var(--brand-ink); text-decoration: none; }
 body[data-exam] { overflow: hidden; }
 body[data-exam] .appbar { display: none; }
 
+/* Width of the AI tutor drawer. The exam surface and the report both give up
+   this much room while it is open, so the tutor sits BESIDE the question
+   (passage | question | tutor) instead of covering it. */
+:root { --tutor-w: 420px; }
+@media (min-width: 901px) {
+  body[data-tutor] .wrap { max-width: none; margin-right: var(--tutor-w); }
+}
+
 .appbar {
   position: sticky; top: 0; z-index: 40;
   background: color-mix(in srgb, var(--bg) 88%, transparent);

@@ -8,7 +8,9 @@
   right: 0;
   bottom: 0;
   z-index: 300;
-  width: min(440px, 100%);
+  /* --tutor-w (globals.css) is the same width the exam surface gives up while
+     the drawer is open — keep them in step or the panes will not line up */
+  width: min(var(--tutor-w, 420px), 100%);
   display: flex;
   flex-direction: column;
   background: var(--surface);

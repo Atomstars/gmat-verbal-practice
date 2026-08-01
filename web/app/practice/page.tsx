@@ -166,6 +166,14 @@ function Runner() {
     return () => { delete document.body.dataset.exam; };
   }, [inExam]);
 
+  /* tutor open: the drawer takes a column of its own (globals.css --tutor-w),
+     so the report — like the exam surface — narrows instead of being covered */
+  useEffect(() => {
+    if (!tutorFor) return;
+    document.body.dataset.tutor = "1";
+    return () => { delete document.body.dataset.tutor; };
+  }, [tutorFor]);
+
   /* section clock — runs from "Begin Section" until the section ends */
   useEffect(() => {
     if (stage === "directions" || stage === "complete" || finished) return;
@@ -453,7 +461,7 @@ function Runner() {
             : "Next";
 
   return (
-    <div className={styles.exam}>
+    <div className={`${styles.exam} ${tutorFor ? styles.withTutor : ""}`}>
       <header className={styles.hdr}>
         <span className={styles.hdrMark}>G</span>
         <span className={styles.sectionName}>{sectionLabel}</span>
