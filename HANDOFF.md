@@ -41,6 +41,20 @@ unconfirmable as `null`.** Correctness beats volume.
   - Geometry questions show a diagram `<img>` above the stem.
   - Modes: Daily RC, GMAT RC column, Practice (filters), Exam sim, Redo-my-misses,
     Target-weak-spots, Analytics dashboard. Progress in **localStorage** (`gmat_verbal_v1`).
+- **Exam interface (2026-07-31):** every session in the Next.js app (`web/`) runs inside
+  a **GMAT Focus test-delivery replica** — full-screen light chrome, section directions,
+  radio-button choices with no letters, Next→Confirm answer locking, Bookmark,
+  Question Review & Edit (3 answer edits in exam modes), Section Complete, then the
+  report. Practice modes still show feedback + explanation inside that surface; exam
+  modes (`mode=exam`, `mode=gmatfocus`) reveal nothing until the report and write their
+  attempts once, at section end. See [docs/EXAM_INTERFACE.md](docs/EXAM_INTERFACE.md).
+- **AI tutor (2026-07-31):** ✦ Ask AI on every practice question (and on every report
+  item) opens a chat drawer that already knows the passage, choices, official answer and
+  explanation. Hints only until you confirm an answer; full debrief after. NVIDIA
+  Nemotron via **our own proxy** — `api/tutor.js` on Vercel, `node scripts/tutor-proxy.mjs`
+  on :8787 locally — because NVIDIA's API sends no CORS headers and the key must stay
+  server-side. Needs `NVIDIA_API_KEY` in `.env.local` locally and in Vercel's env vars.
+  See [docs/AI_TUTOR.md](docs/AI_TUTOR.md).
 - **Supabase cross-device sync:** local-first, optional. Google OAuth + `progress` table.
   Project `bfaaczlxfafsxjnqqvoc` (Seoul). **Google sign-in not yet end-to-end verified.**
 - **Vector search — in the browser, no backend:** precomputed vectors ship in
@@ -66,6 +80,12 @@ unconfirmable as `null`.** Correctness beats volume.
 ```bash
 python -m http.server 8754      # REQUIRED — app fetch()es JSON, file:// fails
 # open http://localhost:8754
+```
+
+The Next.js app (the deploy target) plus the AI tutor:
+```bash
+npm run dev --prefix web        # http://localhost:3000
+node scripts/tutor-proxy.mjs    # :8787 — only needed for the AI tutor chat
 ```
 
 Re-generate quant data (PDF lives outside the repo on OneDrive Desktop):

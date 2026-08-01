@@ -14,6 +14,12 @@
       "port": 8000
     },
     {
+      "name": "gmat-tutor",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["scripts/tutor-proxy.mjs"],
+      "port": 8787
+    },
+    {
       "name": "gmat-web",
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "dev", "--prefix", "web"],

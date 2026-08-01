@@ -1,94 +1,396 @@
-/* ===== exam top strip (navy, full-bleed, sticky under the app bar) ===== */
-.examBar {
-  position: sticky;
-  top: 56px;
-  z-index: 30;
-  background: var(--navy);
-  color: #fff;
-  border-bottom: 1px solid color-mix(in srgb, #fff 10%, var(--navy));
+/* ============================================================
+   GMAT Focus Edition test-delivery chrome.
+
+   A live section takes over the whole viewport — the site header and nav
+   are hidden (body[data-exam] in globals.css) — and is painted in a fixed
+   light "testing centre" skin that ignores the app theme, because the real
+   exam has no dark mode. Structure, top to bottom:
+
+     ┌ header: section name · Time Remaining (+ hide) · Question n of N ┐
+     │ body:   directions / question screen / review & edit / complete  │
+     └ footer: Bookmark · Question Review · Help ......... Next→Confirm ┘
+
+   Everything after the section (the score report) drops back into the
+   normal app theme and lives at the bottom of this file.
+   ============================================================ */
+
+.exam {
+  --ex-bg: #ffffff;
+  --ex-chrome: #e8ebef;
+  --ex-chrome-soft: #f5f6f8;
+  --ex-line: #b6bdc7;
+  --ex-ink: #14181f;
+  --ex-muted: #4d5663;
+  --ex-blue: #13457e;
+  --ex-blue-dk: #0e3462;
+  --ex-hover: #f0f3f7;
+  --ex-sel: #e3ecf7;
+  --ex-flag: #b5720a;
+  --ex-red: #9c2a24;
+
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  background: var(--ex-bg);
+  color: var(--ex-ink);
+  font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
+  letter-spacing: 0;
 }
-.examBarIn {
-  max-width: 1080px;
-  margin: 0 auto;
-  padding: 10px 18px;
+
+/* ===== header ===== */
+.hdr {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  height: 46px;
+  padding: 0 14px;
+  background: linear-gradient(#f7f8fa, var(--ex-chrome));
+  border-bottom: 1px solid var(--ex-line);
+}
+.hdrMark {
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  background: var(--ex-blue);
+  color: #fff;
+  font-weight: 700;
+  font-size: 12px;
+}
+.sectionName {
+  font-size: 14px;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.hdrRight {
+  margin-left: auto;
   display: flex;
   align-items: center;
   gap: 16px;
-  flex-wrap: wrap;
 }
-.examBarLeft { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
-.examSection {
-  font-size: 10.5px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
-  opacity: 0.72;
+.clockBox {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
 }
-.examQnum {
-  font-size: 13.5px; font-weight: 600; font-variant-numeric: tabular-nums;
+.clockLabel {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ex-muted);
 }
-.examBarRight { display: flex; align-items: center; gap: 10px; margin-left: auto; }
-.examClock {
-  font-family: var(--mono); font-weight: 600; font-size: 14.5px;
+.clock {
+  font-size: 15px;
+  font-weight: 700;
   font-variant-numeric: tabular-nums;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 5px; padding: 4px 9px;
+  min-width: 52px;
 }
-.examClock.low { background: color-mix(in srgb, var(--red) 55%, transparent); color: #fff; }
-.markBtn, .endBtn {
-  background: transparent; border: 1px solid rgba(255, 255, 255, 0.28); color: #fff;
-  border-radius: 5px; font-size: 12.5px; font-weight: 600; padding: 6px 11px;
+.clockLow {
+  color: var(--ex-red);
+}
+.clockHidden {
+  letter-spacing: 0.14em;
+  color: var(--ex-muted);
+}
+.linkBtn {
+  background: none;
+  border: 0;
+  padding: 0;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--ex-blue);
+  text-decoration: underline;
+  font-family: inherit;
+}
+.qcount {
+  font-size: 13px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
-.markBtn:hover, .endBtn:hover { background: rgba(255, 255, 255, 0.1); }
-.markBtn.markOn { background: var(--flag); border-color: var(--flag); color: #1a1200; }
 
-/* ===== runner content ===== */
-.runnerMain { padding-bottom: 96px; }
+/* AI tutor entry point — a study aid bolted onto the test screen, so it is
+   marked as such (accent colour, not exam chrome) and never shown during an
+   exam-mode section */
+.askBtn {
+  background: #fff;
+  border: 1px solid var(--ex-blue);
+  border-radius: 2px;
+  color: var(--ex-blue);
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 700;
+  padding: 6px 11px;
+  white-space: nowrap;
+}
+.askBtn:hover { background: var(--ex-sel); }
+.askOn { background: var(--ex-blue); color: #fff; }
 
-/* similar panel */
-.simPanel {
-  background: var(--surface); border: 1px solid var(--line);
-  border-radius: var(--r); box-shadow: var(--sh-sm);
-  padding: 14px 16px; margin-top: 14px;
-  display: flex; flex-direction: column; gap: 8px;
+/* ===== body ===== */
+.body {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  overflow: hidden;
 }
-.simHead { font-weight: 700; font-size: 13.5px; }
-.simHead em { font-style: normal; color: var(--brand-ink); font-size: 11.5px; margin-left: 8px; }
-.simItem {
-  text-align: left; background: var(--surface2); border: 1px solid var(--line);
-  border-radius: var(--r2); padding: 9px 12px; color: var(--ink);
-  display: flex; flex-direction: column; gap: 3px;
+@media (max-width: 860px) {
+  .body {
+    display: block;
+    overflow-y: auto;
+  }
 }
-.simItem:hover { border-color: var(--brand2); }
-.meta { display: flex; gap: 8px; align-items: baseline; font-size: 11px; }
-.meta b { background: var(--pick); color: var(--brand-ink); border-radius: 4px; padding: 1px 8px; font-weight: 700; }
-.meta i { font-style: normal; color: var(--muted); }
-.meta em { font-style: normal; color: var(--faint); margin-left: auto; }
-.simStem { font-size: 13px; }
 
-/* ===== fixed bottom nav (Back / Confirm — exam convention) ===== */
-.navBar {
-  position: fixed; left: 0; right: 0; bottom: 0; z-index: 35;
-  background: color-mix(in srgb, var(--surface) 94%, transparent);
-  backdrop-filter: blur(10px);
-  border-top: 1px solid var(--line);
+/* generic centred sheet used by directions / review / complete */
+.sheet {
+  flex: 1;
+  overflow-y: auto;
+  padding: 34px 26px 48px;
 }
-.navBarIn {
-  max-width: 1080px; margin: 0 auto; padding: 12px 18px;
-  display: flex; align-items: center; gap: 12px;
+.sheetIn {
+  max-width: 720px;
+  margin: 0 auto;
 }
-.navSpacer { flex: 1; }
-.backBtn {
-  background: var(--surface); border: 1.5px solid var(--line); color: var(--ink);
-  border-radius: var(--r2); padding: 11px 18px; font-weight: 600; font-size: 14px;
+.sheetIn h1 {
+  font-size: 21px;
+  margin: 0 0 4px;
+  letter-spacing: 0;
+  font-weight: 700;
 }
-.backBtn:hover { border-color: var(--brand2); }
-.confirmBtn {
-  background: var(--brand); color: #fff; border: 0; border-radius: var(--r2);
-  font-weight: 700; font-size: 14.5px; padding: 12px 28px;
-  box-shadow: 0 3px 10px color-mix(in srgb, var(--brand) 35%, transparent);
+.sheetKick {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ex-muted);
+  margin-bottom: 10px;
 }
-.confirmBtn:disabled { opacity: 0.4; cursor: default; box-shadow: none; }
+.sheetIn p {
+  font-size: 14.5px;
+  line-height: 1.65;
+  color: var(--ex-ink);
+}
+.rules {
+  border: 1px solid var(--ex-line);
+  background: var(--ex-chrome-soft);
+  padding: 16px 20px;
+  margin-top: 18px;
+}
+.rules ul {
+  margin: 0;
+  padding-left: 20px;
+  font-size: 14px;
+  line-height: 1.75;
+}
+.factRow {
+  display: flex;
+  gap: 26px;
+  flex-wrap: wrap;
+  margin: 18px 0 4px;
+  border-top: 1px solid var(--ex-line);
+  border-bottom: 1px solid var(--ex-line);
+  padding: 14px 0;
+}
+.fact b {
+  display: block;
+  font-size: 19px;
+  font-variant-numeric: tabular-nums;
+}
+.fact span {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ex-muted);
+}
 
-/* ===== report ===== */
+/* ===== review & edit table ===== */
+.revTable {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 16px;
+  font-size: 14px;
+}
+.revTable th {
+  text-align: left;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ex-muted);
+  border-bottom: 1px solid var(--ex-line);
+  padding: 8px 10px;
+}
+.revTable td {
+  border-bottom: 1px solid var(--ex-chrome);
+  padding: 0;
+}
+.revRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  background: none;
+  border: 0;
+  padding: 9px 10px;
+  font-size: 14px;
+  font-family: inherit;
+  color: var(--ex-ink);
+  text-align: left;
+}
+.revRow:not(:disabled):hover {
+  background: var(--ex-hover);
+}
+.revRow:disabled {
+  cursor: default;
+  color: var(--ex-muted);
+}
+.revNum {
+  flex: 0 0 96px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.revStatus {
+  flex: 1;
+}
+.revCurrent {
+  background: var(--ex-sel);
+}
+.revFlag {
+  flex: 0 0 60px;
+  color: var(--ex-flag);
+  font-size: 15px;
+}
+.revNote {
+  font-size: 13px;
+  color: var(--ex-muted);
+  margin-top: 6px;
+}
+.revActions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 22px;
+}
+
+/* ===== help overlay ===== */
+.helpBack {
+  position: absolute;
+  inset: 0;
+  background: rgba(12, 18, 28, 0.45);
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  z-index: 5;
+}
+.helpBox {
+  background: #fff;
+  border: 1px solid var(--ex-line);
+  max-width: 520px;
+  width: 100%;
+  padding: 22px 24px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+}
+.helpBox h2 {
+  margin: 0 0 10px;
+  font-size: 17px;
+}
+.helpBox dl {
+  margin: 0;
+  display: grid;
+  grid-template-columns: 108px 1fr;
+  gap: 6px 12px;
+  font-size: 13.5px;
+}
+.helpBox dt {
+  font-weight: 700;
+  font-family: var(--mono, monospace);
+}
+.helpBox dd {
+  margin: 0;
+  color: var(--ex-muted);
+}
+
+/* ===== footer ===== */
+.ftr {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  min-height: 52px;
+  background: linear-gradient(var(--ex-chrome), #dfe3e9);
+  border-top: 1px solid var(--ex-line);
+}
+.ftrBtn {
+  background: linear-gradient(#fff, #f1f3f6);
+  border: 1px solid var(--ex-line);
+  border-radius: 2px;
+  padding: 7px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ex-ink);
+  font-family: inherit;
+  white-space: nowrap;
+}
+.ftrBtn:hover {
+  background: linear-gradient(#fff, #e7eaee);
+}
+.bookmarkOn {
+  background: #fbeed3;
+  border-color: var(--ex-flag);
+  color: #6f4705;
+}
+.ftrSpacer {
+  flex: 1;
+}
+.confirmHint {
+  font-size: 12.5px;
+  color: var(--ex-muted);
+  margin-right: 4px;
+  text-align: right;
+}
+.primary {
+  background: linear-gradient(var(--ex-blue), var(--ex-blue-dk));
+  color: #fff;
+  border: 1px solid var(--ex-blue-dk);
+  border-radius: 2px;
+  padding: 9px 30px;
+  font-size: 14px;
+  font-weight: 700;
+  font-family: inherit;
+  min-width: 128px;
+}
+.primary:disabled {
+  background: #c4cad3;
+  border-color: #b3bac4;
+  color: #f2f4f7;
+  cursor: default;
+}
+@media (max-width: 620px) {
+  .ftrBtn {
+    padding: 7px 9px;
+    font-size: 12px;
+  }
+  .primary {
+    padding: 9px 16px;
+    min-width: 96px;
+  }
+  .confirmHint {
+    display: none;
+  }
+  .hdrMark {
+    display: none;
+  }
+}
+
+/* ============================================================
+   After the section: report + empty states (normal app theme)
+   ============================================================ */
 .report {
   background: var(--surface); border: 1px solid var(--line);
   border-radius: var(--r); box-shadow: var(--sh);
@@ -122,7 +424,11 @@
 .repMeta { color: var(--muted); font-size: 12px; }
 .repTime { margin-left: auto; color: var(--faint); font-size: 12px; font-family: var(--mono); }
 .repStem { font-size: 13.5px; margin-top: 5px; }
-.repAns { font-size: 12.5px; color: var(--muted); margin-top: 5px; }
+.repAns { font-size: 12.5px; color: var(--muted); margin-top: 5px; display: flex; align-items: center; gap: 6px; }
+.repAsk {
+  margin-left: auto; background: var(--pick); border: 0; border-radius: var(--r2);
+  color: var(--brand-ink); font-weight: 700; font-size: 12px; padding: 5px 11px;
+}
 .repExpl {
   font-size: 12.5px; color: var(--muted); margin-top: 8px;
   border-top: 1px dashed var(--line); padding-top: 8px; white-space: pre-line;
@@ -131,3 +437,25 @@
 .repPassage { margin-top: 8px; font-size: 13px; }
 .repPassage summary { cursor: pointer; color: var(--brand-ink); font-weight: 600; }
 .repPassage div { margin-top: 6px; color: var(--muted); white-space: pre-line; font-family: var(--serif); }
+
+/* similar-questions panel — practice modes only, inside the question pane
+   after an answer is confirmed (never during an exam section) */
+.simPanel {
+  border: 1px solid var(--ex-line);
+  background: var(--ex-chrome-soft);
+  padding: 13px 15px; margin-top: 16px;
+  display: flex; flex-direction: column; gap: 8px;
+}
+.simHead { font-weight: 700; font-size: 13px; }
+.simHead em { font-style: normal; color: var(--ex-blue); font-size: 11.5px; margin-left: 8px; }
+.simItem {
+  text-align: left; background: #fff; border: 1px solid var(--ex-line);
+  padding: 9px 12px; color: var(--ex-ink); font-family: inherit;
+  display: flex; flex-direction: column; gap: 3px;
+}
+.simItem:hover { border-color: var(--ex-blue); }
+.meta { display: flex; gap: 8px; align-items: baseline; font-size: 11px; }
+.meta b { background: var(--ex-sel); color: var(--ex-blue); padding: 1px 8px; font-weight: 700; }
+.meta i { font-style: normal; color: var(--ex-muted); }
+.meta em { font-style: normal; color: var(--ex-muted); margin-left: auto; }
+.simStem { font-size: 13px; }

@@ -21,3 +21,8 @@ _*.py
 
 # Generated vector index (rebuild with: python test_embeddings.py)
 questions_embedded.json
+
+# Local secrets (NVIDIA_API_KEY for the AI tutor proxy)
+.env
+.env.*
+!.env.example

@@ -23,3 +23,7 @@ requirements*.txt
 .claude
 memory
 .git
+
+# Local secrets: the tutor key comes from Vercel env vars, never from an uploaded file
+.env
+.env.*

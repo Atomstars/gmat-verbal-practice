@@ -1,200 +1,285 @@
-/* Exam-style question surface: a split "passage | question" desk, plain
-   lettered-bubble choice list (not boxed cards), flat metadata tags — modeled
-   on the actual GMAT Focus Edition testing screen rather than a chat/quiz UI. */
+/* ============================================================
+   The test screen itself — a replica of the GMAT Focus Edition
+   delivery interface, not a quiz card.
 
-.examShell {
-  display: block;
-}
-@media (min-width: 900px) {
-  .examShell.hasPassage {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    align-items: start;
-    gap: 0;
-    border: 1px solid var(--line);
-    border-radius: var(--r);
-    overflow: hidden;
-    background: var(--surface);
-  }
-  .examShell.hasPassage .passagePane,
-  .examShell.hasPassage .questionPane {
-    max-height: calc(100vh - 190px);
-    overflow-y: auto;
-  }
-  .examShell.hasPassage .passagePane {
-    border-right: 1px solid var(--line);
-  }
-}
+   Rules the real screen follows and this file keeps:
+   · plain white desk, Arial, black text, no rounded cards or shadows
+   · answer choices are bare radio buttons in a column — no lettering,
+     no boxes, no colour, nothing that hints at the answer
+   · reading passages sit in a left-hand pane split by a hard rule and
+     scroll independently of the question on the right
+   Colour variables (--ex-*) come from the exam shell in
+   app/practice/practice.module.css and are fixed light (the real test
+   has no dark mode).
+   ============================================================ */
 
-.passagePane {
-  background: var(--surface2);
-  padding: 18px 22px;
-}
-.questionPane {
-  background: var(--surface);
-  padding: 20px 22px;
-  border: 1px solid var(--line);
-  border-radius: var(--r);
-}
-.examShell.hasPassage .questionPane {
-  border: 0;
-  border-radius: 0;
-}
-@media (max-width: 899px) {
-  .examShell.hasPassage .passagePane {
-    border: 1px solid var(--line);
-    border-radius: var(--r);
-    margin-bottom: 14px;
-  }
-}
-
-.paneLabel {
-  font-size: 10.5px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
-  color: var(--faint); margin-bottom: 12px; padding-bottom: 8px;
-  border-bottom: 1px solid var(--line);
-}
-
-.qHead {
+.shell {
   display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-wrap: wrap;
-  margin-bottom: 14px;
+  height: 100%;
+  min-height: 0;
 }
 
-.tag {
-  display: inline-block;
-  font-size: 10.5px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  padding: 3px 8px;
-  border-radius: 4px;
-  border: 1px solid var(--line);
-  background: var(--surface2);
-  color: var(--muted);
+/* ---- panes ---- */
+.passagePane,
+.questionPane {
+  flex: 1 1 50%;
+  min-width: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
-.tPS, .tDS { border-color: color-mix(in srgb, var(--brand) 35%, var(--line)); color: var(--brand-ink); background: var(--pick); }
-.tagMuted {
-  font-size: 11.5px;
-  color: var(--faint);
+.shell:not(.hasPassage) .questionPane {
+  flex: 1 1 100%;
+}
+.hasPassage .passagePane {
+  border-right: 1px solid var(--ex-line);
+  background: var(--ex-bg);
 }
 
-.passage {
-  font-family: var(--serif);
+.passageIn {
+  padding: 26px 30px 40px;
   font-size: 15px;
-  line-height: 1.75;
-  color: var(--ink);
+  line-height: 1.72;
+  max-width: 640px;
 }
-.passage p { margin: 0 0 0.9em; }
-.passage p:last-child { margin-bottom: 0; }
+.passageIn p {
+  margin: 0 0 1.05em;
+}
+.passageIn p:last-child {
+  margin-bottom: 0;
+}
+
+.questionIn {
+  padding: 26px 30px 40px;
+  max-width: 780px;
+}
+.hasPassage .questionIn {
+  max-width: 660px;
+}
+.shell:not(.hasPassage) .questionIn {
+  margin: 0 auto;
+}
+
+/* ---- stem ---- */
+.stem {
+  font-size: 15.5px;
+  line-height: 1.62;
+}
+.stem p {
+  margin: 0 0 0.85em;
+}
+.stem p:last-child {
+  margin-bottom: 0;
+}
 
 .diagram {
   display: block;
   max-width: 100%;
-  margin: 0.75rem 0 1rem;
-  border-radius: 4px;
-  border: 1px solid var(--line);
+  margin: 0 0 18px;
+  border: 1px solid var(--ex-line);
+  background: #fff;
 }
 
-.stem { font-size: 15.5px; line-height: 1.6; }
-.stem p { margin: 0 0 0.7em; }
-
+/* ---- answer choices: radio list ---- */
 .options {
   display: flex;
   flex-direction: column;
-  margin-top: 18px;
-  border-top: 1px solid var(--line);
+  margin-top: 22px;
 }
 
 .opt {
   display: flex;
-  gap: 13px;
+  gap: 12px;
   align-items: flex-start;
   text-align: left;
   width: 100%;
   background: transparent;
-  border: 0;
-  border-bottom: 1px solid var(--line);
-  padding: 13px 4px;
-  font-size: 14.5px;
-  color: var(--ink);
-  transition: background 0.12s;
+  border: 1px solid transparent;
+  padding: 9px 10px;
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--ex-ink);
+  font-family: inherit;
 }
-.opt:not(:disabled):hover { background: var(--surface2); }
-.optPicked { background: var(--pick); }
-.optCorrect { background: color-mix(in srgb, var(--green) 9%, transparent); }
-.optWrong { background: color-mix(in srgb, var(--red) 9%, transparent); }
+.opt:not(:disabled):hover {
+  background: var(--ex-hover);
+}
+.opt:focus-visible {
+  outline: 2px solid var(--ex-blue);
+  outline-offset: -2px;
+}
+.optPicked {
+  background: var(--ex-sel);
+}
 
-.optLabel {
-  flex: 0 0 25px;
-  height: 25px;
+.radio {
+  flex: 0 0 17px;
+  width: 17px;
+  height: 17px;
+  margin-top: 2px;
+  border: 1px solid #6b737f;
   border-radius: 50%;
-  border: 1.5px solid var(--faint);
+  background: #fff;
   display: grid;
   place-items: center;
-  font-size: 12px;
+  box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.12);
+}
+.dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: transparent;
+}
+.optPicked .radio {
+  border-color: var(--ex-blue);
+}
+.optPicked .dot {
+  background: var(--ex-blue);
+}
+
+/* letters stay hidden until the answer is confirmed (they are not on the
+   real screen; practice needs them because explanations name a letter) */
+.letter {
+  flex: 0 0 auto;
   font-weight: 700;
-  color: var(--muted);
-  background: var(--surface);
-  align-self: flex-start;
+  font-size: 13px;
+  color: var(--ex-muted);
   margin-top: 1px;
 }
-.optPicked .optLabel { border-color: var(--brand); background: var(--brand); color: #fff; }
-.optCorrect .optLabel { border-color: var(--green); background: var(--green); color: #fff; }
-.optWrong .optLabel { border-color: var(--red); background: var(--red); color: #fff; }
 
-.optText { flex: 1; min-width: 0; }
+.optText {
+  flex: 1;
+  min-width: 0;
+}
 
 .optMark {
   flex: 0 0 auto;
-  font-weight: 800;
-  font-size: 14px;
+  font-weight: 700;
   margin-left: auto;
-  padding-left: 8px;
+  padding-left: 10px;
 }
-.optCorrect .optMark { color: var(--green); }
-.optWrong .optMark { color: var(--red); }
+.optCorrect {
+  background: #e7f3ea;
+}
+.optWrong {
+  background: #fbeceb;
+}
+.optCorrect .optMark,
+.optCorrect .letter {
+  color: #14663b;
+}
+.optWrong .optMark,
+.optWrong .letter {
+  color: #9c2a24;
+}
+.optCorrect .radio {
+  border-color: #14663b;
+}
+.optWrong .radio {
+  border-color: #9c2a24;
+}
 
+/* ---- post-answer feedback (practice modes only) ---- */
 .feedback {
-  margin-top: 18px;
-  border-top: 1px solid var(--line);
-  padding-top: 16px;
+  margin-top: 24px;
+  border-top: 1px solid var(--ex-line);
+  padding-top: 18px;
 }
-
-.verdictOk, .verdictNo {
+.verdictOk,
+.verdictNo {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 9px;
   font-weight: 700;
-  font-size: 14.5px;
-  margin-bottom: 10px;
+  font-size: 15px;
 }
 .verdictMark {
   display: inline-flex;
-  width: 20px; height: 20px;
+  width: 20px;
+  height: 20px;
   border-radius: 50%;
-  align-items: center; justify-content: center;
-  font-size: 12px; color: #fff;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  color: #fff;
 }
-.verdictOk { color: var(--green); }
-.verdictOk .verdictMark { background: var(--green); }
-.verdictNo { color: var(--red); }
-.verdictNo .verdictMark { background: var(--red); }
+.verdictOk {
+  color: #14663b;
+}
+.verdictOk .verdictMark {
+  background: #14663b;
+}
+.verdictNo {
+  color: #9c2a24;
+}
+.verdictNo .verdictMark {
+  background: #9c2a24;
+}
+
+.metaRow {
+  display: flex;
+  gap: 7px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+.tag {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border: 1px solid var(--ex-line);
+  background: var(--ex-chrome);
+  color: var(--ex-muted);
+}
+.tagMuted {
+  font-size: 12px;
+  color: var(--ex-muted);
+}
 
 .explanation {
-  margin-top: 12px;
-  font-size: 13.5px;
-  color: var(--muted);
+  margin-top: 14px;
+  font-size: 14px;
   line-height: 1.65;
-  background: var(--surface2);
-  border: 1px solid var(--line);
-  border-radius: var(--r2);
-  padding: 14px 16px;
+  color: var(--ex-ink);
+  border: 1px solid var(--ex-line);
+  background: var(--ex-chrome-soft);
+  padding: 15px 17px;
 }
 .explanationLabel {
-  font-size: 10.5px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
-  color: var(--faint); margin-bottom: 8px;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ex-muted);
+  margin-bottom: 8px;
 }
-.explanation p { margin: 0 0 0.7em; }
-.explanation p:last-child { margin-bottom: 0; }
+.explanation p {
+  margin: 0 0 0.75em;
+}
+.explanation p:last-child {
+  margin-bottom: 0;
+}
+
+/* ---- narrow screens: the split becomes a stack, whole screen scrolls ---- */
+@media (max-width: 860px) {
+  .shell {
+    display: block;
+    height: auto;
+    overflow-y: auto;
+  }
+  .passagePane,
+  .questionPane {
+    overflow: visible;
+  }
+  .hasPassage .passagePane {
+    border-right: 0;
+    border-bottom: 1px solid var(--ex-line);
+    background: var(--ex-chrome-soft);
+  }
+  .passageIn,
+  .questionIn {
+    padding: 18px 18px 22px;
+    max-width: none;
+  }
+}

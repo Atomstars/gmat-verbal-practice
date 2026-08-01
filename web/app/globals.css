@@ -60,6 +60,12 @@ a { color: var(--brand-ink); text-decoration: none; }
 
 .wrap { max-width: 1080px; margin: 0 auto; padding: 22px 18px 64px; }
 
+/* A live exam section takes over the viewport (app/practice/practice.module.css):
+   the site header goes away and nothing behind it scrolls, exactly like sitting
+   down in front of the real test delivery software. */
+body[data-exam] { overflow: hidden; }
+body[data-exam] .appbar { display: none; }
+
 .appbar {
   position: sticky; top: 0; z-index: 40;
   background: color-mix(in srgb, var(--bg) 88%, transparent);
