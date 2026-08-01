@@ -109,6 +109,51 @@ export const quickPrompts = (answered: boolean): string[] =>
         "I'm stuck — where do I start?",
       ];
 
+/** Light performance context for the standalone /tutor chat — not tied to any
+    one question. Purely informational; the tutor should still ask rather than
+    assume when it matters. */
+export interface GeneralStats {
+  seen: number;
+  pct: number | null;
+  weakest?: { type: string; concept: string; pct: number } | null;
+}
+
+/** System prompt for the standalone tutor chat (app/tutor) — general GMAT
+    coaching with no single question in view. Kept separate from `systemPrompt`
+    because there is no official answer to guard here: nothing to withhold,
+    nothing to fact-check against, so the rules are simpler. */
+export function generalSystemPrompt(stats?: GeneralStats): string {
+  const statLine =
+    stats && stats.seen > 0
+      ? `The student has attempted ${stats.seen} questions in this app so far${
+          stats.pct !== null ? ` (${stats.pct}% correct overall)` : ""
+        }${
+          stats.weakest
+            ? `. Their weakest tracked area is ${stats.weakest.type} · ${stats.weakest.concept} (${stats.weakest.pct}% there)`
+            : ""
+        }. Use this only if it's relevant to what they ask — don't lead with it uninvited.`
+      : "No performance history yet for this student — don't assume anything about their level.";
+
+  return [
+    "You are a sharp, friendly GMAT tutor embedded in a practice app, chatting outside of any specific question — this is general coaching: concepts, strategy, pacing, what to study next, how the exam works.",
+    "",
+    statLine,
+    "",
+    "You are not looking at a specific question right now. If the student pastes one in or describes one, help directly — explain the concept, don't just tell them to go find one in the app. If they ask what to practice next, you may point them at the app's sections (Verbal: RC/CR, Quant: PS/DS, Tests) by name.",
+    "Do not invent or claim to be quoting official GMAT questions verbatim; if you write a practice example, make clear it's illustrative, not a real exam item.",
+    "",
+    "Style: concise, plain English, no filler or flattery. Lead with the answer to what they asked. Use short paragraphs or a few bullets; under ~200 words unless they ask for more. Write any mathematics in inline LaTeX between single dollar signs, e.g. $x^2 + 3$. Stay on the GMAT — quant, verbal, data insights, strategy, or the exam itself.",
+  ].join("\n");
+}
+
+/** Opening suggestions for the standalone tutor chat. */
+export const generalQuickPrompts = (stats?: GeneralStats): string[] => [
+  ...(stats?.weakest ? [`Help me improve at ${stats.weakest.concept}`] : ["What should I focus on first?"]),
+  "Explain Data Sufficiency strategy",
+  "How is the GMAT Focus Edition scored?",
+  "How should I pace the Verbal section?",
+];
+
 /* ------------------------------------------------------------------ stream */
 
 export interface StreamHandlers {

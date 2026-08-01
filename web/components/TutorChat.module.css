@@ -1,50 +1,25 @@
-/* AI tutor drawer. Deliberately painted in the APP theme (not the exam's fixed
-   light skin) so it reads as a study tool laid over the test screen rather than
-   part of it — and so it still looks right on the report screen. */
+/* The standalone /tutor chat — same conversation mechanics and visual language
+   as TutorPanel (the per-question drawer), but laid out as a normal page card
+   instead of a fixed overlay, since there's no question screen to sit beside. */
 
-.panel {
-  position: fixed;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 300;
-  /* --tutor-w (globals.css) is the same width the exam surface gives up while
-     the drawer is open — keep them in step or the panes will not line up */
-  width: min(var(--tutor-w, 420px), 100%);
+.card {
   display: flex;
   flex-direction: column;
+  height: min(70vh, 720px);
+  min-height: 420px;
   background: var(--surface);
-  color: var(--ink);
-  border-left: 1px solid var(--line);
-  box-shadow: var(--sh-lg);
-  font-family: var(--sans);
-}
-
-.head {
-  flex: 0 0 auto;
-  display: flex;
-  align-items: baseline;
-  gap: 9px;
-  padding: 12px 14px;
-  border-bottom: 1px solid var(--line);
-  background: var(--surface2);
-}
-.title { font-weight: 700; font-size: 14.5px; }
-.sub { font-size: 11px; color: var(--faint); }
-.close {
-  margin-left: auto;
-  background: none;
-  border: 0;
-  color: var(--muted);
-  font-size: 15px;
-  padding: 2px 4px;
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  box-shadow: var(--sh);
+  overflow: hidden;
+  margin-top: 18px;
 }
 
 .body {
   flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
-  padding: 14px;
+  padding: 18px;
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -66,7 +41,7 @@
 
 .user {
   align-self: flex-end;
-  max-width: 88%;
+  max-width: 80%;
   background: var(--pick);
   color: var(--brand-ink);
   border-radius: 12px 12px 3px 12px;
@@ -75,7 +50,7 @@
 }
 .bot {
   align-self: flex-start;
-  max-width: 100%;
+  max-width: 88%;
   background: var(--surface2);
   border: 1px solid var(--line);
   border-radius: 12px 12px 12px 3px;
@@ -113,7 +88,7 @@
 .composer {
   flex: 0 0 auto;
   border-top: 1px solid var(--line);
-  padding: 10px 12px 12px;
+  padding: 12px 14px 14px;
   background: var(--surface);
 }
 .input {
@@ -142,7 +117,3 @@
 .send { background: var(--brand); color: #fff; }
 .send:disabled { opacity: 0.4; cursor: default; }
 .stop { background: var(--surface2); border: 1px solid var(--line); color: var(--ink); }
-
-@media (max-width: 620px) {
-  .panel { width: 100%; }
-}

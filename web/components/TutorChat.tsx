@@ -1,58 +1,53 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import type { Question } from "@/lib/types";
+import { Store } from "@/lib/store";
 import {
   type ChatMsg,
-  quickPrompts,
+  type GeneralStats,
+  generalQuickPrompts,
+  generalSystemPrompt,
   streamChat,
-  systemPrompt,
   tutorHealth,
 } from "@/lib/tutor";
 import RichText from "./RichText";
-import styles from "./TutorPanel.module.css";
+import styles from "./TutorChat.module.css";
 
-/* Conversations live for the browser session, keyed by question id, so closing the
-   drawer or moving to another question and back keeps the thread. Deliberately not
-   persisted: chat history is chatter, not study data. */
-const threads = new Map<string, ChatMsg[]>();
+/* Session-only, like the per-question drawer — the general chat isn't study
+   data, so it isn't persisted past a reload. */
+let thread: ChatMsg[] = [];
 
-interface Props {
-  q: Question;
-  answered: boolean;
-  picked?: string | null;
-  correct?: boolean;
-  onClose: () => void;
+function readStats(): GeneralStats {
+  const { seen, pct } = Store.overall();
+  const top = Store.weakest()[0];
+  return {
+    seen,
+    pct,
+    weakest: top ? { type: top.type, concept: top.concept, pct: top.pct } : null,
+  };
 }
 
-export default function TutorPanel({ q, answered, picked, correct, onClose }: Props) {
-  const [msgs, setMsgs] = useState<ChatMsg[]>(() => threads.get(q.id) ?? []);
+export default function TutorChat() {
+  const [msgs, setMsgs] = useState<ChatMsg[]>(thread);
   const [input, setInput] = useState("");
   const [streaming, setStreaming] = useState(false);
-  const [thinking, setThinking] = useState(false); // model is in its reasoning phase
+  const [thinking, setThinking] = useState(false);
   const [deepThink, setDeepThink] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [health, setHealth] = useState<{ ok: boolean; note: string } | null>(null);
+  const [health, setHealth] = useState<{ note: string } | null>(null);
+  const [stats, setStats] = useState<GeneralStats | null>(null);
   const abort = useRef<AbortController | null>(null);
   const scroller = useRef<HTMLDivElement>(null);
 
-  /* swap the visible thread when the question changes */
   useEffect(() => {
-    setMsgs(threads.get(q.id) ?? []);
-    setError(null);
-    abort.current?.abort();
-    setStreaming(false);
-  }, [q.id]);
-
-  /* one health check per mount — tells the user *why* it isn't answering */
-  useEffect(() => {
+    setStats(readStats());
     let live = true;
     tutorHealth().then((h) => {
       if (!live) return;
       if (h.reachable && h.configured) setHealth(null);
       else if (!h.reachable)
-        setHealth({ ok: false, note: "Tutor server not running. Start it with: node scripts/tutor-proxy.mjs" });
-      else setHealth({ ok: false, note: "Server is up but NVIDIA_API_KEY is not set." });
+        setHealth({ note: "Tutor server not running. Start it with: node scripts/tutor-proxy.mjs" });
+      else setHealth({ note: "Server is up but NVIDIA_API_KEY is not set." });
     });
     return () => { live = false; };
   }, []);
@@ -61,7 +56,6 @@ export default function TutorPanel({ q, answered, picked, correct, onClose }: Pr
     scroller.current?.scrollTo({ top: scroller.current.scrollHeight, behavior: "smooth" });
   }, [msgs, streaming]);
 
-  /* live "waiting Ns" counter — a stalled endpoint should look stalled, not dead */
   const [waited, setWaited] = useState(0);
   useEffect(() => {
     if (!streaming) { setWaited(0); return; }
@@ -69,26 +63,11 @@ export default function TutorPanel({ q, answered, picked, correct, onClose }: Pr
     return () => clearInterval(t);
   }, [streaming]);
 
-  const send = async (text: string) => {
-    const body = text.trim();
-    if (!body || streaming) return;
-    setError(null);
-    setInput("");
-
-    const history = threads.get(q.id) ?? [];
-    const next: ChatMsg[] = [...history, { role: "user", content: body }];
-    threads.set(q.id, next);
-    setMsgs(next);
-    await run(next);
-  };
-
-  /** Send the thread as it stands (used by send and by Retry after a stall). */
   const run = async (next: ChatMsg[]) => {
     const wire: ChatMsg[] = [
-      { role: "system", content: systemPrompt(q, { answered, picked, correct }) },
+      { role: "system", content: generalSystemPrompt(stats ?? undefined) },
       ...next,
     ];
-
     const ctrl = new AbortController();
     abort.current = ctrl;
     setStreaming(true);
@@ -103,22 +82,20 @@ export default function TutorPanel({ q, answered, picked, correct, onClose }: Pr
         onDelta: (d) => {
           acc += d;
           setThinking(false);
-          setMsgs([...next, { role: "assistant", content: acc }]);
+          thread = [...next, { role: "assistant", content: acc }];
+          setMsgs(thread);
         },
       });
-      const done: ChatMsg[] = [...next, { role: "assistant", content: acc }];
-      threads.set(q.id, done);
-      setMsgs(done);
+      thread = [...next, { role: "assistant", content: acc }];
+      setMsgs(thread);
     } catch (e) {
       const err = e as Error;
       if (err.name === "AbortError") {
-        /* keep whatever streamed before the stop */
-        const kept: ChatMsg[] = acc ? [...next, { role: "assistant", content: acc }] : next;
-        threads.set(q.id, kept);
-        setMsgs(kept);
+        thread = acc ? [...next, { role: "assistant", content: acc }] : next;
+        setMsgs(thread);
       } else {
         setError(err.message);
-        threads.set(q.id, next);
+        thread = next;
       }
     } finally {
       setStreaming(false);
@@ -127,14 +104,23 @@ export default function TutorPanel({ q, answered, picked, correct, onClose }: Pr
     }
   };
 
+  const send = async (text: string) => {
+    const body = text.trim();
+    if (!body || streaming) return;
+    setError(null);
+    setInput("");
+    const next: ChatMsg[] = [...thread, { role: "user", content: body }];
+    thread = next;
+    setMsgs(next);
+    await run(next);
+  };
+
   const stop = () => abort.current?.abort();
 
-  /** Re-send the thread after a stall (the failed turn's question is still last). */
   const retry = () => {
-    const t = threads.get(q.id) ?? [];
-    if (streaming || !t.length || t[t.length - 1].role !== "user") return;
+    if (streaming || !thread.length || thread[thread.length - 1].role !== "user") return;
     setError(null);
-    void run(t);
+    void run(thread);
   };
 
   const onKey = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -142,33 +128,22 @@ export default function TutorPanel({ q, answered, picked, correct, onClose }: Pr
       e.preventDefault();
       void send(input);
     }
-    e.stopPropagation(); // the runner listens for 1-5 / B / R globally
   };
 
   return (
-    <aside className={styles.panel} aria-label="AI tutor">
-      <header className={styles.head}>
-        <span className={styles.title}>AI Tutor</span>
-        <span className={styles.sub}>
-          {answered ? "answer revealed" : "hints only until you answer"}
-        </span>
-        <button type="button" className={styles.close} onClick={onClose} aria-label="Close tutor">
-          ✕
-        </button>
-      </header>
-
+    <div className={styles.card}>
       <div className={styles.body} ref={scroller}>
         {health && <div className={styles.warn}>{health.note}</div>}
 
         {msgs.length === 0 && (
           <div className={styles.intro}>
             <p>
-              Ask anything about this question — the tutor can see the passage, the choices
-              and the official explanation.
-              {!answered && " Until you confirm an answer it will hint, not tell."}
+              Ask about any GMAT concept, strategy, or how the exam works — no question
+              needs to be open. Working through a specific one? Use the ✦ Ask AI button
+              on the question screen instead; it can see the passage and choices.
             </p>
             <div className={styles.chips}>
-              {quickPrompts(answered).map((p) => (
+              {generalQuickPrompts(stats ?? undefined).map((p) => (
                 <button key={p} type="button" className={styles.chip} onClick={() => void send(p)}>
                   {p}
                 </button>
@@ -202,7 +177,7 @@ export default function TutorPanel({ q, answered, picked, correct, onClose }: Pr
           className={styles.input}
           rows={2}
           value={input}
-          placeholder={answered ? "Why is (C) better than (B)?" : "Where should I start?"}
+          placeholder="Ask about the GMAT…"
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={onKey}
         />
@@ -230,6 +205,6 @@ export default function TutorPanel({ q, answered, picked, correct, onClose }: Pr
           )}
         </div>
       </div>
-    </aside>
+    </div>
   );
 }

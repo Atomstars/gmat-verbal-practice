@@ -1,0 +1,15 @@
+/* Shared with TutorPanel and TutorChat — see RichText.tsx. Paragraph spacing
+   for the <p> tags this renders is set by each caller (`.bot p` / `.botMsg p`),
+   since a plain HTML-tag selector applies regardless of which module rendered
+   the element. Lists need their own rule because "ul" alone would pick up
+   nothing without one. */
+.list {
+  margin: 0 0 0.7em;
+  padding-left: 20px;
+}
+.list li {
+  margin-bottom: 0.3em;
+}
+.list:last-child {
+  margin-bottom: 0;
+}

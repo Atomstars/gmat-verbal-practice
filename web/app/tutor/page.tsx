@@ -1,23 +1,18 @@
-import Link from "next/link";
-import Icon from "@/components/Icon";
+import TutorChat from "@/components/TutorChat";
 import styles from "@/components/Premium.module.css";
 
 export default function TutorPage() {
   return (
     <main className="wrap">
-      <div className={styles.hero}>
-        <span className={styles.badge}>PREMIUM</span>
-        <div className={styles.mark}><Icon name="graduate" size={30} /></div>
-        <h1 className={styles.title}>Tutor</h1>
-        <p className={styles.lede}>
-          A live AI tutor that sits with you through a question — walks the reasoning,
-          answers &quot;why is B wrong?&quot;, and adapts to how <em>you</em> think, not a script.
+      <div className={styles.pageHead}>
+        <span className={styles.badge}>AI</span>
+        <h1 className={styles.pageTitle}>Tutor</h1>
+        <p className={styles.pageLede}>
+          Ask about any GMAT concept or strategy — no question needs to be open.
+          For help on one you&apos;re solving, use ✦ Ask AI on the question screen instead.
         </p>
-        <div className={styles.soon}>
-          <Icon name="sparkle" size={14} /> Launching soon
-        </div>
-        <Link href="/" className={styles.back}>← Back to home</Link>
       </div>
+      <TutorChat />
     </main>
   );
 }
