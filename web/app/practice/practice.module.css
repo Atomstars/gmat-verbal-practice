@@ -33,7 +33,6 @@
   z-index: 200;
   display: flex;
   flex-direction: column;
-  transition: right 0.16s ease;
   background: var(--ex-bg);
   color: var(--ex-ink);
   font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
@@ -43,9 +42,15 @@
 /* Tutor open: give the drawer its own column instead of letting it cover the
    question. On a wide screen that reads as three parallel panes —
    passage | question | tutor. Below 900px there isn't room, so the drawer goes
-   back to overlaying. */
+   back to overlaying.
+   Compound selector (not just .withTutor) is deliberate: .exam sets `right`
+   via the `inset: 0` shorthand, and Next's CSS-module output does not
+   reliably let a same-specificity single-class rule win on source order
+   alone (observed in production — .exam's shorthand kept winning over a
+   later .withTutor rule). .exam.withTutor outranks .exam outright, so the
+   override is unambiguous regardless of bundler-chunk ordering. */
 @media (min-width: 901px) {
-  .withTutor { right: var(--tutor-w); }
+  .exam.withTutor { right: var(--tutor-w); }
 }
 
 /* ===== header ===== */
