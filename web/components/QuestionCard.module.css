@@ -15,6 +15,12 @@
 
 .shell {
   display: flex;
+  /* fill the exam body: without this the shell is a shrink-to-fit flex child, so
+     the 50% panes resolve against its content width and the split lands wherever
+     the text happens to end (lopsided, with dead space on the right) */
+  flex: 1 1 auto;
+  width: 100%;
+  min-width: 0;
   height: 100%;
   min-height: 0;
 }
@@ -39,7 +45,10 @@
   padding: 26px 30px 40px;
   font-size: 15px;
   line-height: 1.72;
-  max-width: 640px;
+  /* a comfortable measure, centred in its half so wide screens stay balanced
+     instead of pushing both columns against the divider */
+  max-width: 660px;
+  margin: 0 auto;
 }
 .passageIn p {
   margin: 0 0 1.05em;
@@ -51,12 +60,10 @@
 .questionIn {
   padding: 26px 30px 40px;
   max-width: 780px;
+  margin: 0 auto;
 }
 .hasPassage .questionIn {
-  max-width: 660px;
-}
-.shell:not(.hasPassage) .questionIn {
-  margin: 0 auto;
+  max-width: 680px;
 }
 
 /* ---- stem ---- */
