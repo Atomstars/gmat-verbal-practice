@@ -59,6 +59,23 @@ Added 2026-07-31.
 - **No GMAC branding or logos.** The layout and interaction model are replicated;
   the marks are not.
 - **Mobile** stacks the passage above the question (the real exam is desktop-only).
+- **Question Review & Edit opens at any time.** On the real exam it is an
+  end-of-section screen: you answer forward through the section, then review and edit
+  up to three answers with whatever time is left. Ours is reachable from the footer
+  mid-section, which is friendlier for practice. The 3-edit cap still applies in exam
+  modes.
+- **End Section exists.** The real exam has no early exit — you finish the section or
+  the clock does it for you. Ours is on the review screen and in Help so a practice
+  session isn't a trap.
+
+## Split-screen geometry (fixed 2026-08-01)
+
+The passage and question panes are **exact halves** of the viewport, each with its own
+scrollbar, matching the real RC screen. The first cut looked lopsided because the
+question surface was a shrink-to-fit flex child of the exam body, so the 50% panes
+resolved against content width instead of the screen. `.shell` now stretches
+(`flex: 1; width: 100%`) and each pane centres a ~660px text column: measured 950/950
+at 1900px wide and 640/640 at 1280px.
 
 ## Behaviour worth knowing
 
