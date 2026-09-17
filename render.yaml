@@ -1,0 +1,93 @@
+services:
+  - type: web
+    name: gmat-backend
+    runtime: docker
+    plan: free
+    region: singapore
+    dockerContext: ./backend
+    dockerfilePath: ./backend/Dockerfile
+    healthCheckPath: /actuator/health
+    autoDeployTrigger: commit
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: DATABASE_USERNAME
+        sync: false
+      - key: DATABASE_PASSWORD
+        sync: false
+      - key: SUPABASE_JWKS_URI
+        sync: false
+      - key: FRONTEND_ORIGIN
+        value: https://gmat-prep-ivory.vercel.app
+      - key: RAG_SERVICE_URL
+        sync: false
+      - key: RAG_INTERNAL_TOKEN
+        sync: false
+      - key: PROGRESS_SERVICE_URL
+        sync: false
+      - key: PROGRESS_INTERNAL_TOKEN
+        sync: false
+      - key: DB_POOL_SIZE
+        value: 3
+      - key: DB_MIN_IDLE
+        value: 0
+      - key: JAVA_TOOL_OPTIONS
+        value: -XX:MaxRAMPercentage=75.0
+
+  - type: web
+    name: gmat-rag-service
+    runtime: docker
+    plan: free
+    region: singapore
+    dockerContext: ./rag-service
+    dockerfilePath: ./rag-service/Dockerfile
+    healthCheckPath: /actuator/health
+    autoDeployTrigger: commit
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: DATABASE_USERNAME
+        sync: false
+      - key: DATABASE_PASSWORD
+        sync: false
+      - key: RAG_INTERNAL_TOKEN
+        sync: false
+      - key: NVIDIA_API_KEY
+        sync: false
+      - key: NVIDIA_MODEL
+        value: nvidia/nemotron-3-ultra-550b-a55b
+      - key: RAG_DB_POOL_SIZE
+        value: 2
+      - key: RAG_DB_MIN_IDLE
+        value: 0
+      - key: JAVA_TOOL_OPTIONS
+        value: -XX:MaxRAMPercentage=75.0
+
+  - type: web
+    name: gmat-progress-service
+    runtime: docker
+    plan: free
+    region: singapore
+    dockerContext: ./progress-service
+    dockerfilePath: ./progress-service/Dockerfile
+    healthCheckPath: /actuator/health
+    autoDeployTrigger: commit
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: DATABASE_USERNAME
+        sync: false
+      - key: DATABASE_PASSWORD
+        sync: false
+      - key: PROGRESS_INTERNAL_TOKEN
+        sync: false
+      - key: PROGRESS_DB_POOL_SIZE
+        value: 2
+      - key: PROGRESS_DB_MIN_IDLE
+        value: 0
+      - key: OUTBOX_POLL_DELAY_MS
+        value: 1000
+      - key: OUTBOX_BATCH_SIZE
+        value: 25
+      - key: JAVA_TOOL_OPTIONS
+        value: -XX:MaxRAMPercentage=75.0

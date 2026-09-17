@@ -23,6 +23,15 @@ spring:
       resourceserver:
         jwt:
           jwk-set-uri: ${SUPABASE_JWKS_URI}
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true
 app:
   cors-origin: ${FRONTEND_ORIGIN:http://localhost:3000}
   rag:

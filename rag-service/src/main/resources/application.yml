@@ -1,5 +1,5 @@
 server:
-  port: ${RAG_PORT:8081}
+  port: ${PORT:${RAG_PORT:8081}}
 spring:
   application:
     name: gmat-rag-service
@@ -11,6 +11,15 @@ spring:
       maximum-pool-size: ${RAG_DB_POOL_SIZE:3}
       minimum-idle: ${RAG_DB_MIN_IDLE:1}
       connection-timeout: 10000
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true
 app:
   internal-token: ${RAG_INTERNAL_TOKEN:local-development-only-change-me}
   retrieval:
