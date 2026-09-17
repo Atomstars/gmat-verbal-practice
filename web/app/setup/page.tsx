@@ -75,7 +75,7 @@ function Setup() {
   /* Every session shows a question only once, so exclude already-attempted
      questions here too — counts reflect what you'll actually be served. Only
      Review (redo) is exempt (it exists to resurface misses). */
-  const seen = useMemo(() => new Set(Store.seenIds()), [all]);
+  const seen = useMemo(() => new Set(Store.seenIds()), []);
   const freshPool = useMemo(
     () => (mode === "redo" ? pool : pool.filter((q) => !seen.has(q.id))),
     [pool, seen, mode],

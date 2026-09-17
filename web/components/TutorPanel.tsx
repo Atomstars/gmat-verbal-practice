@@ -6,7 +6,6 @@ import {
   type ChatMsg,
   quickPrompts,
   streamChat,
-  systemPrompt,
   tutorHealth,
 } from "@/lib/tutor";
 import RichText from "./RichText";
@@ -20,12 +19,11 @@ const threads = new Map<string, ChatMsg[]>();
 interface Props {
   q: Question;
   answered: boolean;
-  picked?: string | null;
-  correct?: boolean;
+  sessionId: string;
   onClose: () => void;
 }
 
-export default function TutorPanel({ q, answered, picked, correct, onClose }: Props) {
+export default function TutorPanel({ q, answered, sessionId, onClose }: Props) {
   const [msgs, setMsgs] = useState<ChatMsg[]>(() => threads.get(q.id) ?? []);
   const [input, setInput] = useState("");
   const [streaming, setStreaming] = useState(false);
@@ -51,7 +49,7 @@ export default function TutorPanel({ q, answered, picked, correct, onClose }: Pr
       if (!live) return;
       if (h.reachable && h.configured) setHealth(null);
       else if (!h.reachable)
-        setHealth({ ok: false, note: "Tutor server not running. Start it with: node scripts/tutor-proxy.mjs" });
+        setHealth({ ok: false, note: "Java backend is not reachable. Start it with: mvn spring-boot:run" });
       else setHealth({ ok: false, note: "Server is up but NVIDIA_API_KEY is not set." });
     });
     return () => { live = false; };
@@ -84,11 +82,6 @@ export default function TutorPanel({ q, answered, picked, correct, onClose }: Pr
 
   /** Send the thread as it stands (used by send and by Retry after a stall). */
   const run = async (next: ChatMsg[]) => {
-    const wire: ChatMsg[] = [
-      { role: "system", content: systemPrompt(q, { answered, picked, correct }) },
-      ...next,
-    ];
-
     const ctrl = new AbortController();
     abort.current = ctrl;
     setStreaming(true);
@@ -96,8 +89,10 @@ export default function TutorPanel({ q, answered, picked, correct, onClose }: Pr
 
     let acc = "";
     try {
-      await streamChat(wire, {
+      await streamChat(next, {
         think: deepThink,
+        questionId: q.id,
+        sessionId,
         signal: ctrl.signal,
         onReasoning: () => setThinking(true),
         onDelta: (d) => {
@@ -164,7 +159,7 @@ export default function TutorPanel({ q, answered, picked, correct, onClose }: Pr
           <div className={styles.intro}>
             <p>
               Ask anything about this question — the tutor can see the passage, the choices
-              and the official explanation.
+              and the official explanation after submission.
               {!answered && " Until you confirm an answer it will hint, not tell."}
             </p>
             <div className={styles.chips}>

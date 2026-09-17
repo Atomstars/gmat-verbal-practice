@@ -1,12 +1,14 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Store } from "@/lib/store";
 import { Sync } from "@/lib/sync";
 import { type TutorHealth, tutorEndpoint, tutorHealth } from "@/lib/tutor";
 import styles from "./settings.module.css";
 
 export default function Settings() {
+  const router = useRouter();
   const [seen, setSeen] = useState(0);
   const [user, setUser] = useState<{ email?: string } | null>(null);
   const [note, setNote] = useState("");
@@ -99,7 +101,7 @@ export default function Settings() {
               type="button"
               onClick={() => {
                 try { localStorage.removeItem("gmat_guest"); } catch {}
-                location.href = "/";
+                router.push("/");
               }}
             >
               Sign in
@@ -124,10 +126,10 @@ export default function Settings() {
             <div className={styles.hint}>
               {tutor?.model ? `${tutor.model} · ` : ""}via {tutorEndpoint()}.
               {tutor && !tutor.configured && tutor.reachable
-                ? " Set NVIDIA_API_KEY in .env.local (local) or the Vercel project's environment variables."
+                ? " Set NVIDIA_API_KEY on the Java backend."
                 : ""}
               {tutor && !tutor.reachable
-                ? " Locally, start it with: node scripts/tutor-proxy.mjs"
+                ? " Start the Java backend with: mvn spring-boot:run"
                 : ""}
             </div>
           </div>

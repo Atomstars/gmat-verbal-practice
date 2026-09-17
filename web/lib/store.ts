@@ -22,6 +22,7 @@ export interface HistoryEntry {
   chapter?: string | null;
   difficulty?: string | null;
   lastTimeMs?: number; // time spent on the most recent attempt (for the History view)
+  stem?: string; // safe student-visible cache; never contains answers/explanations
   ts: number;
 }
 
@@ -103,6 +104,7 @@ export const Store = {
     h.chapter = q.chapter ?? null;
     h.difficulty = q.difficulty ?? null;
     h.ts = Date.now();
+    h.stem = q.question.split("\n\n").pop()?.slice(0, 300);
     if (typeof timeMs === "number" && timeMs > 0) h.lastTimeMs = timeMs;
     data.history[q.id] = h;
     if (typeof timeMs === "number" && timeMs > 0) {

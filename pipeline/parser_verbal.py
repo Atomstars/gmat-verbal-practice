@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-parser.py - Extract GMAT Verbal practice problems from Manhattan Prep's
+parser_verbal.py - Extract GMAT Verbal practice problems from Manhattan Prep's
 "GMAT All the Verbal" (6th ed.) into a single questions.json file.
 
 INPUT

@@ -1,0 +1,33 @@
+server:
+  port: ${PORT:8080}
+  forward-headers-strategy: framework
+spring:
+  application:
+    name: gmat-backend
+  datasource:
+    url: ${DATABASE_URL}
+    username: ${DATABASE_USERNAME:}
+    password: ${DATABASE_PASSWORD:}
+    hikari:
+      maximum-pool-size: ${DB_POOL_SIZE:5}
+      minimum-idle: ${DB_MIN_IDLE:1}
+      connection-timeout: 10000
+  flyway:
+    enabled: true
+    # Supabase provisions objects before application migrations. Baseline at 0
+    # so Flyway can adopt that schema and still apply V1 onward.
+    baseline-on-migrate: true
+    baseline-version: 0
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: ${SUPABASE_JWKS_URI}
+app:
+  cors-origin: ${FRONTEND_ORIGIN:http://localhost:3000}
+  rag:
+    base-url: ${RAG_SERVICE_URL:http://localhost:8081}
+    internal-token: ${RAG_INTERNAL_TOKEN:local-development-only-change-me}
+  progress:
+    base-url: ${PROGRESS_SERVICE_URL:http://localhost:8082}
+    internal-token: ${PROGRESS_INTERNAL_TOKEN:local-development-only-change-me}

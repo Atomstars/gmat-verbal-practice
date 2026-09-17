@@ -17,8 +17,10 @@ export interface Question {
   question: string;
   passage: string | null;
   options: Option[];
-  correct_answer: Letter | null;
-  explanation: string | null;
+  /** Populated only by the answer-submission API after grading. */
+  correct_answer?: Letter | null;
+  /** Populated only by the answer-submission API after grading. */
+  explanation?: string | null;
   format: string;
   /** OG extras */
   subtype?: string;
@@ -33,6 +35,19 @@ export interface Question {
   diagram_description?: string;
   /** Added client-side at load time */
   bank: Bank;
+}
+
+export interface AnswerResult {
+  attemptId?: string;
+  correct: boolean;
+  correctAnswer: Letter;
+  explanation: string | null;
+}
+
+export interface PracticeSession {
+  sessionId: string;
+  questions: Question[];
+  total: number;
 }
 
 export const isQuantType = (t: QType) => t === "PS" || t === "DS";

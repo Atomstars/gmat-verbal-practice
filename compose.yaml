@@ -1,0 +1,19 @@
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_DB: gmat
+      POSTGRES_USER: gmat
+      POSTGRES_PASSWORD: local-development-only
+    ports:
+      - "5432:5432"
+    volumes:
+      - gmat_postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U gmat -d gmat"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+volumes:
+  gmat_postgres:

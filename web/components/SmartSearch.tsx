@@ -2,8 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { loadAll } from "@/lib/banks";
-import { embCount, embedQuery, loadEmbeddings, vecSearch } from "@/lib/vector";
+import { apiFetch } from "@/lib/api";
 import type { Question } from "@/lib/types";
 import Icon from "./Icon";
 import styles from "./SmartSearch.module.css";
@@ -17,22 +16,13 @@ const EXAMPLES = [
     as a dropdown overlay so the input never grows the page layout. */
 export default function SmartSearch() {
   const router = useRouter();
-  const [all, setAll] = useState<Question[]>([]);
-  const [ai, setAi] = useState<"loading" | "on" | "off">("loading");
+  const [ai, setAi] = useState<"loading" | "on" | "off">("on");
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState("");
   const [results, setResults] = useState<{ q: Question; score: number }[] | null>(null);
   const [open, setOpen] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const rootRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    loadAll().then(async (qs) => {
-      setAll(qs);
-      const ok = await loadEmbeddings(qs);
-      setAi(ok ? "on" : "off");
-    });
-  }, []);
 
   useEffect(() => {
     const onClick = (e: MouseEvent) => {
@@ -51,13 +41,15 @@ export default function SmartSearch() {
     if (!text || text.length < 3) { setResults(null); setStatus(""); return; }
     setStatus("Searching…");
     try {
-      const qv = await embedQuery(text, () =>
-        setStatus("Warming up the search model (first time only)…"),
-      );
-      const res = vecSearch(all, qv, 8);
+      const data = await apiFetch<{ results: { question: Question; score: number }[] }>("/api/search", {
+        method: "POST", body: JSON.stringify({ query: text, limit: 8 }),
+      });
+      const res = data.results.map((x) => ({ q: x.question, score: x.score }));
       setResults(res);
+      setAi("on");
       setStatus(`${res.length} result${res.length !== 1 ? "s" : ""}`);
     } catch {
+      setAi("off");
       setStatus("Search unavailable — check your connection.");
     }
   };
@@ -86,7 +78,7 @@ export default function SmartSearch() {
           spellCheck={false}
         />
         <span className={`${styles.dot} ${styles[ai]}`} title={
-          ai === "on" ? `AI search ready · ${embCount()} indexed` : ai === "loading" ? "Loading search index…" : "Search index unavailable"
+          ai === "on" ? "AI search ready · embeddings stay on the Java server" : ai === "loading" ? "Loading search model…" : "Search unavailable"
         } />
       </div>
 

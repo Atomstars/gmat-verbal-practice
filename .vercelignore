@@ -1,7 +1,6 @@
-# Vercel builds the Next.js app in web/ (see vercel.json). Its prebuild step
-# (web/scripts/sync-data.mjs) copies the root question banks + embeddings into
-# web/public/data, so those JSON files must stay uploaded. Keep the Python
-# pipeline, docs, tests, prototypes, generated indexes and source books out.
+# Vercel builds only the static Next.js frontend in web/. Questions, answers,
+# embeddings, the Java service, source books, and content tooling stay out.
+backend
 pipeline
 docs
 tests
@@ -19,6 +18,12 @@ pdf_pages.json
 *.bat
 *.toml
 requirements*.txt
+.repo-inspection
+.clone
+questions-og.json
+questions.json
+questions-quant.json
+embeddings.json
 .prettierrc
 .claude
 memory

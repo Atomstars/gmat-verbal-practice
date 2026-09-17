@@ -32,7 +32,8 @@ export default function Home() {
   }, []);
 
   if (gate === "pending") return null;
-  if (gate === "show") return <AuthGate onDone={() => setGate("done")} />;
+  if (gate === "show")
+    return <AuthGate onDone={() => setGate("done")} />;
 
   return (
     <main className="wrap">
@@ -42,7 +43,7 @@ export default function Home() {
 
       {err && (
         <p className={styles.error}>
-          Couldn&apos;t load the question banks — check that /data is deployed.
+          Could not load the question banks.
         </p>
       )}
 

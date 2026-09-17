@@ -1,60 +1,41 @@
-# TECH_STACK
+# Technology stack
 
-Deliberately minimal: no build step, no framework, no backend (yet). Everything is
-plain files you can open and run.
+## Production
 
-## At a glance
-| Layer | Choice | Why |
+| Layer | Choice | Role |
 |---|---|---|
-| Extraction | **Python 3** | One script, no packaging. |
-| PDF parse (Manhattan) | **pdfplumber** | Linear page text + structural anchors. |
-| EPUB parse (Manhattan) | **BeautifulSoup + lxml** | Structured XHTML; independent cross-check oracle. |
-| PDF parse (Official Guide) | **PyMuPDF (`fitz`)** | Clean Unicode — pdfplumber mangles this file's ligatures/quotes. |
-| Data | **JSON** (`questions*.json`) | Flat array, one schema both books share. |
-| Frontend | **Vanilla HTML/CSS/JS**, single file | Zero build, opens anywhere, easy to reason about. |
-| State / persistence | **localStorage** via a `Store` abstraction | Per-device save; swappable for a DB backend. |
-| Local serving | `python -m http.server` | The app `fetch()`es JSON, so `file://` won't work. |
-| Source control | **Git + GitHub** (private) | `github.com/Atomstars/gmat-verbal-practice`. |
-| Hosting | **Vercel** (static) | Project `gmat-prep`, GitHub-connected auto-deploy. |
+| UI | Next.js 16, React 19, TypeScript | Existing routes and visual experience; exported statically |
+| Authentication | Supabase Auth | Issues user JWTs; the browser uses Supabase only for Auth |
+| API | Java 21, Spring Boot 3.5 | Sessions, grading, progress, search, and tutor grounding |
+| API security | Spring Security resource server | Validates Supabase JWTs from the configured JWKS endpoint |
+| Relational data | PostgreSQL 16 | Questions, sessions, attempts, progress, and study state |
+| Vector search | pgvector, HNSW cosine index | Stores/searches 384-dimensional corpus embeddings |
+| Embeddings | LangChain4j all-MiniLM-L6-v2 ONNX | Generates query embeddings inside the Java process |
+| Schema changes | Flyway | Versioned, additive relational database migration |
+| Tutor transport | Java HTTP client, SSE | Keeps provider credentials and protected prompts server-side |
+| Packaging | Maven + OCI Dockerfile | Reproducible Java build/deployment |
+| Frontend hosting | Vercel static output | Publishes `web/out` without question banks or vectors |
 
-There are **no tests and no build**. "Validation" = re-running `parser.py` and reading
-its printed coverage + cross-validation report.
+## Content toolchain
 
-## Pipeline
+The verified Python parsers remain the source-content generator until the
+source-specific extraction heuristics have golden-fixture parity in Java. The Java
+backend already includes PDFBox/jsoup extraction, shared normalization, the exact
+embedding-text recipe, and the final transactional JSON-to-PostgreSQL publisher.
+
+```text
+source PDF/EPUB
+  -> verified parser
+  -> questions*.json
+  -> embeddings.json
+  -> Java validation/publisher
+  -> PostgreSQL + pgvector
+  -> Spring API
+  -> static Next.js UI
 ```
-Manhattan PDF/EPUB  ─┐
-                     ├─ parser.py ─┬─ questions.json      ─┐
-GMAT Official Guide ─┘  (--og)     └─ questions-og.json   ─┴─ index.html ─ (Vercel)
-   (PDF, fitz)
-```
 
-## Parser architecture (`parser.py`)
-Three backends, **one JSON schema**:
-- `parse_pdf` (pdfplumber) + `parse_epub` (bs4) for Manhattan; `cross_check()` compares
-  the two independent extractions — agreement is the anti-hallucination guarantee.
-- `parse_og` (fitz) for the Official Guide: locates Chapter 8's six sub-sections by
-  heading text (8.4–8.9), reads the **numbered answer key** as authoritative, and
-  cross-checks it against the **explanation's "Correct." marker** within the same PDF.
-  Sub-types: RC = the book's printed type label (verbatim); CR = a task inferred from
-  the stem wording (`_OG_CR_RULES`), `"Unclassified"` when uncertain.
+The optional Python/FastAPI/Qdrant implementation in `pipeline/` is retained only as
+a development/reference path. It is not used by the migrated web application.
 
-## App architecture (`index.html`)
-A hand-rolled single-page app — no router library:
-- **Screens** are `<section class="screen">` blocks (`landing`, `dash`, `setup`, `run`,
-  `report`). `show(id)` toggles a `.on` class; CSS shows exactly one at a time. Layout
-  that must differ per screen goes on `#id.on` (never a bare `#id { display }` — that
-  breaks hiding; see HANDOFF gotchas).
-- **`Store`** (IIFE) — the only thing that touches persistence. Records per-question
-  history, daily streak/level, adaptive column level; exposes `record`, `overall`,
-  `byField`, `wrongIds`, `adaptLevel`, daily/column helpers, export/import/reset.
-  Built so a Supabase backend can replace it without touching the UI.
-- **Adaptive engine** — `buildPassages()` groups RC into passages (OG: 36 = 11/13/12 by
-  difficulty); after a passage, `adaptLevel`: ≥75% → harder, <50% → easier, else stay.
-  Drives both Daily RC and the GMAT column.
-- **Analytics** — accuracy aggregated by `subtype` (RC type / CR task) and `difficulty`,
-  with a weakest-area callout.
-
-## Schema (both files)
-`id, type (CR|RC), chapter, title, question, passage (RC only), options[{label,text}],
-correct_answer, explanation, format`. OG adds `subtype, category, difficulty, number,
-source`. The app reads either file; unknown keys are ignored.
+See [PRODUCTION_ARCHITECTURE.md](PRODUCTION_ARCHITECTURE.md) for commands, security
+decisions, environment variables, and deployment.

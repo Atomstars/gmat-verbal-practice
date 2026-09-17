@@ -1,5 +1,6 @@
 # Python
 __pycache__/
+pytest-cache-files-*/
 *.py[cod]
 
 # Parser page-extraction caches (regenerated from the source PDFs)
@@ -18,6 +19,12 @@ _*.py
 .DS_Store
 
 .vercel
+web/public/data/
+**/target/
+
+# Local repository inspection/worktree artifacts
+.clone/
+.repo-inspection/
 
 # Generated vector index (rebuild with: python test_embeddings.py)
 questions_embedded.json

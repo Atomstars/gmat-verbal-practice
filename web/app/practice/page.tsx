@@ -5,24 +5,11 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import QuestionCard from "@/components/QuestionCard";
 import TutorPanel from "@/components/TutorPanel";
-import { type AdaptiveState, pickNext, startAdaptive } from "@/lib/adaptive";
-import { loadAll, playable } from "@/lib/banks";
-import { finishDaily, pickDaily } from "@/lib/daily";
-import { bookOrder, takeBook } from "@/lib/order";
+import { apiFetch } from "@/lib/api";
+import { finishDaily } from "@/lib/daily";
 import { Store } from "@/lib/store";
-import { Attempts } from "@/lib/sync";
-import { conceptOf, type Letter, type QType, type Question } from "@/lib/types";
-import { loadEmbeddings, vecSimilar } from "@/lib/vector";
+import { type AnswerResult, type Letter, type PracticeSession, type QType, type Question } from "@/lib/types";
 import styles from "./practice.module.css";
-
-const shuffle = <T,>(a: T[]) => {
-  const b = [...a];
-  for (let i = b.length - 1; i > 0; i--) {
-    const j = (Math.random() * (i + 1)) | 0;
-    [b[i], b[j]] = [b[j], b[i]];
-  }
-  return b;
-};
 
 const mmss = (s: number) => {
   s = Math.max(0, s | 0);
@@ -50,8 +37,10 @@ function Runner() {
   const timed = params.get("timed") === "1";
   const title = params.get("title") ?? "Practice";
 
-  const [all, setAll] = useState<Question[]>([]);
   const [qs, setQs] = useState<Question[] | null>(null);
+  const [sessionId, setSessionId] = useState("");
+  const [apiFailure, setApiFailure] = useState("");
+  const [submitting, setSubmitting] = useState(false);
   const [allSeen, setAllSeen] = useState(false); // fresh practice ran dry because everything's been attempted
   const [idx, setIdx] = useState(0);
   const [picked, setPicked] = useState<Letter | null>(null);
@@ -71,90 +60,30 @@ function Runner() {
   const [tutorFor, setTutorFor] = useState<Question | null>(null);
   const qStart = useRef(Date.now());
   const dailyDone = useRef(false);
-  const recorded = useRef(false);
-  const adaptiveRef = useRef<AdaptiveState | null>(null);
-  const lastCorrectRef = useRef(false);
 
-  /* build the session pool once */
+  /* Ask the server to select and sanitize the complete session. */
   useEffect(() => {
-    loadAll().then((data) => {
-      setAll(data);
-      setAllSeen(false); // recomputed below when a fresh session runs dry
-
-      const ids = params.get("ids");
-      /* A question is shown ONCE, ever: every mode drops questions you've
-         already attempted. The only exceptions are the flows whose whole
-         purpose is to resurface seen questions — Review (redo) and an
-         explicit id-set (Retry from History / "redo the ones I missed"). */
-      const resurface = mode === "redo" || !!ids;
-      const seen = new Set(Store.seenIds());
-      const fresh = resurface ? data : data.filter((q) => !seen.has(q.id));
-
-      /* GMAT Focus: questions are chosen adaptively, one at a time */
-      if (adaptive) {
-        const t = params.get("types")?.split(",") as QType[] | undefined;
-        const started = startAdaptive(fresh, +(params.get("n") ?? 23), t?.length ? t : undefined);
-        adaptiveRef.current = started?.state ?? null;
-        setQs(started ? [started.first] : []);
-        setAllSeen(!started);
+    let cancelled = false;
+    const requestedIds = params.get("ids")?.split(",").filter(Boolean) ?? [];
+    const ids = requestedIds.length ? requestedIds : mode === "redo" ? Store.wrongIds() : [];
+    const body = {
+      types: (params.get("types")?.split(",").filter(Boolean) ?? []) as QType[],
+      mode, count: +(params.get("n") ?? (adaptive ? 23 : 10)),
+      topic: params.get("topic") || undefined, difficulty: params.get("diff") || undefined,
+      order: params.get("order") || undefined, ids,
+      excludeIds: ids.length || mode === "redo" ? [] : Store.seenIds(),
+    };
+    setApiFailure("");
+    apiFetch<PracticeSession>("/api/practice/sessions", { method: "POST", body: JSON.stringify(body) })
+      .then((session) => {
+        if (cancelled) return;
+        setSessionId(session.sessionId);
+        setQs(session.questions);
+        setAllSeen(session.questions.length === 0 && body.excludeIds.length > 0);
         qStart.current = Date.now();
-        return;
-      }
-
-      if (mode === "daily") {
-        const dq = pickDaily(fresh); // one unseen passage at your adaptive level
-        setQs(dq);
-        setAllSeen(dq.length === 0);
-        qStart.current = Date.now();
-        return;
-      }
-
-      let pool = fresh.filter(playable);
-      if (ids) {
-        const want = new Set(ids.split(","));
-        pool = pool.filter((q) => want.has(q.id));
-      } else {
-        if (mode === "redo") {
-          const wrong = new Set(Store.wrongIds());
-          pool = pool.filter((q) => wrong.has(q.id));
-        }
-        const types = (params.get("types")?.split(",") ?? []) as QType[];
-        if (types.length) pool = pool.filter((q) => types.includes(q.type));
-      }
-      const topic = params.get("topic");
-      if (topic) pool = pool.filter((q) => conceptOf(q) === topic);
-      const diff = params.get("diff");
-      if (diff) pool = pool.filter((q) => q.difficulty === diff);
-
-      /* Ran dry because everything matching is already done (vs. no match at
-         all)? Compare against the same filters over the full bank. */
-      if (!resurface && pool.length === 0) {
-        const types = (params.get("types")?.split(",") ?? []) as QType[];
-        const matched = data.filter(
-          (q) =>
-            playable(q) &&
-            (!types.length || types.includes(q.type)) &&
-            (!topic || conceptOf(q) === topic) &&
-            (!diff || q.difficulty === diff),
-        ).length;
-        setAllSeen(matched > 0);
-      }
-
-      /* Always book order (RC passages kept as units), unless this is an
-         explicitly randomized entry (Random Mix / Exam simulation). */
-      if (params.get("order") === "shuffle" || exam) {
-        pool = shuffle(pool);
-        const n = +(params.get("n") ?? pool.length);
-        pool = pool.slice(0, n);
-      } else if (ids || mode === "redo") {
-        pool = bookOrder(pool);
-      } else {
-        pool = takeBook(pool, +(params.get("n") ?? pool.length));
-      }
-
-      setQs(pool);
-      qStart.current = Date.now();
-    });
+      })
+      .catch((error: Error) => { if (!cancelled) { setApiFailure(error.message); setQs([]); } });
+    return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params]);
 
@@ -197,10 +126,8 @@ function Runner() {
   /* exam sections stay editable only while edits remain */
   const locked = examLike && answered && editsLeft <= 0;
 
-  const total = adaptive ? (adaptiveRef.current?.target ?? 23) : (qs?.length ?? 0);
-  const atLast = adaptive
-    ? !!(adaptiveRef.current && adaptiveRef.current.servedIds.size >= adaptiveRef.current.target)
-    : idx + 1 >= (qs?.length ?? 0);
+  const total = qs?.length ?? 0;
+  const atLast = idx + 1 >= (qs?.length ?? 0);
 
   const sectionLabel = useMemo(() => {
     const types = new Set((qs ?? []).map((x) => x.type));
@@ -230,15 +157,6 @@ function Runner() {
     setConfirming(false);
     setPicked(null);
     qStart.current = Date.now();
-    /* adaptive: a new question is only served from the frontier — stepping
-       forward through questions you went back to just walks the list */
-    if (adaptiveRef.current && idx === qs.length - 1) {
-      const nq = pickNext(adaptiveRef.current, lastCorrectRef.current);
-      if (!nq) { endSection(); return; }
-      setQs((p) => [...(p ?? []), nq]);
-      setIdx((i) => i + 1);
-      return;
-    }
     if (idx + 1 < qs.length) {
       const nid = qs[idx + 1].id;
       setPicked(answers[nid]?.picked ?? null);
@@ -247,28 +165,31 @@ function Runner() {
   };
 
   /** Lock the selected choice in (the "Confirm" step). */
-  const commit = () => {
-    if (!q || !picked) return;
-    const correct = picked === q.correct_answer;
+  const commit = async () => {
+    if (!q || !picked || submitting || !sessionId) return;
     const timeMs = prevAns ? prevAns.timeMs : Date.now() - qStart.current;
     const isEdit = !!prevAns;
-    setAnswers((a) => ({ ...a, [q.id]: { picked, correct, timeMs } }));
-    setConfirming(false);
-    if (isEdit && examLike) setEditsLeft((e) => Math.max(0, e - 1));
-
-    if (examLike) {
-      /* the adaptive engine only reacts to the frontier question */
-      if (idx === (qs?.length ?? 1) - 1) lastCorrectRef.current = correct;
-      /* attempts are written once, at section end, so edits don't double-count */
-      advance();
-      return;
+    setSubmitting(true);
+    setApiFailure("");
+    try {
+      const result = await apiFetch<AnswerResult>("/api/answers", { method: "POST", body: JSON.stringify({
+        sessionId, questionId: q.id, selectedAnswer: picked, timeMs, mode,
+        clientAttemptId: crypto.randomUUID(),
+      }) });
+      const revealed = { ...q, correct_answer: result.correctAnswer, explanation: result.explanation };
+      setQs((current) => current?.map((item) => item.id === q.id ? revealed : item) ?? null);
+      setAnswers((a) => ({ ...a, [q.id]: { picked, correct: result.correct, timeMs } }));
+      setConfirming(false);
+      if (isEdit && examLike) setEditsLeft((e) => Math.max(0, e - 1));
+      Store.record(revealed, picked, result.correct, timeMs);
+      if (examLike) { advance(); return; }
+      const data = await apiFetch<{ results: { question: Question; score: number }[] }>(`/api/questions/${encodeURIComponent(q.id)}/similar?limit=3`);
+      setSimilar(data.results.map((x) => ({ q: x.question, score: x.score })));
+    } catch (error) {
+      setApiFailure(error instanceof Error ? error.message : "Answer submission failed.");
+    } finally {
+      setSubmitting(false);
     }
-
-    Store.record(q, picked, correct, timeMs);
-    void Attempts.save(q, picked, timeMs);
-    void loadEmbeddings(all).then((ok) => {
-      if (ok) setSimilar(vecSimilar(all, q.id, 3));
-    });
   };
 
   /** The bottom-right button: Next → Confirm → (next question). */
@@ -278,7 +199,7 @@ function Runner() {
     const changed = !!picked && (!prevAns || picked !== prevAns.picked);
     if (!changed) { advance(); return; }     // nothing new to lock in
     if (!confirming) { setConfirming(true); return; }
-    commit();
+    void commit();
   };
 
   const toggleFlag = () => {
@@ -290,10 +211,18 @@ function Runner() {
     });
   };
 
-  const openSimilar = (sq: Question) => {
+  const openSimilar = async (sq: Question) => {
     if (!qs) return;
     const at = qs.findIndex((x) => x.id === sq.id);
     if (at >= 0) { goTo(at); return; }
+    try {
+      await apiFetch(`/api/practice/sessions/${encodeURIComponent(sessionId)}/questions`, {
+        method: "POST", body: JSON.stringify({ questionId: sq.id }),
+      });
+    } catch (error) {
+      setApiFailure(error instanceof Error ? error.message : "Could not open the similar question.");
+      return;
+    }
     setQs([...qs, sq]); // append — never disturb answered indices
     setIdx(qs.length);
     setSimilar([]);
@@ -301,18 +230,6 @@ function Runner() {
     setConfirming(false);
     qStart.current = Date.now();
   };
-
-  /* exam-like sections: write every attempt once, when the section ends */
-  useEffect(() => {
-    if (stage !== "complete" || !examLike || recorded.current || !qs) return;
-    recorded.current = true;
-    for (const x of qs) {
-      const a = answers[x.id];
-      if (!a) continue;
-      Store.record(x, a.picked, a.correct, a.timeMs);
-      void Attempts.save(x, a.picked, a.timeMs);
-    }
-  }, [stage, examLike, qs, answers]);
 
   /* daily mode: adapt level + streak exactly once when the session ends */
   useEffect(() => {
@@ -349,7 +266,7 @@ function Runner() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [q, picked, answered, locked, showFeedback, stage, helpOpen, finished, idx, qs, confirming, tutorFor]);
 
-  if (!qs) return <main className="wrap">Loading questions…</main>;
+  if (!qs) return <main className="wrap">Creating your session…</main>;
 
   if (!qs.length) {
     const typeParam = params.get("types");
@@ -358,9 +275,9 @@ function Runner() {
     return (
       <main className="wrap">
         <div className={styles.report}>
-          <h1>{allSeen ? "You've practiced every question here" : "No questions here yet"}</h1>
+          <h1>{apiFailure ? "Couldn’t load this session" : allSeen ? "You've practiced every question here" : "No questions here yet"}</h1>
           <p>
-            {allSeen
+            {apiFailure ? apiFailure : allSeen
               ? "Nice work — you've attempted all of these. Review the ones you missed, or look back over your history."
               : mode === "redo"
                 ? "Missed questions land in Redo."
@@ -437,8 +354,7 @@ function Runner() {
           <TutorPanel
             q={tutorFor}
             answered={!!answers[tutorFor.id]}
-            picked={answers[tutorFor.id]?.picked}
-            correct={answers[tutorFor.id]?.correct}
+            sessionId={sessionId}
             onClose={() => setTutorFor(null)}
           />
         )}
@@ -551,6 +467,7 @@ function Runner() {
             locked={locked}
             onPick={(l) => { setPicked(l); setConfirming(false); }}
           >
+            {apiFailure && <div className={styles.confirmHint}>{apiFailure}</div>}
             {showFeedback && similar.length > 0 && (
               <div className={styles.simPanel}>
                 <div className={styles.simHead}>Similar questions <em>✦ AI-matched</em></div>
@@ -700,10 +617,10 @@ function Runner() {
           <button
             type="button"
             className={styles.primary}
-            disabled={stage === "section" && !picked && !answered}
+            disabled={submitting || (stage === "section" && !picked && !answered)}
             onClick={primary}
           >
-            {primaryLabel}
+            {submitting ? "Submitting…" : primaryLabel}
           </button>
         )}
       </footer>
@@ -712,8 +629,7 @@ function Runner() {
         <TutorPanel
           q={tutorFor}
           answered={!!answers[tutorFor.id]}
-          picked={answers[tutorFor.id]?.picked}
-          correct={answers[tutorFor.id]?.correct}
+          sessionId={sessionId}
           onClose={() => setTutorFor(null)}
         />
       )}

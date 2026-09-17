@@ -1,11 +1,10 @@
 # GMAT Vector DB Setup Guide
 
-> **⚠ Partially historical (written 2026-06, single-bank era).** The app's vector
-> search now runs **fully in the browser** (`embeddings.json` + transformers.js) —
-> see [DESIGN.md](DESIGN.md) §2.5/§3.3 for the current architecture. This guide
-> remains useful for the optional local debug API (`pipeline/api.py`) and the
-> embedding recipe. `setup_qdrant.py` mentioned below was removed — `api.py` does
-> the same Qdrant load at startup. Build the index with `python pipeline/build_index.py`.
+> **Historical Qdrant guide.** Production search now uses LangChain4j in the Java
+> service and a PostgreSQL `vector(384)` HNSW index. The browser no longer downloads
+> `embeddings.json`. See [PRODUCTION_ARCHITECTURE.md](PRODUCTION_ARCHITECTURE.md) for
+> the current setup. The material below is retained for the optional Python/Qdrant
+> reference implementation and embedding-recipe history.
 
 ## Overview
 
